@@ -16,6 +16,8 @@
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "expo-server-sdk": "^4.0.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
   }
 }

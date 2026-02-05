@@ -1,21 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 const { Expo } = require('expo-server-sdk');
+const path = require('path');
 const fs = require('fs');
+const cron = require('node-cron');
+const axios = require('axios');
 const { getBCVRate } = require('./services/bcv');
+
+// PUSH SETUP
+const expo = new Expo();
+const TOKENS_FILE = path.join(__dirname, 'tokens.json');
 
 const app = express();
 const PORT = 8000;
 
-// Push Notifications Setup
-const expo = new Expo();
-const TOKENS_FILE = 'push_tokens.json';
-
 app.use(cors());
-app.use(express.json()); // Necesario para parsear body JSON
+app.use(express.json());
 app.use(express.static('public'));
 
 // Load Tokens
+// --- PUSH HELPER FUNCTIONS ---
 let pushTokens = [];
 if (fs.existsSync(TOKENS_FILE)) {
     try {
@@ -27,12 +31,6 @@ if (fs.existsSync(TOKENS_FILE)) {
 
 const saveTokens = () => {
     fs.writeFileSync(TOKENS_FILE, JSON.stringify(pushTokens));
-};
-
-// Monitor Rates Logic
-let lastKnownRates = {
-    usd: { rate: null, date: null },
-    eur: { rate: null, date: null }
 };
 
 const notifyUsers = async (currency, newRate, newDate = null) => {
@@ -59,16 +57,16 @@ const notifyUsers = async (currency, newRate, newDate = null) => {
     for (let chunk of chunks) {
         try {
             const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-            console.log(`✅ Chunk enviado con éxito. Tickets: ${ticketChunk.ticketChunk ? ticketChunk.ticketChunk.length : ticketChunk.length}`);
+            console.log(`✅ Chunk sent. Tickets: ${ticketChunk.ticketChunk ? ticketChunk.ticketChunk.length : ticketChunk.length}`);
         } catch (error) {
-            console.error("Error enviando push chunk", error);
+            console.error("Error sending push chunk", error);
         }
     }
 };
 
-// Check for updates periodically (Every 2 mins for better responsiveness)
 // Check for updates periodically (Runs every minute, but logic executes hourly 9am-7pm)
-setInterval(async () => {
+cron.schedule('0 * * * 1-6', async () => { // Schedule to run at the top of every hour, Monday-Saturday
+    const now = new Date();
     // Convert to Venezuela Time (UTC-4)
     const vetNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Caracas" }));
     const hours = vetNow.getHours();
@@ -76,12 +74,7 @@ setInterval(async () => {
 
     // Check if within operating hours (9 AM - 7 PM VET)
     if (hours < 9 || hours >= 19) {
-        // console.log(`💤 [${now.toLocaleTimeString()}] Fuera de horario operativo (9am - 7pm).`);
-        return;
-    }
-
-    // Check if it's the top of the hour (minute 0)
-    if (minutes !== 0) {
+        console.log(`💤 [${vetNow.toLocaleTimeString()}] Fuera de horario operativo (9am - 7pm).`);
         return;
     }
 
@@ -166,10 +159,10 @@ setInterval(async () => {
 }, 60 * 1000); // Check every minute to catch the :00 minute
 
 // Endpoint to save token
-app.post('/api/save-token', (req, res) => {
+app.post('/api/pushtoken', (req, res) => {
     const { token } = req.body;
     if (!token || !Expo.isExpoPushToken(token)) {
-        return res.status(400).send('Token inválido');
+        return res.status(400).send({ error: 'Token inválido' });
     }
 
     if (!pushTokens.includes(token)) {
@@ -180,6 +173,12 @@ app.post('/api/save-token', (req, res) => {
 
     res.send({ success: true });
 });
+
+
+
+// --- API ENDPOINTS ---
+
+
 
 app.get('/api/rates', async (req, res) => {
     console.log('📊 Request received for /api/rates');
