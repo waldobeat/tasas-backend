@@ -69,11 +69,12 @@ const notifyUsers = async (currency, newRate, newDate = null) => {
 // Check for updates periodically (Every 2 mins for better responsiveness)
 // Check for updates periodically (Runs every minute, but logic executes hourly 9am-7pm)
 setInterval(async () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    // Convert to Venezuela Time (UTC-4)
+    const vetNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Caracas" }));
+    const hours = vetNow.getHours();
+    const minutes = vetNow.getMinutes();
 
-    // Check if within operating hours (9 AM - 7 PM)
+    // Check if within operating hours (9 AM - 7 PM VET)
     if (hours < 9 || hours >= 19) {
         // console.log(`💤 [${now.toLocaleTimeString()}] Fuera de horario operativo (9am - 7pm).`);
         return;
@@ -84,7 +85,7 @@ setInterval(async () => {
         return;
     }
 
-    console.log(`🔍 [${now.toLocaleTimeString()}] Ejecutando monitoreo programado...`);
+    console.log(`🔍 [${vetNow.toLocaleTimeString()}] Ejecutando monitoreo programado (VET)...`);
 
     try {
         const bcvData = await getBCVRate().catch(e => { console.error("BCV Error:", e.message); return null; });
