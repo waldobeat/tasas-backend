@@ -141,7 +141,9 @@ app.post('/api/auth/register', async (req, res) => {
             console.error('❌ Nodemailer Error Detail:', {
                 message: mailError.message,
                 code: mailError.code,
-                command: mailError.command
+                command: mailError.command,
+                response: mailError.response,
+                stack: mailError.stack
             });
         }
 
