@@ -27,7 +27,8 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 // MONGOOSE SETUP
-mongoose.connect(process.env.MONGODB_URI, { family: 4 })
+// mongoose.connect(process.env.MONGODB_URI, { family: 4 })
+mongoose.connect("mongodb+srv://latasa:Latasa2026@latasa.dhmt7nn.mongodb.net/?appName=latasa", { family: 4 })
     .then(() => console.log('✅ Connected to MongoDB Atlas'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
