@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "La Tasa - Dólar en Venezuela",
+    "slug": "tasas-venezuela-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cafesitoxpressve.latasa",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.cafesitoxpressve.latasa",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-1443541391284549~6789793998"
+      }
+    },
+    "plugins": [
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-1443541391284549~6789793998",
+          "iosAppId": "ca-app-pub-1443541391284549~6789793998"
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "394bc141-d012-40e8-a531-fabb6cf8c108"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/394bc141-d012-40e8-a531-fabb6cf8c108"
+    },
+    "runtimeVersion": "1.0.0"
+  }
+}
