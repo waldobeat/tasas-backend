@@ -5,7 +5,7 @@ import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import { financeService } from '../utils/financeService';
 import { PieChart, LineChart, BarChart } from 'react-native-chart-kit';
-import { BannerAd, BannerAdSize, TestIds } from '../utils/AdMobWrapper';
+// Wortise Banner import will go here if needed
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -24,7 +24,6 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
     const [paymentModalVisible, setPaymentModalVisible] = useState(false);
     const [selectedDebt, setSelectedDebt] = useState(null);
 
-    const bannerUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-1443541391284549/4650715819';
 
     useEffect(() => {
         calculateLocalStats();
@@ -123,15 +122,7 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                 </TouchableOpacity>
 
                 {/* Banner for non-premium */}
-                <View style={{ marginTop: scale(20) }}>
-                    <BannerAd
-                        unitId={bannerUnitId}
-                        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-                        requestOptions={{
-                            requestNonPersonalizedAdsOnly: true,
-                        }}
-                    />
-                </View>
+                {/* Wortise Banner for non-premium would go here */}
             </View>
         );
     }

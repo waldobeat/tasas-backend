@@ -3,6 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
+import { LineChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 const Portfolio = ({ theme, activeColors, history }) => {
 
@@ -96,49 +100,43 @@ const Portfolio = ({ theme, activeColors, history }) => {
                 </View>
             </View>
 
-            {/* Simple JS Bar Chart */}
-            <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, borderColor: activeColors.border }]}>
+            {/* Premium JS Line Chart */}
+            <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, borderColor: activeColors.border, padding: scale(5), overflow: 'hidden' }]}>
                 {hasData ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: verticalScale(150), paddingTop: 20 }}>
-                        {chartData.items.map((item, index) => {
-                            // Calculate height relative to max (simple normalization)
-                            // To make differences more visible, we can normalize based on min-max range
-                            const range = chartData.max - chartData.min;
-                            const normalizedHeight = range === 0 ? 0.5 : (item.rate - chartData.min) / range;
-                            // Clamp between 10% and 100% height
-                            const barHeight = Math.max(10, normalizedHeight * 100);
-
-                            // Highlight the last bar (active)
-                            const isLast = index === chartData.items.length - 1;
-
-                            return (
-                                <View key={index} style={{ alignItems: 'center', flex: 1 }}>
-                                    <Text style={{
-                                        fontSize: scale(9),
-                                        color: isLast ? theme.primary : activeColors.secondary,
-                                        marginBottom: 4,
-                                        fontWeight: isLast ? '900' : '700'
-                                    }}>
-                                        {formatNumber(item.rate)}
-                                    </Text>
-                                    <View style={{
-                                        width: scale(12),
-                                        height: `${barHeight}%`,
-                                        backgroundColor: theme.primary,
-                                        borderRadius: 4,
-                                        opacity: isLast ? 1 : 0.4
-                                    }} />
-                                    <Text style={{
-                                        fontSize: scale(9),
-                                        color: isLast ? activeColors.textDark : activeColors.secondary,
-                                        marginTop: 6
-                                    }}>
-                                        {item.label}
-                                    </Text>
-                                </View>
-                            );
-                        })}
-                    </View>
+                    <LineChart
+                        data={{
+                            labels: chartData.items.map(i => i.label),
+                            datasets: [{
+                                data: chartData.items.map(i => i.rate)
+                            }]
+                        }}
+                        width={screenWidth - scale(60)}
+                        height={verticalScale(160)}
+                        chartConfig={{
+                            backgroundColor: activeColors.cardCtx,
+                            backgroundGradientFrom: activeColors.cardCtx,
+                            backgroundGradientTo: activeColors.cardCtx,
+                            decimalPlaces: 2,
+                            color: (opacity = 1) => theme.primary,
+                            labelColor: (opacity = 1) => activeColors.secondary,
+                            style: {
+                                borderRadius: 16
+                            },
+                            propsForDots: {
+                                r: "4",
+                                strokeWidth: "2",
+                                stroke: theme.primary
+                            }
+                        }}
+                        bezier
+                        style={{
+                            marginVertical: 8,
+                            borderRadius: 16,
+                            marginLeft: -scale(15)
+                        }}
+                        withInnerLines={false}
+                        withOuterLines={false}
+                    />
                 ) : (
                     <View style={{ height: 150, justifyContent: 'center', alignItems: 'center' }}>
                         <Text style={{ color: activeColors.secondary }}>Cargando historial...</Text>

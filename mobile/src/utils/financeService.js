@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { authService } from './authService';
 
-const API_URL = 'http://192.168.101.8:8000/api/finance';
+const API_URL = 'https://tasas-backend.onrender.com/api/finance';
 
 export const financeService = {
     getAllTransactions: async () => {

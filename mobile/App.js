@@ -7,6 +7,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Updates from 'expo-updates';
+import { useUpdates } from 'expo-updates';
 import Constants from 'expo-constants';
 import RateCard from './src/components/RateCard';
 import Portfolio from './src/components/Portfolio';
@@ -18,19 +19,23 @@ import FinancialDashboard from './src/components/FinancialDashboard';
 import AddTransactionModal from './src/components/AddTransactionModal';
 import AuthScreen from './src/components/AuthScreen';
 import { financeService } from './src/utils/financeService';
-import { RewardedAd, RewardedAdEventType, TestIds, AdEventType, BannerAd, BannerAdSize } from './src/utils/AdMobWrapper';
+import { SDK, RewardedAd } from '@wortise/react-native-sdk';
 
-const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-1443541391284549/7280758326';
+const WORTISE_APP_ID = '423ce07c-2606-491a-8cea-19182c29a141';
+const rewardedUnitId = __DEV__ ? 'test-rewarded' : '20d9e555-87d6-4a00-a9b0-3e3491d2ac80';
 
-const rewarded = RewardedAd.createForAdRequest(adUnitId, {
-  keywords: ['finance', 'investment'],
-});
+// Initialize Wortise SDK
+SDK.initialize(WORTISE_APP_ID);
+
+const rewarded = RewardedAd.createForAdRequest(rewardedUnitId);
+const betaRewarded = RewardedAd.createForAdRequest(rewardedUnitId); // Using same for now
+
 import { authService } from './src/utils/authService';
 
 // API URL
-// const API_URL = 'https://tasas-backend.onrender.com/api/rates'; // PRODUCTION
+const API_URL = 'https://tasas-backend.onrender.com/api/rates'; // PRODUCTION
 // { const API_URL = 'http://localhost:8000/api/rates'; }
-const API_URL = 'http://192.168.101.8:8000/api/rates'; // LOCAL IP FOR EMULATOR
+// const API_URL = 'http://192.168.101.8:8000/api/rates'; // LOCAL IP FOR EMULATOR
 
 const PRIVACY_KEY = 'privacy_accepted_v1';
 const COOKIE_KEY = 'cookies_accepted_v1';
@@ -49,6 +54,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+  const [loadingAd, setLoadingAd] = useState(false);
   const [rates, setRates] = useState(null);
   const [history, setHistory] = useState([]); // New History State
   const [date, setDate] = useState(''); // Fecha del sistema (HOY)
@@ -105,7 +111,48 @@ export default function App() {
   const [isDebtPayment, setIsDebtPayment] = useState(false);
   const [selectedDebtId, setSelectedDebtId] = useState(null);
 
+  // --- OTA UPDATE STATES ---
+  const { isDownloading, downloadProgress, isUpdatePending, isUpdateAvailable } = useUpdates();
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    if (isUpdateAvailable || isDownloading || isUpdatePending) {
+      setShowUpdateModal(true);
+    }
+  }, [isUpdateAvailable, isDownloading, isUpdatePending]);
+
+  useEffect(() => {
+    if (isDownloading) {
+      Animated.timing(progressAnim, {
+        toValue: downloadProgress || 0,
+        duration: 500,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [isDownloading, downloadProgress]);
+
+  useEffect(() => {
+    if (isUpdatePending) {
+      // Ensure bar is full
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [isUpdatePending]);
+
+  useEffect(() => {
+    // Initialize AdMob
+    mobileAds()
+      .initialize()
+      .then(adapterStatuses => {
+        console.log('AdMob Initialized:', adapterStatuses);
+      })
+      .catch(e => console.error('AdMob Init Error:', e));
+
     checkAuth();
   }, []);
   const checkAuth = async () => {
@@ -148,67 +195,142 @@ export default function App() {
           }
         ]
       );
-      return;
     }
+  };
 
-    if (type === 'code') {
-      // ... existing code logic if needed, but button is hidden now
-      // Keeping logic just in case useful for admin/testing
-      const validCode = "123123ABCD";
-      if (codeInput === validCode) {
-        // This part needs to be updated to use authService.updatePremiumStatus
-        // For now, it's a placeholder for the old logic.
-        // A proper implementation would involve calling the backend.
-        Alert.alert("¡Éxito!", "Código canjeado correctamente. (Funcionalidad de actualización de estado pendiente)");
-        setShowPremiumModal(false);
-      } else {
-        Alert.alert("Error", "Código inválido");
+  // --- ACCESS CONTROL & ADS ---
+  const [sessionLocked, setSessionLocked] = useState(false);
+
+  // Grant 6 hours of access (Reusable)
+  const grantPremiumAccess = async (onSuccess, customMessage) => {
+    const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+    try {
+      let userId = user?.id || user?._id;
+      if (userId) {
+        const result = await authService.updatePremiumStatus(userId, true, expiresAt, 'free');
+        setUser({ ...user, ...result });
+        setIsPremium(result.isPremium);
       }
+      setSessionLocked(false);
+      if (onSuccess) onSuccess(expiresAt);
+
+      Alert.alert(
+        customMessage ? "Acceso por Cortesía" : "¡Acceso Concedido!",
+        customMessage || "Tienes 6 horas de acceso libre."
+      );
+
+      setShowPremiumModal(false);
+      setFinanceRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error("Reward sync error:", error);
+      setSessionLocked(false);
+      if (onSuccess) onSuccess(expiresAt);
+      Alert.alert("Acceso Concedido", "Disfruta de tus 6 horas de acceso.");
     }
+  };
 
+  // Resilient Ad Handler with Fallback & Timeout
+  const showRewardedAd = (onSuccess) => {
+    let timeoutId = null;
+    let isFinished = false;
 
-    if (type === 'ad') {
-      setLoading(true);
-      const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        setLoading(false);
-        rewarded.show();
+    setLoadingAd(true);
+
+    const cleanup = () => {
+      isFinished = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      setLoadingAd(false);
+    };
+
+    const attemptAd = (adInstance, isFallback = false) => {
+      console.log(`Attempting Wortise ad (${isFallback ? 'Beta' : 'Primary'})...`);
+
+      const unsubscribeLoaded = adInstance.addListener('onLoaded', () => {
+        if (isFinished) return;
+        cleanup();
+        adInstance.show();
+        unsubscribeAll();
       });
 
-      const unsubscribeEarned = rewarded.addAdEventListener(RewardedAdEventType.EARNED_REWARD, async (reward) => {
-        console.log('User earned reward of ', reward);
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        try {
-          // Grant Premium Free 24h
-          const result = await authService.updatePremiumStatus(user.id, true, expiresAt, 'free');
-          setIsPremium(result.isPremium);
-          setPremiumType(result.premiumType);
-          const updatedUser = {
-            ...user,
-            isPremium: result.isPremium,
-            premiumType: result.premiumType,
-            expiresAt: result.expiresAt
-          };
-          setUser(updatedUser);
-          Alert.alert("¡Premium Activado!", "Tienes 24 horas de acceso gratuito.");
-          setShowPremiumModal(false);
-          setFinanceRefreshKey(prev => prev + 1);
-        } catch (error) {
-          Alert.alert("Error", "No se pudo activar la recompensa.");
+      const unsubscribeError = adInstance.addListener('onFailedToLoad', (error) => {
+        if (isFinished) return;
+        console.error(`Wortise Ad Error (${isFallback ? 'Beta' : 'Primary'}):`, error);
+        unsubscribeAll();
+
+        if (!isFallback) {
+          // Try Beta
+          attemptAd(betaRewarded, true);
+        } else {
+          // Both failed - Grant access anyway (Courtesy)
+          cleanup();
+          grantPremiumAccess(onSuccess, "No hay videos disponibles en este momento. Te hemos concedido 6 horas de acceso gratuito igualmente.");
         }
       });
 
-      // Handle close/fail
-      const unsubscribeClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
-        setLoading(false);
-        // Cleanup listeners
-        unsubscribeLoaded();
-        unsubscribeEarned();
-        unsubscribeClosed();
-        // Preload next ad
-        rewarded.load();
+      const unsubscribeEarned = adInstance.addListener('onCompleted', () => {
+        console.log('Reward Earned (Wortise)');
+        cleanup();
+        grantPremiumAccess(onSuccess);
       });
 
-      rewarded.load();
+      const unsubscribeClosed = adInstance.addListener('onDismissed', () => {
+        unsubscribeAll();
+        adInstance.load(); // Preload next
+      });
+
+      const unsubscribeAll = () => {
+        unsubscribeLoaded.remove();
+        unsubscribeError.remove();
+        unsubscribeEarned.remove();
+        unsubscribeClosed.remove();
+      };
+
+      // Check if ALREADY loaded
+      if (adInstance.isLoaded()) {
+        cleanup();
+        adInstance.show();
+        unsubscribeAll();
+      } else {
+        adInstance.load();
+        // Fallback safety timeout (12s)
+        timeoutId = setTimeout(() => {
+          if (!isFinished) {
+            console.warn("Wortise ad load timed out.");
+            unsubscribeAll();
+            if (!isFallback) {
+              attemptAd(betaRewarded, true);
+            } else {
+              // Both failed or timed out
+              cleanup();
+              grantPremiumAccess(onSuccess, "La publicidad está demorando en cargar. Te hemos concedido 6 horas de acceso por cortesía.");
+            }
+          }
+        }, 12000);
+      }
+    };
+
+    attemptAd(rewarded);
+  };
+
+  // Check Session Expiry every minute
+  useEffect(() => {
+    if (!user) return;
+    const checkExpiry = () => {
+      if (!user.expiresAt) return;
+      const now = new Date();
+      const expiry = new Date(user.expiresAt);
+      if (now > expiry) {
+        setSessionLocked(true);
+      }
+    };
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const handlePremiumOption = (type) => {
+    if (type === 'ad') {
+      showRewardedAd();
     }
   };
 
@@ -777,6 +899,21 @@ export default function App() {
 
   // RENDER INTRO SCREEN
   useEffect(() => {
+    // Initialize AdMob with more detailed logging
+    console.log("Starting AdMob Initialization...");
+    mobileAds()
+      .initialize()
+      .then(adapterStatuses => {
+        console.log('AdMob Initialized Successfully:', adapterStatuses);
+        // Pre-load ads after initialization if needed
+        rewarded.load();
+        betaRewarded.load();
+      })
+      .catch(e => {
+        console.error('AdMob Init Error:', e);
+        Alert.alert("Error AdMob", "No se pudo inicializar la publicidad.");
+      });
+
     fetchRates();
     checkCookies();
     fetchHistory();
@@ -847,7 +984,7 @@ export default function App() {
           />
         }
       >
-        {loading ? (
+        {loading && !rates ? (
           <ActivityIndicator size="large" color={theme.primary} />
         ) : activeModule === 'rates' ? (
           <>
@@ -900,7 +1037,23 @@ export default function App() {
 
             {/* CHART RESTORED - HISTORY (Closing 7 PM) */}
             {/* CHART RESTORED - HISTORY (Closing 7 PM) */}
+            {/* CHART RESTORED - HISTORY (Closing 7 PM) */}
             <Portfolio portfolio={portfolio} theme={theme} activeColors={activeColors} rates={rates} history={history} />
+
+            {/* Wortise Banners placeholder or logic here if ID provided */}
+            {/* 
+            {!isPremium && (
+              <View style={{ alignItems: 'center', marginVertical: scale(20) }}>
+                <BannerAd
+                  unitId={bannerUnitId}
+                  size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                  requestOptions={{
+                    requestNonPersonalizedAdsOnly: false,
+                  }}
+                />
+              </View>
+            )}
+            */}
 
             <View style={{ alignItems: 'center', marginTop: scale(10), marginBottom: scale(30) }}>
               <TouchableOpacity onPress={() => setShowPrivacy(true)}>
@@ -919,6 +1072,16 @@ export default function App() {
             date={date}
             lastUpdated={lastUpdated}
             onShowPrivacy={() => setShowPrivacy(true)}
+            onUnlockRegister={(callback) => {
+              Alert.alert(
+                "Desbloquear Registro",
+                "Para crear una cuenta nueva debes ver un video publicitario. Esto te dará tus primeras 6 horas de acceso.",
+                [
+                  { text: "Cancelar", style: "cancel" },
+                  { text: "Ver Video", onPress: () => showRewardedAd(callback) }
+                ]
+              );
+            }}
           />
         ) : (
           <FinancialDashboard
@@ -947,7 +1110,7 @@ export default function App() {
             unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-1443541391284549/4650715819'}
             size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
             requestOptions={{
-              requestNonPersonalizedAdsOnly: true,
+              // requestNonPersonalizedAdsOnly: true, // Allow personalized for better fill
             }}
           />
         </View>
@@ -1008,6 +1171,16 @@ export default function App() {
             <TouchableOpacity style={[styles.modalBtn, { backgroundColor: theme.primary }]} onPress={acceptPrivacy}>
               <Text style={styles.modalBtnText}>He leído y Acepto</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* LOADING AD MODAL - NON DISRUPTIVE */}
+      <Modal visible={loadingAd} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: activeColors.cardCtx, padding: 30, borderRadius: 20, alignItems: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 10 }}>
+            <ActivityIndicator size="large" color={theme.primary} />
+            <Text style={{ marginTop: 15, color: activeColors.textDark, fontWeight: 'bold' }}>Solicitando Acceso...</Text>
           </View>
         </View>
       </Modal>
@@ -1520,6 +1693,75 @@ export default function App() {
         activeColors={activeColors}
       />
 
+      {/* OTA UPDATE PROGRESS MODAL */}
+      <Modal visible={showUpdateModal} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 25 }}>
+          <View style={{ backgroundColor: activeColors.cardCtx, borderRadius: 25, padding: 30, width: '100%', alignItems: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 15 }}>
+
+            <View style={{ backgroundColor: theme.primary + '15', padding: 20, borderRadius: 50, marginBottom: 20 }}>
+              <MaterialCommunityIcons
+                name={isUpdatePending ? "check-decagram" : "cloud-download"}
+                size={60}
+                color={theme.primary}
+              />
+            </View>
+
+            <Text style={{ fontSize: 22, fontWeight: '900', color: activeColors.textDark, textAlign: 'center', marginBottom: 10 }}>
+              {isUpdatePending ? "¡Nueva Versión Lista!" : "Actualización Disponible"}
+            </Text>
+
+            <Text style={{ fontSize: 15, color: activeColors.secondary, textAlign: 'center', marginBottom: 30, lineHeight: 22 }}>
+              {isUpdatePending
+                ? "La descarga ha finalizado correctamente. Reinicia la app para aplicar los cambios."
+                : "Estamos descargando las últimas mejoras para brindarte una mejor experiencia."}
+            </Text>
+
+            {!isUpdatePending && (
+              <View style={{ width: '100%', marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Descargando...</Text>
+                  <Text style={{ color: activeColors.secondary }}>{Math.round((downloadProgress || 0) * 100)}%</Text>
+                </View>
+                <View style={{ height: 10, width: '100%', backgroundColor: activeColors.border, borderRadius: 5, overflow: 'hidden' }}>
+                  <Animated.View style={{
+                    height: '100%',
+                    backgroundColor: theme.primary,
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%']
+                    })
+                  }} />
+                </View>
+              </View>
+            )}
+
+            {isUpdatePending && (
+              <TouchableOpacity
+                onPress={() => Updates.reloadAsync()}
+                style={{
+                  backgroundColor: theme.primary,
+                  paddingVertical: 18,
+                  paddingHorizontal: 30,
+                  borderRadius: 15,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  width: '100%',
+                  justifyContent: 'center',
+                  shadowColor: theme.primary,
+                  shadowOffset: { width: 0, height: 5 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 10,
+                  elevation: 5
+                }}
+              >
+                <Ionicons name="refresh-circle" size={26} color="white" style={{ marginRight: 10 }} />
+                <Text style={{ color: 'white', fontWeight: '800', fontSize: 18 }}>Reiniciar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
+
 
 
       <AddTransactionModal
@@ -1602,7 +1844,7 @@ export default function App() {
                     <Ionicons name="play-circle" size={24} color="white" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: scale(15), fontWeight: '800', color: activeColors.textDark }}>Premium Gratis 24 H</Text>
+                    <Text style={{ fontSize: scale(15), fontWeight: '800', color: activeColors.textDark }}>Premium Gratis 6 H</Text>
                     <Text style={{ fontSize: scale(11), color: activeColors.secondary }}>Ver un video para desbloquear</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={activeColors.secondary} />
@@ -1634,6 +1876,37 @@ export default function App() {
                 </View>
               )}
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* SESSION LOCKED MODAL */}
+      <Modal visible={sessionLocked} animationType="fade" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: activeColors.bg, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: activeColors.cardCtx, padding: 30, borderRadius: 20, width: '100%', alignItems: 'center', shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 }}>
+            <Ionicons name="time" size={80} color={theme.primary} style={{ marginBottom: 20 }} />
+            <Text style={{ fontSize: 24, fontWeight: '900', color: activeColors.textDark, textAlign: 'center', marginBottom: 10 }}>Sesión Expirada</Text>
+            <Text style={{ fontSize: 16, color: activeColors.secondary, textAlign: 'center', marginBottom: 30, lineHeight: 24 }}>
+              Tus 6 horas de acceso gratuito han terminado. Para continuar usando la app sin perder tu progreso, por favor ve un video corto.
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => showRewardedAd()}
+              style={{ backgroundColor: theme.primary, paddingVertical: 15, paddingHorizontal: 30, borderRadius: 12, flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'center' }}
+            >
+              <Ionicons name="play-circle" size={24} color="white" style={{ marginRight: 10 }} />
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Extender 6 Horas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setSessionLocked(false);
+                authService.logout().then(() => setUser(null));
+              }}
+              style={{ marginTop: 20 }}
+            >
+              <Text style={{ color: activeColors.secondary, fontWeight: '600' }}>Cerrar Sesión</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

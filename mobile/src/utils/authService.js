@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.101.8:8000/api/auth';
+const API_URL = 'https://tasas-backend.onrender.com/api/auth';
 const USER_KEY = '@auth_user_v1';
 
 export const authService = {

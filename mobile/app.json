@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cafesitoxpressve.latasa",
+      "bundleIdentifier": "com.waldobeatmaker.tasasvenezuelamobile",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,19 +25,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.cafesitoxpressve.latasa",
-      "config": {
-        "googleMobileAdsAppId": "ca-app-pub-1443541391284549~6789793998"
-      }
+      "package": "com.waldobeatmaker.tasasvenezuelamobile"
     },
     "plugins": [
       [
-        "react-native-google-mobile-ads",
+        "@wortise/react-native-sdk",
         {
-          "androidAppId": "ca-app-pub-1443541391284549~6789793998",
-          "iosAppId": "ca-app-pub-1443541391284549~6789793998"
+          "androidAppId": "423ce07c-2606-491a-8cea-19182c29a141"
         }
-      ]
+      ],
+      "./plugins/withAndroidManifestFix"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,6 +47,8 @@
     "updates": {
       "url": "https://u.expo.dev/394bc141-d012-40e8-a531-fabb6cf8c108"
     },
-    "runtimeVersion": "1.0.0"
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
