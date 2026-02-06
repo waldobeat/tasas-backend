@@ -162,19 +162,17 @@ app.post('/api/auth/register', async (req, res) => {
             console.error('❌ Email Sending Error:', mailError.message);
             // Proceed anyway, user can resend later or use default code if in dev
         }
-        stack: mailError.stack
-    });
-        }
 
-res.status(201).json({
-    id: saved._id,
-    status: 'pendiente',
-    message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
-    devCode: vCode // Always send for now to unblock user, can be hide later
-});
+
+        res.status(201).json({
+            id: saved._id,
+            status: 'pendiente',
+            message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
+            devCode: vCode // Always send for now to unblock user, can be hide later
+        });
     } catch (err) {
-    res.status(500).json({ error: err.message });
-}
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.post('/api/auth/verify', async (req, res) => {
