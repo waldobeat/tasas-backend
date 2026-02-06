@@ -96,10 +96,9 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
 
         setLoading(true);
         try {
-            const res = await authService.verify(email, verificationCode);
-            Alert.alert("¡Cuenta Activada!", "Ahora puedes iniciar sesión.");
-            setMode('login');
-            setPassword(''); // Clear password for security re-entry or keep it for UX? Let's clear it mostly.
+            await authService.verify(email, verificationCode);
+            Alert.alert("¡Cuenta Activada!", "Iniciando sesión automáticamente...");
+            handleLogin(); // Auto-login
         } catch (error) {
             Alert.alert("Error", error);
         } finally {
