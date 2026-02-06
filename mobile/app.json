@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "La Tasa - Dólar en Venezuela",
-    "slug": "tasas-venezuela-mobile",
+    "slug": "httpstasas-backendonrendercom",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.waldobeatmaker.tasasvenezuelamobile",
+      "bundleIdentifier": "com.cafesitoxpressve.latasa",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -25,15 +25,9 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.waldobeatmaker.tasasvenezuelamobile"
+      "package": "com.cafesitoxpressve.latasa"
     },
     "plugins": [
-      [
-        "@wortise/react-native-sdk",
-        {
-          "androidAppId": "423ce07c-2606-491a-8cea-19182c29a141"
-        }
-      ],
       "./plugins/withAndroidManifestFix"
     ],
     "web": {
@@ -41,11 +35,11 @@
     },
     "extra": {
       "eas": {
-        "projectId": "394bc141-d012-40e8-a531-fabb6cf8c108"
+        "projectId": "77ab63dd-e2e6-47c0-8f86-12978e2b9b00"
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/394bc141-d012-40e8-a531-fabb6cf8c108"
+      "url": "https://u.expo.dev/77ab63dd-e2e6-47c0-8f86-12978e2b9b00"
     },
     "runtimeVersion": {
       "policy": "appVersion"

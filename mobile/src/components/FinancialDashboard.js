@@ -5,7 +5,7 @@ import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import { financeService } from '../utils/financeService';
 import { PieChart, LineChart, BarChart } from 'react-native-chart-kit';
-// Wortise Banner import will go here if needed
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -121,8 +121,7 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                     <Text style={styles.premiumBtnText}>Obtener Acceso Premium</Text>
                 </TouchableOpacity>
 
-                {/* Banner for non-premium */}
-                {/* Wortise Banner for non-premium would go here */}
+
             </View>
         );
     }

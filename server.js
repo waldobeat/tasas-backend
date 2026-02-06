@@ -85,8 +85,8 @@ app.use((req, res, next) => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER || 'fakemovil@gmail.com',
-        pass: process.env.EMAIL_PASS || 'bgscctywhzewopsr'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 

@@ -140,10 +140,8 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.linkBtn} onPress={() => {
-                onUnlockRegister(() => {
-                    setMode('register');
-                    generateCaptcha();
-                });
+                setMode('register');
+                generateCaptcha();
             }}>
                 <Text style={{ color: activeColors.secondary }}>¿No tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Regístrate</Text></Text>
             </TouchableOpacity>
