@@ -130,18 +130,26 @@ app.post('/api/auth/register', async (req, res) => {
 
         let emailSent = false;
         try {
-            await transporter.sendMail(mailOptions);
-            emailSent = true;
+            if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+                await transporter.sendMail(mailOptions);
+                emailSent = true;
+                console.log(`📧 Email sent successfully to ${email}`);
+            } else {
+                console.warn('⚠️ EMAIL_USER or EMAIL_PASS not configured. Skipping email.');
+            }
         } catch (mailError) {
-            console.error('Error enviando email:', mailError);
-            // Fallback for development/testing without email
+            console.error('❌ Nodemailer Error Detail:', {
+                message: mailError.message,
+                code: mailError.code,
+                command: mailError.command
+            });
         }
 
         res.status(201).json({
             id: saved._id,
             status: 'pendiente',
-            message: emailSent ? 'Código enviado al correo' : 'Error enviando correo. Código para pruebas: ' + vCode,
-            devCode: !emailSent ? vCode : null // Send code in response if email fails
+            message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
+            devCode: vCode // Always send for now to unblock user, can be hide later
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

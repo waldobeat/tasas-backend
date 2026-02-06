@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { authService } from '../utils/authService';
 
-const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy }) => {
+const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy, onUnlockRegister }) => {
     // Modes: 'login', 'register', 'verify'
     const [mode, setMode] = useState('login');
     const [loading, setLoading] = useState(false);
@@ -73,10 +73,15 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         setLoading(true);
         try {
             const res = await authService.register(name, email, password, premiumCode);
-            Alert.alert("Registro Exitoso", "Hemos enviado un código de verificación a tu correo.");
+            // res usually contains { message, devCode, status }
+            let alertMsg = res.message || "Hemos enviado un código de verificación a tu correo.";
+            if (res.devCode) {
+                alertMsg += `\n\nFallback (Solo Pruebas): ${res.devCode}`;
+            }
+            Alert.alert("Registro", alertMsg);
             setMode('verify');
         } catch (error) {
-            Alert.alert("Error", error);
+            Alert.alert("Error de Registro", typeof error === 'string' ? error : (error.message || "No se pudo completar el registro"));
             generateCaptcha();
         } finally {
             setLoading(false);
@@ -135,7 +140,12 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                 {loading ? <ActivityIndicator color="white" /> : <Text style={styles.mainBtnText}>Iniciar Sesión</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.linkBtn} onPress={() => { setMode('register'); generateCaptcha(); }}>
+            <TouchableOpacity style={styles.linkBtn} onPress={() => {
+                onUnlockRegister(() => {
+                    setMode('register');
+                    generateCaptcha();
+                });
+            }}>
                 <Text style={{ color: activeColors.secondary }}>¿No tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Regístrate</Text></Text>
             </TouchableOpacity>
         </View>
