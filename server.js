@@ -82,17 +82,33 @@ app.use((req, res, next) => {
 });
 
 // Email Transporter (configurar en .env)
+// Email Transporter (configurar en .env)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true for 465, false for other ports
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        pass: (process.env.EMAIL_PASS || '').replace(/\s+/g, '') // Remove spaces from app password
+    },
+    tls: {
+        rejectUnauthorized: false // Help with some network restrictions
+    }
+});
+
+// Verify connection configuration
+transporter.verify(function (error, success) {
+    if (error) {
+        console.error('❌ Transporter Error:', error);
+    } else {
+        console.log('✅ Server is ready to take our messages');
     }
 });
 
 // --- AUTH API ---
 app.post('/api/auth/register', async (req, res) => {
     try {
+        console.log('📝 Register request received');
         const { name, email, password, premiumCode } = req.body;
         if (!name || !email || !password) return res.status(400).json({ error: 'Faltan datos' });
         if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
@@ -111,8 +127,9 @@ app.post('/api/auth/register', async (req, res) => {
         });
 
         const saved = await newUser.save();
+        console.log(`👤 User saved: ${saved._id}`);
 
-        // Enviar correo real
+        // Enviar correo real con Timeout
         const mailOptions = {
             from: `"La Tasa" <${process.env.EMAIL_USER}>`,
             to: email,
@@ -131,31 +148,33 @@ app.post('/api/auth/register', async (req, res) => {
         let emailSent = false;
         try {
             if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-                await transporter.sendMail(mailOptions);
+                console.log(`📧 Attempting to send email to ${email}...`);
+                const info = await Promise.race([
+                    transporter.sendMail(mailOptions),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 10000))
+                ]);
                 emailSent = true;
-                console.log(`📧 Email sent successfully to ${email}`);
+                console.log(`📧 Email sent successfully: ${info.messageId}`);
             } else {
                 console.warn('⚠️ EMAIL_USER or EMAIL_PASS not configured. Skipping email.');
             }
         } catch (mailError) {
-            console.error('❌ Nodemailer Error Detail:', {
-                message: mailError.message,
-                code: mailError.code,
-                command: mailError.command,
-                response: mailError.response,
-                stack: mailError.stack
-            });
+            console.error('❌ Email Sending Error:', mailError.message);
+            // Proceed anyway, user can resend later or use default code if in dev
+        }
+        stack: mailError.stack
+    });
         }
 
-        res.status(201).json({
-            id: saved._id,
-            status: 'pendiente',
-            message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
-            devCode: vCode // Always send for now to unblock user, can be hide later
-        });
+res.status(201).json({
+    id: saved._id,
+    status: 'pendiente',
+    message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
+    devCode: vCode // Always send for now to unblock user, can be hide later
+});
     } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    res.status(500).json({ error: err.message });
+}
 });
 
 app.post('/api/auth/verify', async (req, res) => {
