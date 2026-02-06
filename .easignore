@@ -5,5 +5,5 @@ mobile/.expo
 mobile/node_modules
 dist
 coverage
-mobile/android
-mobile/ios
+mobile/android/
+mobile/ios/
