@@ -145,7 +145,7 @@ app.post('/api/auth/register', async (req, res) => {
                 console.log(`📧 Attempting to send email to ${email}...`);
                 const info = await Promise.race([
                     transporter.sendMail(mailOptions),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 4000))
                 ]);
                 emailSent = true;
                 console.log(`📧 Email sent successfully: ${info.messageId}`);
@@ -154,17 +154,17 @@ app.post('/api/auth/register', async (req, res) => {
             }
         } catch (mailError) {
             console.error('❌ Email Sending Error:', mailError.message);
-            // Proceed anyway, user can resend later or use default code if in dev
         }
 
-
+        console.log('🚀 Sending 201 response back to app...');
         res.status(201).json({
             id: saved._id,
             status: 'pendiente',
             message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
-            devCode: vCode // Always send for now to unblock user, can be hide later
+            devCode: vCode
         });
     } catch (err) {
+        console.error('❌ Fatal Register Error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
