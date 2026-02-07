@@ -75,148 +75,23 @@ const AddTransactionModal = ({ visible, onClose, onSave, activeColors, theme }) 
     };
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.overlay}>
-                <View style={[styles.content, { backgroundColor: activeColors.cardCtx }]}>
-                    <View style={styles.header}>
-                        <Text style={[styles.title, { color: activeColors.textDark }]}>Nueva Transacción</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={28} color={activeColors.secondary} />
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        {/* Type Selection */}
-                        <View style={styles.typeContainer}>
-                            {['income', 'expense', 'debt', 'receivable'].map((t) => (
-                                <TouchableOpacity
-                                    key={t}
-                                    onPress={() => { setType(t); setCategory(''); }}
-                                    style={[
-                                        styles.typeBtn,
-                                        { backgroundColor: type === t ? theme.primary : activeColors.bg }
-                                    ]}
-                                >
-                                    <Text style={{
-                                        color: type === t ? 'white' : activeColors.secondary,
-                                        fontSize: scale(11),
-                                        fontWeight: 'bold',
-                                        textTransform: 'capitalize'
-                                    }}>
-                                        {t === 'income' ? 'Ingreso' : t === 'expense' ? 'Gasto' : t === 'debt' ? 'Deuda' : 'Por Cobrar'}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {/* Amount Input */}
-                        <Text style={[styles.label, { color: activeColors.secondary }]}>Monto ($)</Text>
-                        <TextInput
-                            style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                            placeholder="0.00"
-                            placeholderTextColor={activeColors.secondary}
-                            keyboardType="numeric"
-                            value={amount}
-                            onChangeText={setAmount}
-                        />
-
-                        {/* Category Selection */}
-                        <Text style={[styles.label, { color: activeColors.secondary }]}>Categoría</Text>
-                        <View style={styles.categoryContainer}>
-                            {categories[type].map((cat) => (
-                                <TouchableOpacity
-                                    key={cat}
-                                    onPress={() => setCategory(cat)}
-                                    style={[
-                                        styles.catBtn,
-                                        {
-                                            backgroundColor: category === cat ? theme.primarySoft : activeColors.bg,
-                                            borderColor: category === cat ? theme.primary : 'transparent',
-                                            borderWidth: 1
-                                        }
-                                    ]}
-                                >
-                                    <Text style={{ color: category === cat ? theme.primary : activeColors.secondary }}>{cat}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        {/* Debt Specific Fields */}
-                        {type === 'debt' && (
-                            <View style={{ marginTop: 20, backgroundColor: activeColors.bg, padding: 15, borderRadius: 15 }}>
-                                <Text style={[styles.label, { color: activeColors.secondary, marginTop: 0 }]}>Tipo de Deuda</Text>
-                                <View style={styles.debtTypeRow}>
-                                    <TouchableOpacity
-                                        onPress={() => setDebtType('loan')}
-                                        style={[styles.smallBtn, { backgroundColor: debtType === 'loan' ? theme.primary : activeColors.cardCtx }]}
-                                    >
-                                        <Text style={{ color: debtType === 'loan' ? 'white' : activeColors.secondary }}>Préstamo</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => setDebtType('credit')}
-                                        style={[styles.smallBtn, { backgroundColor: debtType === 'credit' ? theme.primary : activeColors.cardCtx }]}
-                                    >
-                                        <Text style={{ color: debtType === 'credit' ? 'white' : activeColors.secondary }}>Crédito</Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                <Text style={[styles.label, { color: activeColors.secondary }]}>Fecha Obtención (YYYY-MM-DD)</Text>
-                                <TextInput
-                                    style={[styles.input, { backgroundColor: activeColors.cardCtx, color: activeColors.textDark, fontSize: 14 }]}
-                                    value={obtainedDate}
-                                    onChangeText={setObtainedDate}
-                                    placeholder="2024-01-01"
-                                />
-
-                                <Text style={[styles.label, { color: activeColors.secondary }]}>Número de Cuotas</Text>
-                                <TextInput
-                                    style={[styles.input, { backgroundColor: activeColors.cardCtx, color: activeColors.textDark, fontSize: 14 }]}
-                                    keyboardType="numeric"
-                                    value={numInstallments}
-                                    onChangeText={handleNumInstallmentsChange}
-                                    placeholder="Ej. 12"
-                                />
-
-                                {installmentDates.length > 0 && (
-                                    <View style={{ marginTop: 15 }}>
-                                        <Text style={[styles.label, { color: theme.primary, fontSize: 12 }]}>Fechas estimadas de pago:</Text>
-                                        {installmentDates.map((d, idx) => (
-                                            <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
-                                                <Text style={{ color: activeColors.secondary, width: 80 }}>Cuota {idx + 1}:</Text>
-                                                <TextInput
-                                                    style={{ flex: 1, backgroundColor: activeColors.cardCtx, color: activeColors.textDark, borderRadius: 8, padding: 5, fontSize: 12 }}
-                                                    value={d}
-                                                    onChangeText={(newVal) => {
-                                                        const newDates = [...installmentDates];
-                                                        newDates[idx] = newVal;
-                                                        setInstallmentDates(newDates);
-                                                    }}
-                                                />
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
-                        )}
-
-                        {/* Note */}
-                        <Text style={[styles.label, { color: activeColors.secondary }]}>Nota (Opcional)</Text>
-                        <TextInput
-                            style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark, height: 80 }]}
-                            placeholder="Ej. Pago de cena"
-                            placeholderTextColor={activeColors.secondary}
-                            multiline
-                            value={note}
-                            onChangeText={setNote}
-                        />
-
-                        <TouchableOpacity
-                            style={[styles.saveBtn, { backgroundColor: theme.primary }]}
-                            onPress={handleSave}
-                        >
-                            <Text style={styles.saveBtnText}>Guardar Transacción</Text>
-                        </TouchableOpacity>
-                    </ScrollView>
+        <Modal visible={visible} animationType="none" transparent>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', padding: 20 }}>
+                <View style={{ backgroundColor: activeColors.cardCtx, padding: 20, borderRadius: 20 }}>
+                    <Text style={{ color: activeColors.textDark, fontSize: 18, fontWeight: 'bold' }}>MODO WIREFRAME: AÑADIR</Text>
+                    <TextInput
+                        style={{ backgroundColor: activeColors.bg, color: activeColors.textDark, padding: 10, marginVertical: 10, borderRadius: 10 }}
+                        placeholder="Monto"
+                        keyboardType="numeric"
+                        value={amount}
+                        onChangeText={setAmount}
+                    />
+                    <TouchableOpacity onPress={handleSave} style={{ backgroundColor: theme.primary, padding: 15, borderRadius: 10, alignItems: 'center' }}>
+                        <Text style={{ color: 'white' }}>GUARDAR (TEST)</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onClose} style={{ marginTop: 10, alignItems: 'center' }}>
+                        <Text style={{ color: activeColors.secondary }}>Cerrar</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </Modal>

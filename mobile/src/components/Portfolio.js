@@ -28,50 +28,60 @@ const Portfolio = ({ theme, activeColors, history }) => {
         now.setHours(0, 0, 0, 0);
 
         const chartItems = data.map(item => {
-            let label;
+            let label = "???";
 
-            if (item.date) {
-                // Use the explicit date string (YYYY-MM-DD)
-                // Example: "2026-02-06"
-                const [y, m, d] = item.date.split('-').map(Number);
-                // Create local date at midnight
-                const localDate = new Date(y, m - 1, d); // Month is 0-indexed
-                const compareTime = localDate.getTime();
+            if (item && item.date && typeof item.date === 'string' && item.date.includes('-')) {
+                try {
+                    // Use the explicit date string (YYYY-MM-DD)
+                    // Example: "2026-02-06"
+                    const parts = item.date.split('-');
+                    if (parts.length === 3) {
+                        const [y, m, d] = parts.map(Number);
+                        // Create local date at midnight
+                        const localDate = new Date(y, m - 1, d); // Month is 0-indexed
+                        const compareTime = localDate.getTime();
 
-                // Diff in days (approximation)
-                const diffTime = compareTime - now.getTime();
-                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                        // Diff in days (approximation)
+                        const diffTime = compareTime - now.getTime();
+                        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-                const dayStr = d.toString().padStart(2, '0');
-                const monthStr = months[m - 1];
+                        const dayStr = d.toString().padStart(2, '0');
+                        const monthStr = months[m - 1] || '???';
 
-                if (diffDays === 0) label = "Hoy";
-                else if (diffDays === -1) label = "Ayer";
-                else if (diffDays === 1) label = "Mañana";
-                else label = `${monthStr} ${dayStr}`;
+                        if (diffDays === 0) label = "Hoy";
+                        else if (diffDays === -1) label = "Ayer";
+                        else if (diffDays === 1) label = "Mañana";
+                        else label = `${monthStr} ${dayStr}`;
+                    }
+                } catch (e) {
+                    console.log("Error parsing item date:", e.message);
+                }
+            } else if (item && item.timestamp) {
+                try {
+                    // Fallback to timestamp if date key is missing (legacy)
+                    const date = new Date(item.timestamp);
+                    const compareDate = new Date(date);
+                    compareDate.setHours(0, 0, 0, 0);
 
-            } else {
-                // Fallback to timestamp if date key is missing (legacy)
-                const date = new Date(item.timestamp);
-                const compareDate = new Date(date);
-                compareDate.setHours(0, 0, 0, 0);
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
 
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-
-                if (compareDate.getTime() === now.getTime()) {
-                    label = "Hoy";
-                } else if (compareDate.getTime() === yesterday.getTime()) {
-                    label = "Ayer";
-                } else {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = months[date.getMonth()];
-                    label = `${month} ${day}`;
+                    if (compareDate.getTime() === now.getTime()) {
+                        label = "Hoy";
+                    } else if (compareDate.getTime() === yesterday.getTime()) {
+                        label = "Ayer";
+                    } else {
+                        const day = date.getDate().toString().padStart(2, '0');
+                        const month = months[date.getMonth()];
+                        label = `${month} ${day}`;
+                    }
+                } catch (e) {
+                    console.log("Error parsing items timestamp:", e.message);
                 }
             }
 
             // A veces el rate viene como string "381.11" o numero
-            const rate = item.rates && item.rates.bdv && item.rates.bdv.usd ? parseFloat(item.rates.bdv.usd.rate) : 0;
+            const rate = item?.rates?.bdv?.usd?.rate ? parseFloat(item.rates.bdv.usd.rate) : 0;
 
             if (rate > maxRate) maxRate = rate;
             if (rate > 0 && rate < minRate) minRate = rate;

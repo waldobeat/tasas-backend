@@ -69,7 +69,8 @@ export const financeService = {
         let runningBalance = 0;
 
         sorted.forEach(t => {
-            const amount = parseFloat(t.amount);
+            if (!t) return;
+            const amount = parseFloat(t.amount) || 0;
             if (t.type === 'income') {
                 stats.totalIncome += amount;
                 runningBalance += amount;
@@ -77,7 +78,9 @@ export const financeService = {
             if (t.type === 'expense') {
                 stats.totalExpense += amount;
                 runningBalance -= amount;
-                stats.categories[t.category] = (stats.categories[t.category] || 0) + amount;
+                if (t.category) {
+                    stats.categories[t.category] = (stats.categories[t.category] || 0) + amount;
+                }
             }
             if (t.type === 'debt') {
                 stats.totalDebt += amount;
@@ -88,8 +91,25 @@ export const financeService = {
                 runningBalance += amount;
             }
 
+            let dateLabel = "N/A";
+            try {
+                if (t && t.date) {
+                    const d = new Date(t.date);
+                    if (!isNaN(d.getTime())) {
+                        try {
+                            dateLabel = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+                        } catch (formatError) {
+                            console.warn("Error formatting date with toLocaleDateString:", formatError);
+                            dateLabel = "Fecha Inválida";
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log("Stats date error", e);
+            }
+
             stats.history.push({
-                date: new Date(t.date).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' }),
+                date: dateLabel,
                 balance: runningBalance
             });
         });

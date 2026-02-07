@@ -13,11 +13,18 @@ export const usePortfolio = (user) => {
     const loadPortfolio = async () => {
         try {
             const stored = await AsyncStorage.getItem(PORTFOLIO_KEY);
-            if (stored) setPortfolio(JSON.parse(stored));
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) setPortfolio(parsed);
+                } catch (e) {
+                    console.error("Error parsing stored portfolio", e);
+                }
+            }
 
             if (user) {
                 const backendTransactions = await financeService.getAllTransactions();
-                if (backendTransactions && backendTransactions.length > 0) {
+                if (Array.isArray(backendTransactions) && backendTransactions.length > 0) {
                     const mapped = backendTransactions.map(t => ({ ...t, id: t._id }));
                     setPortfolio(mapped);
                     await AsyncStorage.setItem(PORTFOLIO_KEY, JSON.stringify(mapped));
@@ -33,8 +40,9 @@ export const usePortfolio = (user) => {
     }, [user, refreshKey]);
 
     const savePortfolio = async (newData) => {
-        setPortfolio(newData);
-        await AsyncStorage.setItem(PORTFOLIO_KEY, JSON.stringify(newData));
+        const dataToSave = Array.isArray(newData) ? newData : [];
+        setPortfolio(dataToSave);
+        await AsyncStorage.setItem(PORTFOLIO_KEY, JSON.stringify(dataToSave));
     };
 
     // Generic Add
@@ -56,7 +64,7 @@ export const usePortfolio = (user) => {
             return saved;
         } catch (e) {
             Alert.alert("Error de Sincronización", "Guardado localmente.");
-            return itemWithTempId; // Return temp item
+            return { ...newItem, id: Date.now().toString() };
         } finally {
             setLoading(false);
         }
@@ -73,7 +81,6 @@ export const usePortfolio = (user) => {
             setRefreshKey(p => p + 1);
         } catch (e) {
             console.error("Update error:", e);
-            // Revert or alert? For now just log
         } finally {
             setLoading(false);
         }
@@ -97,6 +104,46 @@ export const usePortfolio = (user) => {
         }
     };
 
+    const toggleTransactionCompletion = async (id) => {
+        const item = portfolio.find(i => i.id === id || i._id === id);
+        if (!item) return;
+        const updated = { ...item, completed: !item.completed };
+        await updateTransaction(id, updated);
+    };
+
+    const addPartialPayment = async (debtId, amount, date) => {
+        try {
+            setLoading(true);
+            const res = await financeService.updateTransaction(debtId, {
+                addPayment: { amount, date }
+            });
+            setRefreshKey(p => p + 1);
+            return res;
+        } catch (e) {
+            Alert.alert("Error", "No se pudo registrar el abono.");
+            throw e;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getTotals = () => {
+        let income = 0;
+        let expense = 0;
+        let debt = 0;
+        let receivable = 0;
+
+        portfolio.forEach(t => {
+            const amt = parseFloat(t.amount) || 0;
+            if (t.type === 'income') income += amt;
+            else if (t.type === 'expense') expense += amt;
+            else if (t.type === 'debt') debt += amt;
+            else if (t.type === 'receivable') receivable += amt;
+        });
+
+        return { income, expense, debt, receivable };
+    };
+
     return {
         portfolio,
         loading,
@@ -104,7 +151,10 @@ export const usePortfolio = (user) => {
         addTransaction,
         updateTransaction,
         deleteTransaction,
-        setPortfolio, // Exposed for complex optimistic updates if needed
+        toggleTransactionCompletion,
+        addPartialPayment,
+        getTotals,
+        setPortfolio,
         loadPortfolio
     };
 };

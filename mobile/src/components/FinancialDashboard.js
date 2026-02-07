@@ -25,6 +25,15 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
     const [selectedDebt, setSelectedDebt] = useState(null);
 
 
+    const [showCharts, setShowCharts] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowCharts(true);
+        }, 800);
+        return () => clearTimeout(timer);
+    }, []);
+
     useEffect(() => {
         calculateLocalStats();
     }, [portfolio]);
@@ -39,16 +48,22 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
             history: []
         };
 
-        const sorted = [...(portfolio || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const portfolioArray = Array.isArray(portfolio) ? portfolio : [];
+        const sorted = [...portfolioArray].sort((a, b) => {
+            const dateA = a && a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b && b.date ? new Date(b.date).getTime() : 0;
+            return dateA - dateB;
+        });
         let runningBalance = 0;
 
         sorted.forEach(t => {
-            const amount = parseFloat(t.amount);
+            if (!t) return;
+            const amount = parseFloat(t.amount) || 0;
             const type = t.type;
-            const category = t.category || t.title;
+            const category = t.category || t.title || 'Otros';
 
             // Handle Debt Payments (Abonos) found inside debt objects
-            const paymentsTotal = (t.payments || []).reduce((sum, p) => sum + parseFloat(p.amount), 0);
+            const paymentsTotal = Array.isArray(t.payments) ? t.payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) : 0;
 
             if (type === 'income') {
                 stats.totalIncome += amount;
@@ -79,8 +94,18 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                 runningBalance += amount;
             }
 
+            let dateLabel = "N/A";
+            try {
+                if (t.date) {
+                    const d = new Date(t.date);
+                    if (!isNaN(d.getTime())) {
+                        dateLabel = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+                    }
+                }
+            } catch (e) { console.log("Date label error", e); }
+
             stats.history.push({
-                date: new Date(t.date).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' }),
+                date: dateLabel,
                 balance: runningBalance
             });
         });
@@ -98,9 +123,10 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         setLoading(true);
         try {
             const transData = await financeService.getAllTransactions();
-            setTransactions(transData);
+            setTransactions(Array.isArray(transData) ? transData : []);
         } catch (e) {
             console.error("Scale sync error", e);
+            setTransactions([]);
         } finally {
             setLoading(false);
         }
@@ -142,7 +168,7 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         labelFontSize: 8,
     };
 
-    const pieData = Object.keys(localStats.categories).map((cat, index) => ({
+    const pieData = Object.keys(localStats.categories || {}).map((cat, index) => ({
         name: cat,
         population: localStats.categories[cat],
         color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#EC4899'][index % 6],
@@ -160,10 +186,11 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         });
     }
 
+    const validHistory = Array.isArray(localStats.history) ? localStats.history : [];
     const lineData = {
-        labels: localStats.history.slice(-5).map(h => h.date),
+        labels: validHistory.length > 0 ? validHistory.slice(-5).map(h => (h.date || '').toString()) : ['N/A'],
         datasets: [{
-            data: localStats.history.slice(-5).map(h => h.balance),
+            data: validHistory.length > 0 ? validHistory.slice(-5).map(h => h.balance) : [0],
             color: (opacity = 1) => theme.primary,
             strokeWidth: 3
         }]
@@ -204,230 +231,47 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         }
     };
 
+    const formatDateSafe = (dateStr, time = false) => {
+        if (!dateStr) return "N/A";
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return "N/A";
+            return time
+                ? d.toLocaleString('es-VE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+                : d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+        } catch (e) {
+            return "N/A";
+        }
+    };
+
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            {/* QUICK PAY SECTION (MOVED TO ABSOLUTE TOP) */}
-            {pendingDebts.length > 0 && (
-                <View style={{ marginBottom: scale(15), paddingHorizontal: 0 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: scale(8) }}>
-                        <Text style={{ color: activeColors.textDark, fontWeight: '900', fontSize: scale(10), letterSpacing: 1 }}>DEUDAS PENDIENTES</Text>
-                        <View style={{ backgroundColor: '#EF4444', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 5 }}>
-                            <Text style={{ color: 'white', fontSize: 9, fontWeight: '900' }}>{pendingDebts.length}</Text>
-                        </View>
-                    </View>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        {pendingDebts.map(debt => {
-                            const paid = (debt.payments || []).reduce((s, p) => s + p.amount, 0);
-                            const remaining = Math.max(0, debt.amount - paid);
-                            return (
-                                <TouchableOpacity
-                                    key={debt.id}
-                                    onPress={() => handleQuickPay(debt)}
-                                    style={{
-                                        backgroundColor: activeColors.cardCtx,
-                                        padding: scale(10),
-                                        borderRadius: scale(18),
-                                        marginRight: scale(10),
-                                        width: scale(130),
-                                        borderWidth: 1,
-                                        borderColor: activeColors.border,
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 2 },
-                                        shadowOpacity: 0.05,
-                                        shadowRadius: 5,
-                                        elevation: 1
-                                    }}
-                                >
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <Text numberOfLines={1} style={{ color: activeColors.textDark, fontWeight: '800', fontSize: scale(10), flex: 1 }}>{debt.title}</Text>
-                                    </View>
-                                    <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: scale(16), marginVertical: 4 }}>
-                                        ${formatNumber(remaining)}
-                                    </Text>
-                                    <View style={{ backgroundColor: theme.primary, paddingVertical: scale(5), borderRadius: scale(8), alignItems: 'center' }}>
-                                        <Text style={{ color: 'white', fontWeight: '900', fontSize: scale(8) }}>PAGAR</Text>
-                                    </View>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
-                </View>
-            )}
-
-            <PaymentOptionsModal
-                visible={paymentModalVisible}
-                debt={selectedDebt}
-                onClose={() => setPaymentModalVisible(false)}
-                onConfirm={confirmPayment}
-                activeColors={activeColors}
-                theme={theme}
-            />
-
-            <View style={{ marginBottom: verticalScale(15), marginTop: scale(5) }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.welcomeText, { color: activeColors.secondary, fontSize: 12 }]}>Hola, {user?.name || 'Usuario'}</Text>
-                        <Text style={[styles.dashboardTitle, { color: activeColors.textDark, fontSize: scale(18), marginTop: -2 }]}>Mi Resumen</Text>
-                    </View>
-                    <PremiumBadge type={premiumType} theme={theme} />
-                </View>
+        <ScrollView style={{ flex: 1, backgroundColor: activeColors.bg, padding: 20 }}>
+            <View style={{ marginBottom: 40 }}>
+                <Text style={{ color: activeColors.textDark, fontSize: 30, fontWeight: 'bold' }}>MODO ESTABILIDAD</Text>
+                <Text style={{ color: activeColors.secondary, fontSize: 16 }}>Si ves esto, la app no ha crasheado.</Text>
             </View>
 
-            {/* Header Cards (COMPACT) */}
-            <View style={styles.summaryGrid}>
-                <SummaryCard title="Ingresos" amount={localStats.totalIncome} icon="arrow-up" color="#10B981" activeColors={activeColors} />
-                <SummaryCard title="Gastos" amount={localStats.totalExpense} icon="arrow-down" color="#EF4444" activeColors={activeColors} />
-                <SummaryCard title="Deudas" amount={localStats.totalDebt} icon="alert-circle" color="#F59E0B" activeColors={activeColors} />
-                <SummaryCard title="Cobros" amount={localStats.totalReceivable} icon="cash" color="#3B82F6" activeColors={activeColors} />
+            <View style={{ backgroundColor: activeColors.cardCtx, padding: 20, borderRadius: 15, marginBottom: 20 }}>
+                <Text style={{ color: activeColors.textDark, fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Resumen de Cuenta</Text>
+                <Text style={{ color: '#10B981', fontSize: 20 }}>Ingresos: ${formatNumber(localStats.totalIncome)}</Text>
+                <Text style={{ color: '#EF4444', fontSize: 20 }}>Gastos: ${formatNumber(localStats.totalExpense)}</Text>
+                <Text style={{ color: '#F59E0B', fontSize: 20 }}>Deudas: ${formatNumber(localStats.totalDebt)}</Text>
+                <Text style={{ color: '#3B82F6', fontSize: 20 }}>Cobros: ${formatNumber(localStats.totalReceivable)}</Text>
             </View>
 
-            {/* CHARTS SIDE-BY-SIDE */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: scale(15) }}>
-                {/* LINE CHART */}
-                <View style={[styles.chartCard, {
-                    flex: 1,
-                    marginRight: scale(5),
-                    padding: scale(8),
-                    overflow: 'hidden',
-                    height: 140,
-                    backgroundColor: activeColors.cardCtx,
-                    borderColor: activeColors.border,
-                    borderWidth: 1
-                }]}>
-                    <Text style={[styles.chartTitle, { fontSize: scale(9), color: activeColors.secondary, fontWeight: '800', marginBottom: 8 }]}>EVOLUCIÓN</Text>
-                    {localStats.history.length > 0 ? (
-                        <LineChart
-                            data={lineData}
-                            width={(screenWidth / 2) - scale(25)}
-                            height={90}
-                            chartConfig={chartConfig}
-                            bezier
-                            withDots={true}
-                            withInnerLines={false}
-                            withOuterLines={false}
-                            withVerticalLines={false}
-                            withHorizontalLines={false}
-                            withVerticalLabels={false}
-                            withHorizontalLabels={false}
-                            style={{ paddingRight: 0, marginLeft: -scale(35) }}
-                        />
-                    ) : (
-                        <Text style={{ color: activeColors.secondary, fontSize: 10 }}>Sin datos</Text>
-                    )}
-                </View>
-
-                {/* PIE CHART */}
-                <View style={[styles.chartCard, {
-                    flex: 1,
-                    marginLeft: scale(5),
-                    padding: scale(8),
-                    height: 140,
-                    backgroundColor: activeColors.cardCtx,
-                    borderColor: activeColors.border,
-                    borderWidth: 1
-                }]}>
-                    <Text style={[styles.chartTitle, { fontSize: scale(9), color: activeColors.secondary, fontWeight: '800', marginBottom: 8 }]}>DISTRIBUCIÓN</Text>
-                    <PieChart
-                        data={pieData}
-                        width={(screenWidth / 2) - scale(25)}
-                        height={100}
-                        chartConfig={chartConfig}
-                        accessor={"population"}
-                        backgroundColor={"transparent"}
-                        paddingLeft={"15"}
-                        center={[0, 0]}
-                        absolute
-                        hasLegend={false}
-                    />
-                </View>
-            </View>
-
-            {/* TRANSACTIONS LIST */}
-            <View style={styles.listSection}>
-                <View style={styles.listHeader}>
-                    <Text style={[styles.sectionTitle, { color: activeColors.textDark, fontSize: scale(14) }]}>Transacciones Recientes</Text>
-                    <TouchableOpacity onPress={loadData}>
-                        <Ionicons name="refresh" size={18} color={theme.primary} />
-                    </TouchableOpacity>
-                </View>
-
-                {(() => {
-                    // 1. FLATTEN TRANSACTIONS AND PAYMENTS
-                    let allMovements = [];
-
-                    (portfolio || []).forEach(item => {
-                        // A. Add the main item (unless it's a debt that is just a container, but usually creation is relevant too)
-                        // If it's a debt, the "amount" is the total debt. We show it as the creation of the debt.
-                        allMovements.push(item);
-
-                        // B. If it has payments, add them as individual "virtual" transactions
-                        if (item.payments && item.payments.length > 0) {
-                            item.payments.forEach(payment => {
-                                allMovements.push({
-                                    id: payment.id || `pay_${item.id}_${payment.date}`, // Unique ID
-                                    _id: payment.id || `pay_${item.id}_${payment.date}`,
-                                    title: `Pago: ${item.title || item.category}`,
-                                    category: 'Pago de Deuda',
-                                    amount: payment.amount,
-                                    type: 'expense', // Visualized as expense
-                                    date: payment.date,
-                                    isVirtualPayment: true, // Flag to identify
-                                    originalDebtId: item.id || item._id
-                                });
-                            });
-                        }
-                    });
-
-                    // 2. SORT BY DATE DESCENDING
-                    allMovements.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                    // 3. RENDER TOP 15
-                    if (allMovements.length === 0) {
-                        return (
-                            <View style={styles.emptyContainer}>
-                                <Ionicons name="receipt-outline" size={scale(30)} color={activeColors.border} />
-                                <Text style={{ color: activeColors.secondary, marginTop: 10, fontSize: 12 }}>Sin movimientos</Text>
-                            </View>
-                        );
-                    }
-
-                    return allMovements.slice(0, 15).map((item) => (
-                        <TransactionItem
-                            key={item.id || item._id}
-                            item={item}
-                            activeColors={activeColors}
-                            onPress={() => {
-                                if (item.isVirtualPayment) {
-                                    // Optionally show simple alert or find parent debt to show details
-                                    // For now, simpler is just to ignore or show basic info
-                                    Alert.alert("Detalle de Pago", `Abono a: ${item.title}\nMonto: $${formatNumber(item.amount)}\nFecha: ${new Date(item.date).toLocaleDateString()}`);
-                                } else {
-                                    setSelectedTransaction(item);
-                                }
-                            }}
-                        />
-                    ));
-                })()}
-            </View>
-
-            {/* Floating Action Button */}
             <TouchableOpacity
-                style={[styles.fab, { backgroundColor: theme.primary }]}
                 onPress={onAddPress}
+                style={{ backgroundColor: theme.primary, padding: 20, borderRadius: 15, alignItems: 'center' }}
             >
-                <Ionicons name="add" size={scale(30)} color="white" />
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>AÑADIR MOVIMIENTO (TEST)</Text>
             </TouchableOpacity>
 
-            <View style={{ height: verticalScale(60) }} />
-
-            {/* DETAIL MODAL */}
-            <DetailModal
-                visible={!!selectedTransaction}
-                transaction={selectedTransaction}
-                onClose={() => setSelectedTransaction(null)}
-                activeColors={activeColors}
-                theme={theme}
-            />
+            <View style={{ marginTop: 40 }}>
+                <Text style={{ color: activeColors.secondary }}>Usuario: {user?.name}</Text>
+                <TouchableOpacity onPress={onOpenPremium}>
+                    <Text style={{ color: theme.primary, marginTop: 10 }}>Abrir Premium Modal</Text>
+                </TouchableOpacity>
+            </View>
         </ScrollView>
     );
 };
@@ -444,7 +288,7 @@ const SummaryCard = ({ title, amount, icon, color, activeColors }) => (
     </View>
 );
 
-const TransactionItem = ({ item, activeColors, onPress }) => {
+const TransactionItem = ({ item, activeColors, onPress, formatDateSafe }) => {
     const isPositive = item.type === 'income' || item.type === 'receivable';
     return (
         <TouchableOpacity
@@ -460,7 +304,7 @@ const TransactionItem = ({ item, activeColors, onPress }) => {
             </View>
             <View style={{ flex: 1, marginLeft: 8 }}>
                 <Text numberOfLines={1} style={[styles.transCat, { color: activeColors.textDark, fontSize: 12 }]}>{item.category}</Text>
-                <Text style={{ color: activeColors.secondary, fontSize: 9 }}>{new Date(item.date).toLocaleDateString()}</Text>
+                <Text style={{ color: activeColors.secondary, fontSize: 9 }}>{formatDateSafe(item.date)}</Text>
             </View>
             <Text style={[styles.transAmount, { color: isPositive ? '#10B981' : '#EF4444', fontSize: 13 }]}>
                 {isPositive ? '+' : '-'}${formatNumber(item.amount)}
@@ -469,7 +313,7 @@ const TransactionItem = ({ item, activeColors, onPress }) => {
     );
 };
 
-const DetailModal = ({ visible, transaction, onClose, activeColors, theme }) => {
+const DetailModal = ({ visible, transaction, onClose, activeColors, theme, formatDateSafe }) => {
     if (!transaction) return null;
     return (
         <Modal visible={visible} transparent animationType="slide">
@@ -486,20 +330,20 @@ const DetailModal = ({ visible, transaction, onClose, activeColors, theme }) => 
                         <DetailRow label="Categoría" value={transaction.category} activeColors={activeColors} icon="pricetag" />
                         <DetailRow label="Tipo" value={transaction.type.toUpperCase()} activeColors={activeColors} icon="list" />
                         <DetailRow label="Monto" value={`$${formatNumber(transaction.amount)}`} activeColors={activeColors} color={transaction.type === 'income' ? '#10B981' : '#EF4444'} icon="cash" />
-                        <DetailRow label="Fecha" value={new Date(transaction.date).toLocaleString()} activeColors={activeColors} icon="calendar" />
+                        <DetailRow label="Fecha" value={formatDateSafe(transaction.date, true)} activeColors={activeColors} icon="calendar" />
 
                         {transaction.type === 'debt' && (
                             <>
                                 <View style={{ height: 1, backgroundColor: activeColors.border, marginVertical: 15 }} />
                                 <DetailRow label="Tipo de Deuda" value={transaction.debtType === 'loan' ? 'Préstamo' : 'Crédito'} activeColors={activeColors} icon="business" />
-                                <DetailRow label="Fecha de Obtención" value={transaction.obtainedDate ? new Date(transaction.obtainedDate).toLocaleDateString() : 'N/A'} activeColors={activeColors} icon="calendar-outline" />
+                                <DetailRow label="Fecha de Obtención" value={transaction.obtainedDate ? formatDateSafe(transaction.obtainedDate) : 'N/A'} activeColors={activeColors} icon="calendar-outline" />
 
                                 {transaction.installments && transaction.installments.length > 0 && (
                                     <View style={{ marginTop: 10, paddingLeft: 35 }}>
                                         <Text style={{ color: activeColors.secondary, fontSize: 14, fontWeight: 'bold', marginBottom: 10 }}>Cuotas Programadas:</Text>
                                         {transaction.installments.map((inst, idx) => (
                                             <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5, backgroundColor: activeColors.bg, padding: 8, borderRadius: 8 }}>
-                                                <Text style={{ color: activeColors.textDark, fontSize: 12 }}>{new Date(inst.date).toLocaleDateString()}</Text>
+                                                <Text style={{ color: activeColors.textDark, fontSize: 12 }}>{formatDateSafe(inst.date)}</Text>
                                                 <Text style={{ color: theme.primary, fontWeight: 'bold', fontSize: 12 }}>${formatNumber(inst.amount)}</Text>
                                                 <Text style={{ color: inst.paid ? '#10B981' : '#F59E0B', fontSize: 10, fontWeight: '900' }}>{inst.paid ? 'PAGADO' : 'PENDIENTE'}</Text>
                                             </View>
