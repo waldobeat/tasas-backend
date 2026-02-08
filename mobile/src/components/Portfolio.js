@@ -114,7 +114,7 @@ const Portfolio = ({ activeColors, history }) => {
                                     data: chartData.items.map(i => i.rate)
                                 }]
                             }}
-                            width={screenWidth - 50}
+                            width={screenWidth - 40} // Adjusted for the 15 + 15 container padding
                             height={190}
                             chartConfig={{
                                 backgroundColor: activeColors.cardCtx,
@@ -130,7 +130,7 @@ const Portfolio = ({ activeColors, history }) => {
                                     stroke: activeColors.primary
                                 },
                                 propsForLabels: {
-                                    fontSize: 12, // Larger numbers for visibility
+                                    fontSize: 11,
                                     fontWeight: 'bold'
                                 },
                                 propsForBackgroundLines: {
@@ -146,8 +146,7 @@ const Portfolio = ({ activeColors, history }) => {
                             bezier
                             style={{
                                 marginVertical: 8,
-                                borderRadius: 16,
-                                paddingRight: 40
+                                borderRadius: 16
                             }}
                             withInnerLines={true}
                             withOuterLines={false}
@@ -170,7 +169,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     chartCard: {
-        padding: 5,
+        paddingVertical: 10,
+        paddingHorizontal: 15, // Increased from 5 to 15
         borderRadius: 18,
         borderWidth: 1,
         elevation: 3,

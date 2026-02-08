@@ -79,11 +79,31 @@ const checkAndLogRate = async () => {
 };
 
 const setupCronJobs = () => {
-    // Check every hour (Minute 0)
-    // "0 * * * *" = Every hour at minute 0
-    cron.schedule('0 * * * *', () => {
+    const timezone = "America/Caracas";
+
+    // 6:00 AM
+    cron.schedule('0 6 * * *', () => {
+        console.log('⏰ Cron 6:00 AM Triggered');
         checkAndLogRate();
-    }, { scheduled: true, timezone: "America/Caracas" });
+    }, { scheduled: true, timezone });
+
+    // 9:20 AM
+    cron.schedule('20 9 * * *', () => {
+        console.log('⏰ Cron 9:20 AM Triggered');
+        checkAndLogRate();
+    }, { scheduled: true, timezone });
+
+    // 3:00 PM (15:00)
+    cron.schedule('0 15 * * *', () => {
+        console.log('⏰ Cron 3:00 PM Triggered');
+        checkAndLogRate();
+    }, { scheduled: true, timezone });
+
+    // 7:10 PM (19:10)
+    cron.schedule('10 19 * * *', () => {
+        console.log('⏰ Cron 7:10 PM Triggered');
+        checkAndLogRate();
+    }, { scheduled: true, timezone });
 
     // Run immediately on startup to check
     checkAndLogRate();
