@@ -4,29 +4,18 @@ const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']); // Google Public DNS
 require('dotenv').config();
 
-const connectDB = require('./config/db');
-const { migrateHistory, setupCronJobs, checkMissedSchedule } = require('./services/cronService');
-const { startMonitoring } = require('./services/monitorService');
+const { setupCronJobs } = require('./services/cronService');
 
-// Routes
-const authRoutes = require('./routes/authRoutes');
-const financeRoutes = require('./routes/financeRoutes');
+// Core Routes Only
 const rateRoutes = require('./routes/rateRoutes');
-const pushTokenRoutes = require('./routes/pushTokenRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Connect to Database
-connectDB().then(() => {
-    // Run checks after DB connection
-    migrateHistory().then(() => {
-        checkMissedSchedule();
-    });
-});
-
 app.use(cors());
 app.use(express.json());
+
+
 
 // Logger Middleware
 app.use((req, res, next) => {
@@ -34,11 +23,25 @@ app.use((req, res, next) => {
     next();
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/finance', financeRoutes);
+const { saveToken } = require('./utils/pushNotifications');
+
+// Mount Routes
 app.use('/api', rateRoutes); // Mounts /rates and /history
-app.use('/api/pushtoken', pushTokenRoutes);
+
+// Push Notification Registration Endpoint
+app.post('/api/register-token', (req, res) => {
+    const { token } = req.body;
+    if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+    }
+
+    const saved = saveToken(token);
+    if (saved) {
+        res.status(201).json({ message: 'Token registered' });
+    } else {
+        res.status(200).json({ message: 'Token already exists or invalid' });
+    }
+});
 
 app.use(express.static('public'));
 
@@ -48,10 +51,9 @@ app.use('/api', (req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-// Start Background Tasks
+// Start Background Tasks (Simplified)
 setupCronJobs();
-startMonitoring();
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🚀 NUCLEAR SERVER running on port ${PORT}`);
 });

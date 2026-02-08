@@ -4,8 +4,8 @@ import { Dimensions } from 'react-native';
 export const LIGHT_PALETTE = {
     bg: '#F1F5F9', // Slightly cooler light gray
     cardCtx: '#FFFFFF',
-    secondary: '#64748B',
-    textDark: '#0F172A', // Deeper navy for text
+    secondary: '#475569', // Darker gray for better readability
+    textDark: '#020617', // Almost black for maximum contrast
     border: '#E2E8F0',
     inputBg: '#F8FAFC',
     shadow: '#94A3B8'

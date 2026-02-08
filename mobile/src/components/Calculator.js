@@ -81,7 +81,7 @@ export default function Calculator({
                     style={[styles.clearBtn]}
                     onPress={() => handleCalcInput('')}
                 >
-                    <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: 13 }}>CLEAR</Text>
+                    <Text style={{ color: '#EF4444', fontWeight: '900', fontSize: 13 }}>LIMPIAR</Text>
                 </TouchableOpacity>
             </View>
 

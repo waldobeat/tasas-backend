@@ -10,51 +10,50 @@ const Portfolio = ({ activeColors, history }) => {
     const processData = () => {
         if (!history || history.length === 0) return { items: [], max: 0, min: 0 };
 
+        // Ensure we have data and sort it just in case, though usually comes sorted
+        // API returns: [{ rates: { bdv: { usd: { rate: ... } } }, date: "YYYY-MM-DD", ... }]
+
         // Take last 7 entries
-        let data = history.slice(-7);
+        let data = [...history].slice(-7);
 
         let maxRate = 0;
         let minRate = Infinity;
 
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
 
         const chartItems = data.map(item => {
             let label = "???";
-            const timestamp = item.timestamp || item.date;
 
-            if (timestamp) {
+            // Use the 'date' field directly "YYYY-MM-DD" which is reliable from backend
+            if (item.date) {
                 try {
-                    const date = new Date(timestamp);
-                    const compareDate = new Date(date);
-                    compareDate.setHours(0, 0, 0, 0);
+                    // Create date from string parts to avoid timezone issues: "2026-02-02"
+                    const parts = item.date.split('-');
+                    const day = parts[2];
+                    const monthIndex = parseInt(parts[1], 10) - 1;
+                    const month = months[monthIndex];
 
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-
-                    if (compareDate.getTime() === now.getTime()) {
-                        label = "Hoy";
-                    } else if (compareDate.getTime() === yesterday.getTime()) {
-                        label = "Ayer";
-                    } else {
-                        const day = date.getDate().toString().padStart(2, '0');
-                        const month = months[date.getMonth()];
-                        label = `${month} ${day}`;
-                    }
+                    label = `${month} ${day}`;
                 } catch (e) {
-                    console.log("Error parsing items timestamp:", e.message);
+                    console.log("Error parsing date:", e);
                 }
             }
 
+            // Extract USD rate
             const rate = item?.rates?.bdv?.usd?.rate ? parseFloat(item.rates.bdv.usd.rate) : 0;
+
             if (rate > maxRate) maxRate = rate;
             if (rate > 0 && rate < minRate) minRate = rate;
 
             return { label, rate };
         });
 
-        return { items: chartItems, max: maxRate * 1.05, min: minRate * 0.95 };
+        // Add some padding to min/max for chart visuals
+        return {
+            items: chartItems,
+            max: maxRate > 0 ? maxRate * 1.005 : 100,
+            min: minRate < Infinity ? minRate * 0.995 : 0
+        };
     };
 
     const chartData = processData();
@@ -64,38 +63,55 @@ const Portfolio = ({ activeColors, history }) => {
         <View style={styles.container}>
             <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, borderColor: activeColors.border }]}>
                 {hasData ? (
-                    <LineChart
-                        data={{
-                            labels: chartData.items.map(i => i.label),
-                            datasets: [{
-                                data: chartData.items.map(i => i.rate)
-                            }]
-                        }}
-                        width={screenWidth - 70}
-                        height={160}
-                        chartConfig={{
-                            backgroundColor: activeColors.cardCtx,
-                            backgroundGradientFrom: activeColors.cardCtx,
-                            backgroundGradientTo: activeColors.cardCtx,
-                            decimalPlaces: 2,
-                            color: (opacity = 1) => activeColors.secondary,
-                            labelColor: (opacity = 1) => activeColors.secondary,
-                            style: { borderRadius: 16 },
-                            propsForDots: {
-                                r: "4",
-                                strokeWidth: "2",
-                                stroke: activeColors.secondary
-                            }
-                        }}
-                        bezier
-                        style={{
-                            marginVertical: 8,
-                            borderRadius: 16,
-                            marginLeft: -30
-                        }}
-                        withInnerLines={false}
-                        withOuterLines={false}
-                    />
+                    <View>
+                        <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5 }}>
+                            <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>Gráfica Histórica</Text>
+                            <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Últimos 7 días</Text>
+                        </View>
+                        <LineChart
+                            data={{
+                                labels: chartData.items.map(i => i.label),
+                                datasets: [{
+                                    data: chartData.items.map(i => i.rate)
+                                }]
+                            }}
+                            width={screenWidth - 60} // Adjusted width to prevent clipping
+                            height={180}
+                            chartConfig={{
+                                backgroundColor: activeColors.cardCtx,
+                                backgroundGradientFrom: activeColors.cardCtx,
+                                backgroundGradientTo: activeColors.cardCtx,
+                                decimalPlaces: 2,
+                                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`, // Blue primary color
+                                labelColor: (opacity = 1) => activeColors.textDark, // Dark text for labels
+                                style: { borderRadius: 16 },
+                                propsForDots: {
+                                    r: "4", // Show dots slightly for better data point visibility
+                                    strokeWidth: "2",
+                                    stroke: activeColors.primary
+                                },
+                                propsForLabels: {
+                                    fontSize: 10,
+                                    fontWeight: 'bold',
+                                    rotation: 0
+                                },
+                                propsForBackgroundLines: {
+                                    strokeDasharray: "", // Solid lines
+                                    strokeWidth: 1,
+                                    stroke: activeColors.border // Subtle grid
+                                }
+                            }}
+                            bezier
+                            style={{
+                                marginVertical: 8,
+                                borderRadius: 16,
+                                paddingRight: 50 // Increased padding
+                            }}
+                            withInnerLines={true}
+                            withOuterLines={false}
+                            withVerticalLines={false}
+                        />
+                    </View>
                 ) : (
                     <View style={{ height: 150, justifyContent: 'center', alignItems: 'center' }}>
                         <Text style={{ color: activeColors.secondary }}>Cargando historial...</Text>

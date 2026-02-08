@@ -11,7 +11,7 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
 
     return (
         <View>
-            {rates && rates.bdv && (
+            {rates && rates.bdv ? (
                 <RateCard
                     id="bcv-usd"
                     title="BCV"
@@ -22,6 +22,26 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
                     onShare={() => { }} // Removed for simplification
                     theme={theme}
                     activeColors={activeColors}
+                />
+            ) : (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                    <Text style={{ color: activeColors.secondary }}>No se pudo cargar la tasa.</Text>
+                    <Text style={{ color: activeColors.secondary, fontSize: 10 }}>Verifique su conexión</Text>
+                </View>
+            )}
+
+            {rates && rates.bdv && rates.bdv.eur && (
+                <RateCard
+                    id="bcv-eur"
+                    title="BCV"
+                    subtitle="Euro Oficial"
+                    rateValue={rates.bdv.eur.rate}
+                    isActive={activeCalc === 'bcv-eur'}
+                    onToggle={toggleCalc}
+                    onShare={() => { }}
+                    theme={{ ...theme, primary: '#EA580C', primarySoft: '#FFF7ED' }} // Orange for Euro to distinguish
+                    activeColors={activeColors}
+                    delay={200}
                 />
             )}
         </View>

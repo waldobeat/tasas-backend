@@ -1,7 +1,10 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { getBCVRate } = require('../services/bcv');
-const RateHistory = require('../models/RateHistory');
 const router = express.Router();
+
+const HISTORY_FILE = path.join(__dirname, '../history.json');
 
 // --- RATES & HISTORY ---
 router.get('/rates', async (req, res) => {
@@ -15,11 +18,14 @@ router.get('/rates', async (req, res) => {
 
 router.get('/history', async (req, res) => {
     try {
-        // Return sorted by date ascending
-        const history = await RateHistory.find().sort({ date: 1 });
-        res.json(history);
+        if (!fs.existsSync(HISTORY_FILE)) {
+            return res.json([]);
+        }
+        const data = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+        // The file is already sorted in this project, but we can ensure it if needed.
+        res.json(data);
     } catch (err) {
-        res.status(500).json({ error: 'Error fetching history' });
+        res.status(500).json({ error: 'Error reading history' });
     }
 });
 

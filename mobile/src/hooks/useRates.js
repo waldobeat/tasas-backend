@@ -57,7 +57,7 @@ export const useRates = () => {
             }
 
             // 2. Si no hay caché o expiró (o forzamos), buscar del servidor
-            const response = await axios.get(API_URL, { timeout: 5000 });
+            const response = await axios.get(API_URL, { timeout: 30000 });
             const newRates = response.data.rates;
 
             setRates(newRates);

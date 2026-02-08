@@ -2,19 +2,15 @@ const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 const { getBCVRate } = require('./bcv');
-const RateHistory = require('../models/RateHistory');
-const User = require('../models/User');
-const Transaction = require('../models/Transaction');
-const { notifyUsers } = require('./notificationService');
+const { broadcastNotification } = require('../utils/pushNotifications');
 
-const migrateHistory = async () => { /* ... same as before ... */ };
+const HISTORY_FILE = path.join(__dirname, '../history.json');
 
-const logDailyRate = async () => { /* ... same as before ... */
-    // Re-paste logic effectively, keeping it brief for this write
-    console.log('⏰ Running Daily Rate Log Task...');
+const checkAndLogRate = async () => {
+    console.log('⏰ Checking for Rate Updates...');
     try {
         const bcvData = await getBCVRate().catch(e => null);
-        if (!bcvData || !bcvData.usd) return;
+        if (!bcvData || !bcvData.usd || !bcvData.usd.rate) return;
 
         let dateKey;
         if (bcvData.value_date) {
@@ -29,84 +25,63 @@ const logDailyRate = async () => { /* ... same as before ... */
         }
         if (!dateKey) dateKey = new Date().toISOString().split('T')[0];
 
-        await RateHistory.findOneAndUpdate({ date: dateKey }, { date: dateKey, timestamp: new Date(), rates: { bdv: { usd: { rate: bcvData.usd.rate } } } }, { upsert: true });
-        console.log(`✅ Logged rate for ${dateKey}`);
-    } catch (e) { console.error(e); }
-};
-
-// Check for upcoming payments/collections and Expiring Premium (3, 2, 1 days)
-const checkReminders = async () => {
-    console.log('⏰ Checking Reminders...');
-    try {
-        const now = new Date();
-
-        // Check for 1, 2, and 3 days in advance
-        for (let days = 1; days <= 3; days++) {
-            const targetDate = new Date(now);
-            targetDate.setDate(targetDate.getDate() + days);
-
-            const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
-
-            // 1. Payment & Collection Reminders
-            const pendingTxs = await Transaction.find({
-                type: { $in: ['pay', 'receivable'] },
-                completed: false,
-                date: { $gte: startOfDay, $lte: endOfDay }
-            });
-
-            for (const tx of pendingTxs) {
-                if (tx.userId) {
-                    const isPay = tx.type === 'pay';
-                    const action = isPay ? 'Pago' : 'Cobro';
-                    const timeMsg = days === 1 ? 'mañana' : `en ${days} días`;
-
-                    notifyUsers({
-                        targetUserId: tx.userId.toString(),
-                        title: `📅 Recordatorio de ${action}`,
-                        body: `Tienes un ${action.toLowerCase()} pendiente de ${tx.title} (${tx.amount} $) para ${timeMsg}.`,
-                        data: { type: 'payment_reminder', id: tx._id }
-                    });
-                    console.log(`Sent ${days}-day Reminder for ${action} to ${tx.userId}`);
-                }
-            }
-
-            // 2. Premium Expiry Reminders
-            const usersExpiring = await User.find({
-                isPremium: true,
-                expiresAt: { $gte: startOfDay, $lte: endOfDay }
-            });
-
-            for (const u of usersExpiring) {
-                const timeMsg = days === 1 ? 'mañana' : `en ${days} días`;
-                notifyUsers({
-                    targetUserId: u._id.toString(),
-                    title: '⚠️ Tu Plane Premium Vence Pronto',
-                    body: `Tu suscripción Premium finaliza ${timeMsg}. Renueva para mantener tus beneficios.`,
-                    data: { type: 'premium_expiry' }
-                });
-                console.log(`Sent ${days}-day Premium Reminder to ${u._id}`);
-            }
+        // Read history.json
+        let history = [];
+        if (fs.existsSync(HISTORY_FILE)) {
+            history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
         }
+
+        const newRateVal = bcvData.usd.rate;
+        const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+        const lastRateVal = lastEntry ? lastEntry.rates.bdv.usd.rate : 0;
+
+        // Condition to update: 
+        // 1. History is empty 
+        // OR 2. Rate has CHANGED significantly (avoids float jitter, though BCV is usually precise)
+        // OR 3. It's a new day (dateKey check inside logic if needed, but rate change is primary trigger for notification)
+
+        // We only append if the rate is DIFFERENT from the last entry. 
+        // If it's the same rate but a new day (unlikely for BCV to not change, but possible), we might just want to update the timestamp or ignore.
+        // For simplicity: If Rate != LastRate, we Add + Notify.
+
+        if (Math.abs(newRateVal - lastRateVal) > 0.0001) {
+            const newEntry = {
+                timestamp: new Date().toISOString(),
+                value_date: bcvData.value_date || dateKey, // Store the string too if possible
+                rates: { bdv: { usd: { rate: newRateVal }, eur: { rate: bcvData.eur.rate } } }
+            };
+
+            history.push(newEntry);
+
+            // Limit history
+            if (history.length > 100) history = history.slice(-100);
+
+            fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+            console.log(`✅ New Rate Logged: ${newRateVal} (Old: ${lastRateVal})`);
+
+            // SEND NOTIFICATION
+            const title = "🔔 ¡El Dólar BCV ha cambiado!";
+            const body = `Nueva Tasa: ${newRateVal} VES/USD\nFecha Valor: ${bcvData.value_date || 'Hoy'}`;
+            await broadcastNotification(title, body, { rate: newRateVal });
+
+        } else {
+            console.log(`ℹ️ Rate unchanged (${newRateVal}). No update.`);
+        }
+
     } catch (e) {
-        console.error('Error in reminders:', e);
+        console.error('Error in checkAndLogRate:', e);
     }
 };
 
 const setupCronJobs = () => {
-    // 9 AM Daily
-    cron.schedule('0 9 * * *', () => {
-        logDailyRate();
-        checkReminders();
+    // Check every hour (Minute 0)
+    // "0 * * * *" = Every hour at minute 0
+    cron.schedule('0 * * * *', () => {
+        checkAndLogRate();
     }, { scheduled: true, timezone: "America/Caracas" });
+
+    // Run immediately on startup to check
+    checkAndLogRate();
 };
 
-const checkMissedSchedule = async () => {
-    // ... check logic ...
-    const now = new Date();
-    if (now.getHours() >= 9) {
-        // Simple check just to ensure it's imported correctly
-    }
-};
-
-module.exports = { migrateHistory, setupCronJobs, checkMissedSchedule };
+module.exports = { setupCronJobs };

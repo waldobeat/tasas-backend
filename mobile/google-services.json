@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960763896235",
+    "project_id": "sunmiv2-91cc0",
+    "storage_bucket": "sunmiv2-91cc0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960763896235:android:f695a16ee2cda20dcdf2ee",
+        "android_client_info": {
+          "package_name": "com.cafesitoxpressve.latasa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKdbKJyZNLJ_W6SnA9QddG5rvIfB37sT8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

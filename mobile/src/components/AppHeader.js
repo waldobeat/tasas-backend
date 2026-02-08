@@ -5,14 +5,17 @@ import { scale, verticalScale, moderateScale } from '../styles/theme';
 
 const AppHeader = ({
     date,
+    valueDate,
     activeColors,
     setMenuVisible,
-    updateTag = "CLEAN START (V12)"
+    updateTag = "CLEAN START (V12)",
+    isAdFree = false
 }) => {
     return (
         <View style={{
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between', // Changed to space-between
             paddingHorizontal: scale(15),
             paddingTop: Platform.OS === 'ios' ? verticalScale(40) : verticalScale(50),
             paddingBottom: verticalScale(10),
@@ -28,30 +31,34 @@ const AppHeader = ({
             elevation: 3,
             zIndex: 10
         }}>
-            <Image source={require('../../assets/icon.png')} style={{ width: scale(30), height: scale(30), borderRadius: 8 }} />
-            <View style={{ flex: 1, marginLeft: scale(10) }}>
-                <Text style={{ color: activeColors.textDark, fontSize: moderateScale(14), fontWeight: '900', letterSpacing: -0.5 }}>
-                    La Tasa
-                </Text>
-                <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 14 }}>
-                    {updateTag}
-                </Text>
-                <Text style={{ color: activeColors.secondary, fontSize: scale(8), opacity: 0.8 }}>
-                    {date}
-                </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Image source={require('../../assets/icon.png')} style={{ width: scale(45), height: scale(45), borderRadius: 12 }} />
+                <View style={{ marginLeft: scale(12) }}>
+                    <Text style={{ color: activeColors.textDark, fontSize: moderateScale(24), fontWeight: '900', letterSpacing: -0.5 }}>
+                        La Tasa
+                    </Text>
+                    <Text style={{ color: activeColors.secondary, fontSize: scale(12), opacity: 1, fontWeight: '600' }}>
+                        Dólar en Venezuela
+                    </Text>
+                </View>
             </View>
-            <TouchableOpacity
-                onPress={() => { Vibration.vibrate(50); setMenuVisible(true); }}
-                style={{
-                    backgroundColor: activeColors.bg,
-                    padding: scale(6),
-                    borderRadius: 10,
+
+            {/* Ad-Free Badge */}
+            {isAdFree && (
+                <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#DCFCE7',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 20,
                     borderWidth: 1,
-                    borderColor: activeColors.border
-                }}
-            >
-                <Ionicons name="options-outline" size={scale(18)} color={activeColors.textDark} />
-            </TouchableOpacity>
+                    borderColor: '#86EFAC'
+                }}>
+                    <Text style={{ fontSize: 12, marginRight: 4 }}>✨</Text>
+                    <Text style={{ color: '#15803d', fontSize: 10, fontWeight: '700' }}>Sin Anuncios</Text>
+                </View>
+            )}
         </View>
     );
 };

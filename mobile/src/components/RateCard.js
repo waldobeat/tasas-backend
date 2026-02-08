@@ -183,13 +183,13 @@ export default RateCard;
 const styles = StyleSheet.create({
     cardContainer: {
         flexDirection: 'row',
-        borderRadius: scale(20),
-        marginBottom: verticalScale(20),
-        borderWidth: 1,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
+        borderRadius: scale(24),
+        marginBottom: verticalScale(25),
+        borderWidth: 0, // Removed border for cleaner look
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 8,
         // Glassmorphism simulation (needs opaque background for react native unless using BlurView)
         // We rely on colors passed in props for transparency effects if desired
     },
