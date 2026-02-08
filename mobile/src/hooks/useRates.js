@@ -39,17 +39,8 @@ export const useRates = () => {
                     const age = Date.now() - timestamp;
 
                     if (age < CACHE_TTL) {
-                        setRates(cachedRates);
-
-                        if (cachedRates.bdv) {
-                            if (cachedRates.bdv.last_updated) {
-                                const d = new Date(cachedRates.bdv.last_updated);
-                                setLastUpdated(d.toLocaleString('es-VE', { hour: 'numeric', minute: 'numeric', hour12: true }));
-                            }
-                            if (cachedRates.bdv.value_date) {
-                                setValueDate(cachedRates.bdv.value_date);
-                            }
-                        }
+                        // We still check cache but don't setRates here.
+                        // History will take over shortly.
                         setLoading(false);
                         return;
                     }
@@ -60,15 +51,12 @@ export const useRates = () => {
             const response = await axios.get(API_URL, { timeout: 30000 });
             const newRates = response.data.rates;
 
-            setRates(newRates);
+            // REMOVED direct setRates/setValueDate to prevent flicker.
+            // Consistency is now handled by the history-based 7 AM logic.
 
             if (response.data.timestamp) {
                 const d = new Date(response.data.timestamp);
                 setLastUpdated(d.toLocaleString('es-VE', { hour: 'numeric', minute: 'numeric', hour12: true }));
-            }
-
-            if (newRates && newRates.bdv && newRates.bdv.value_date) {
-                setValueDate(newRates.bdv.value_date);
             }
 
             // 3. Guardar en caché local
@@ -79,14 +67,7 @@ export const useRates = () => {
 
         } catch (e) {
             console.log('Error fetching rates:', e);
-            const cached = await AsyncStorage.getItem(RATES_CACHE_KEY);
-            if (cached) {
-                const { rates: cachedRates } = JSON.parse(cached);
-                setRates(cachedRates);
-                if (cachedRates.bdv && cachedRates.bdv.value_date) {
-                    setValueDate(cachedRates.bdv.value_date);
-                }
-            }
+            // On error, we don't restore rates here anymore to stay consistent with history
         } finally {
             setLoading(false);
         }
