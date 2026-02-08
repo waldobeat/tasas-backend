@@ -37,7 +37,7 @@
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-color);
-            background-image: 
+            background-image:
                 radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.15) 0%, transparent 50%);
             color: var(--text-main);
@@ -434,9 +434,17 @@
         }
 
         @media (max-width: 480px) {
-            h1 { font-size: 2rem; }
-            .rate { font-size: 1.6rem; }
-            .card { padding: 18px; }
+            h1 {
+                font-size: 2rem;
+            }
+
+            .rate {
+                font-size: 1.6rem;
+            }
+
+            .card {
+                padding: 18px;
+            }
         }
     </style>
 </head>
@@ -444,7 +452,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>La Tasa</h1>
+            <h1>La Tasa v2.1</h1>
             <div class="subtitle">Dólar en Venezuela</div>
             <div class="date-badge" id="currentDate">Cargando...</div>
         </header>
@@ -453,11 +461,25 @@
         <div class="download-section">
             <div class="download-title">¡Descarga nuestra App! 📱</div>
             <div class="download-desc">
-                Obtén notificaciones en tiempo real, gráficas interactivas y gestión financiera personal. sin publicidad y totalmente segura.
+                Obtén notificaciones en tiempo real, gráficas interactivas y gestión financiera personal. sin publicidad
+                y totalmente segura.
             </div>
-            <a href="/downloads/app.apk" class="download-btn">
+            <a href="/api/download" class="download-btn">
                 <i class="fab fa-android"></i> Descargar APK Directo
             </a>
+            <div id="downloadCount"
+                style="margin-top: 25px; padding: 12px 20px; background-color: #10B981; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <i class="fas fa-download" style="margin-right: 10px; color: white;"></i>
+                <span style="color: white; font-weight: 800; font-size: 1.1rem;">
+                    <span id="countText">0</span> descargas
+                </span>
+            </div>
+
+            <!-- Diagnostic Trigger -->
+            <div style="margin-top: 15px; opacity: 0.1;">
+                <button onclick="testPush()"
+                    style="background: none; border: 1px solid var(--text-dim); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; padding: 2px 5px; border-radius: 4px;">Push</button>
+            </div>
         </div>
 
         <div id="ratesContainer">
@@ -482,9 +504,12 @@
         <div class="modal-content">
             <div class="modal-title">Aviso Legal y Privacidad</div>
             <div class="modal-text">
-                <p><strong>1. Fuente de Información:</strong> Esta herramienta se basa exclusivamente en las tasas oficiales del <strong>Banco Central de Venezuela (BCV)</strong>.</p>
-                <p style="margin-top: 12px;"><strong>2. Responsabilidad:</strong> Los resultados son referenciales. Esta aplicación no sustituye a la información oficial de entes bancarios.</p>
-                <p style="margin-top: 12px;"><strong>3. Privacidad:</strong> No recolectamos datos personales. Tu privacidad es nuestra prioridad.</p>
+                <p><strong>1. Fuente de Información:</strong> Esta herramienta se basa exclusivamente en las tasas
+                    oficiales del <strong>Banco Central de Venezuela (BCV)</strong>.</p>
+                <p style="margin-top: 12px;"><strong>2. Responsabilidad:</strong> Los resultados son referenciales. Esta
+                    aplicación no sustituye a la información oficial de entes bancarios.</p>
+                <p style="margin-top: 12px;"><strong>3. Privacidad:</strong> No recolectamos datos personales. Tu
+                    privacidad es nuestra prioridad.</p>
             </div>
             <button class="modal-close" onclick="acceptPrivacy()">Aceptar y Cerrar</button>
         </div>
@@ -494,7 +519,8 @@
         <div class="modal-content">
             <div class="modal-title">Política de Cookies</div>
             <div class="modal-text">
-                Utilizamos almacenamiento local para recordar tus preferencias y que no tengas que aceptar los términos cada vez que entras. No rastreamos tu navegación externa.
+                Utilizamos almacenamiento local para recordar tus preferencias y que no tengas que aceptar los términos
+                cada vez que entras. No rastreamos tu navegación externa.
             </div>
             <button class="modal-close" onclick="toggleModal('cookieModal')">Entendido</button>
         </div>
@@ -503,7 +529,7 @@
     <!-- Cookie Banner -->
     <div id="cookieBanner" class="cookie-banner">
         <div class="cookie-text">
-            Este sitio utiliza cookies para una mejor experiencia. 
+            Este sitio utiliza cookies para una mejor experiencia.
             <span class="legal-link" style="font-size: 0.9rem;" onclick="toggleModal('cookieModal')">Leer más</span>
         </div>
         <button class="cookie-btn" onclick="acceptCookies()">Aceptar todas</button>
@@ -573,6 +599,25 @@
             calculate(id, rawRate);
         }
 
+        async function testPush() {
+            if (!confirm("¿Enviar notificación de prueba a todos?")) return;
+            try {
+                const response = await fetch('/api/test-push', { method: 'POST' });
+                const data = await response.json();
+                alert(data.message || data.error);
+            } catch (e) { alert("Error"); }
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/download-stats');
+                const data = await response.json();
+                document.getElementById('countText').innerText = data.apk_downloads.toLocaleString();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
         async function fetchRates() {
             try {
                 const response = await fetch('/api/rates');
@@ -599,9 +644,9 @@
                             
                             <div id="calc-${id}" class="calculator-section">
                                 <div class="presets-container">
-                                    ${[5, 10, 20, 50, 100].map(val => 
-                                        `<button class="preset-btn" onclick="setAmount('${id}', ${val}, '${rateValue}')">${val}</button>`
-                                    ).join('')}
+                                    ${[5, 10, 20, 50, 100].map(val =>
+                        `<button class="preset-btn" onclick="setAmount('${id}', ${val}, '${rateValue}')">${val}</button>`
+                    ).join('')}
                                 </div>
                                 <div class="input-group">
                                     <input type="number" id="input-${id}" value="1" oninput="calculate('${id}', '${rateValue}')">
@@ -618,7 +663,7 @@
 
                     if (data.rates.bdv.last_updated) {
                         const date = new Date(data.rates.bdv.last_updated);
-                        document.getElementById('footer-text').innerHTML = 
+                        document.getElementById('footer-text').innerHTML =
                             `<i class="fas fa-check-circle" style="color: var(--success-color)"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
                     }
                 }
@@ -630,7 +675,10 @@
         updateDate();
         checkAcceptance();
         fetchRates();
+        fetchStats();
         setInterval(fetchRates, 300000);
+        setInterval(fetchStats, 60000);
     </script>
 </body>
+
 </html>

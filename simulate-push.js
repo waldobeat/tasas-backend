@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { broadcastNotification } = require('./utils/pushNotifications');
 
 async function test() {

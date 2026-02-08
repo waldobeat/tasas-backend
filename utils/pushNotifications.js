@@ -1,8 +1,12 @@
 const axios = require('axios');
 
 // Configuración de OneSignal
-const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || "0898149e-1a1e-44cf-9807-5b0088bfe32c";
-const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "os_v2_app_bcmbjhq2dzcm7gahlmairp7dfqnshu3jk3nequeoyxsjzgqeawk3pegvuop2fzetst5p4ymiorhxwfwsdoohzfuwar4ae5ai7kjffdi";
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID;
+const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
+
+if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
+    console.error("❌ ERROR: OneSignal credentials missing. Check your .env file.");
+}
 
 // OneSignal maneja el registro automáticamente en el SDK, no necesitamos guardar tokens locales
 function getSavedTokens() { return []; }
@@ -11,6 +15,11 @@ function saveToken(token) { return true; }
 // Send Notification using OneSignal REST API
 async function broadcastNotification(title, body, data = {}) {
     console.log("OneSignal: Enviando notificación a todos los usuarios...");
+    console.log("OneSignal: App ID:", ONESIGNAL_APP_ID ? "Configurado ✅" : "FALTA ❌");
+    console.log("OneSignal: API Key:", ONESIGNAL_REST_API_KEY ? "Configurada ✅" : "FALTA ❌");
+    if (ONESIGNAL_REST_API_KEY) {
+        console.log("OneSignal: API Key prefix:", ONESIGNAL_REST_API_KEY.substring(0, 10) + "...");
+    }
 
     try {
         const response = await axios.post('https://onesignal.com/api/v1/notifications', {

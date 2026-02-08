@@ -3,7 +3,7 @@ import { Platform, Animated, Easing, ScrollView, View, Text, TouchableOpacity, A
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useUpdates } from 'expo-updates';
+import * as Updates from 'expo-updates';
 // AdMob - REMOVED (Simulation Mode)
 
 // UI Components (Minimal set)
@@ -22,8 +22,8 @@ import { LogLevel, OneSignal } from 'react-native-onesignal';
 import Constants from 'expo-constants';
 
 // Initialize OneSignal
-// Reemplaza esto con tu App ID real de OneSignal
-const ONESIGNAL_APP_ID = "0898149e-1a1e-44cf-9807-5b0088bfe32c";
+// El App ID se lee desde la configuración (asegúrate de configurarlo en tu entorno de desarrollo)
+const ONESIGNAL_APP_ID = Constants.expoConfig?.extra?.onesignalAppId || "";
 OneSignal.Debug.setLogLevel(LogLevel.Verbose);
 OneSignal.initialize(ONESIGNAL_APP_ID);
 
@@ -41,7 +41,7 @@ export default function App() {
   const [activeCalc, setActiveCalc] = useState(null);
 
   // OTA Updates
-  const { isDownloading, downloadProgress, isUpdatePending, isUpdateAvailable } = useUpdates();
+  const { isDownloading, downloadProgress, isUpdatePending, isUpdateAvailable } = Updates.useUpdates();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
@@ -89,6 +89,15 @@ export default function App() {
   useEffect(() => {
     if (isUpdateAvailable || isDownloading || isUpdatePending) setShowUpdateModal(true);
   }, [isUpdateAvailable, isDownloading, isUpdatePending]);
+
+  useEffect(() => {
+    if (isUpdatePending) {
+      // Small delay to let user see the message
+      setTimeout(() => {
+        Updates.reloadAsync();
+      }, 1500);
+    }
+  }, [isUpdatePending]);
 
   // --- ACTIONS ---
   const handleAcceptPrivacy = async () => {
