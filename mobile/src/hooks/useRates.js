@@ -39,9 +39,8 @@ export const useRates = () => {
                     const age = Date.now() - timestamp;
 
                     if (age < CACHE_TTL) {
-                        // We still check cache but don't setRates here.
+                        // We still check cache but don't setLoading(false) here.
                         // History will take over shortly.
-                        setLoading(false);
                         return;
                     }
                 }
@@ -51,7 +50,6 @@ export const useRates = () => {
             const response = await axios.get(API_URL, { timeout: 30000 });
             const newRates = response.data.rates;
 
-            // REMOVED direct setRates/setValueDate to prevent flicker.
             // Consistency is now handled by the history-based 7 AM logic.
 
             if (response.data.timestamp) {
@@ -67,9 +65,8 @@ export const useRates = () => {
 
         } catch (e) {
             console.log('Error fetching rates:', e);
-            // On error, we don't restore rates here anymore to stay consistent with history
         } finally {
-            setLoading(false);
+            // No setLoading(false) here either.
         }
     }
 
@@ -122,12 +119,22 @@ export const useRates = () => {
                 setLastUpdated(d.toLocaleString('es-VE', { hour: 'numeric', minute: 'numeric', hour12: true }));
             }
         }
+
+        // Finalize loading once we have processed history
+        setLoading(false);
     }, [history]);
 
     useEffect(() => {
         fetchRates();
         fetchHistory();
         updateDate();
+
+        // Safety fallback: if history fails or is slow, don't leave user hanging forever
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 10000);
+
+        return () => clearTimeout(timer);
     }, []);
 
     return {

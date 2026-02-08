@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import RateCard from './RateCard';
 
 const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
