@@ -7,5 +7,3 @@ dist
 coverage
 mobile/android
 mobile/ios
-stats.json
-history.json

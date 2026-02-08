@@ -72,6 +72,7 @@ const STATS_FILE = path.join(__dirname, 'stats.json');
 // Download tracking endpoint
 app.get('/api/download', (req, res) => {
     try {
+        const offset = parseInt(process.env.DOWNLOAD_OFFSET || '0', 10);
         let stats = { apk_downloads: 0 };
         if (fs.existsSync(STATS_FILE)) {
             stats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
@@ -83,19 +84,23 @@ app.get('/api/download', (req, res) => {
         res.redirect('/downloads/app.apk');
     } catch (error) {
         console.error('Error tracking download:', error);
-        res.redirect('/downloads/app.apk'); // Redirect anyway
+        res.redirect('/downloads/app.apk');
     }
 });
 
 // Stats endpoint
 app.get('/api/download-stats', (req, res) => {
     try {
+        const offset = parseInt(process.env.DOWNLOAD_OFFSET || '0', 10);
+        let stats = { apk_downloads: 0 };
         if (fs.existsSync(STATS_FILE)) {
-            const stats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
-            res.json(stats);
-        } else {
-            res.json({ apk_downloads: 0 });
+            stats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8'));
         }
+
+        // Return total = file count + environment offset
+        res.json({
+            apk_downloads: (stats.apk_downloads || 0) + offset
+        });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching stats' });
     }
