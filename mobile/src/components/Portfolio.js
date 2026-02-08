@@ -25,10 +25,13 @@ const Portfolio = ({ activeColors, history }) => {
             let label = "???";
 
             // Use the 'date' field directly "YYYY-MM-DD" which is reliable from backend
-            if (item.date) {
+            // Fallback to timestamp if date is missing
+            const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+
+            if (dateSource) {
                 try {
                     // Create date from string parts to avoid timezone issues: "2026-02-02"
-                    const parts = item.date.split('-');
+                    const parts = dateSource.split('-');
                     const day = parts[2];
                     const monthIndex = parseInt(parts[1], 10) - 1;
                     const month = months[monthIndex];

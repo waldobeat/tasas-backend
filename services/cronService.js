@@ -47,7 +47,8 @@ const checkAndLogRate = async () => {
         if (Math.abs(newRateVal - lastRateVal) > 0.0001) {
             const newEntry = {
                 timestamp: new Date().toISOString(),
-                value_date: bcvData.value_date || dateKey, // Store the string too if possible
+                date: dateKey,
+                value_date: bcvData.value_date || dateKey,
                 rates: { bdv: { usd: { rate: newRateVal }, eur: { rate: bcvData.eur.rate } } }
             };
 
