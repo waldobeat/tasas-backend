@@ -16,48 +16,47 @@ const Portfolio = ({ activeColors, history }) => {
         // Take last 7 entries
         let data = [...history].slice(-7);
 
+        const todayStr = new Date().toISOString().split('T')[0];
+
         let maxRate = 0;
         let minRate = Infinity;
 
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+        // 1. Map data and identify min/max
         const chartItems = data.map(item => {
-            let label = "???";
             const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
-
-            if (dateSource) {
-                try {
-                    const today = new Date();
-                    const yesterday = new Date();
-                    yesterday.setDate(today.getDate() - 1);
-
-                    const todayStr = today.toISOString().split('T')[0];
-                    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-                    if (dateSource === todayStr) {
-                        label = "Hoy";
-                    } else if (dateSource === yesterdayStr) {
-                        label = "Ayer";
-                    } else if (dateSource > todayStr) {
-                        label = "Cierre"; // BCV's future value date
-                    } else {
-                        const parts = dateSource.split('-');
-                        const day = parts[2];
-                        const monthIndex = parseInt(parts[1], 10) - 1;
-                        label = `${months[monthIndex]} ${day}`;
-                    }
-                } catch (e) {
-                    console.log("Error processing label:", e);
-                }
-            }
-
-            // Extract USD rate
             const rate = item?.rates?.bdv?.usd?.rate ? parseFloat(item.rates.bdv.usd.rate) : 0;
 
             if (rate > maxRate) maxRate = rate;
             if (rate > 0 && rate < minRate) minRate = rate;
 
-            return { label, rate };
+            return { date: dateSource, rate, label: "" };
+        });
+
+        // 2. Identify the "Active" rate index (latest where date <= today)
+        let activeIndex = -1;
+        for (let i = chartItems.length - 1; i >= 0; i--) {
+            if (chartItems[i].date <= todayStr) {
+                activeIndex = i;
+                break;
+            }
+        }
+
+        // 3. Assign labels based on proximity to active rate
+        chartItems.forEach((item, index) => {
+            if (index === activeIndex) {
+                item.label = "Hoy";
+            } else if (activeIndex !== -1 && index === activeIndex - 1) {
+                item.label = "Ayer";
+            } else if (index > activeIndex && activeIndex !== -1) {
+                item.label = "Cierre";
+            } else if (item.date) {
+                const parts = item.date.split('-');
+                item.label = `${months[parseInt(parts[1], 10) - 1]} ${parts[2]}`;
+            } else {
+                item.label = "???";
+            }
         });
 
         // Add some padding to min/max for chart visuals
