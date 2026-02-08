@@ -1,40 +1,104 @@
 [
   {
-    "timestamp": "2026-02-02T23:00:00.000Z",
-    "date": "2026-02-02",
+    "timestamp": "2026-01-28T12:00:00.000Z",
+    "date": "2026-01-28",
+    "value_date": "Miércoles, 28 Enero 2026",
     "rates": {
       "bdv": {
         "usd": {
-          "rate": 370.2544
+          "rate": 361.49
         }
       }
     }
   },
   {
-    "timestamp": "2026-02-03T23:00:00.000Z",
+    "timestamp": "2026-01-29T12:00:00.000Z",
+    "date": "2026-01-29",
+    "value_date": "Jueves, 29 Enero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 363.66
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-30T12:00:00.000Z",
+    "date": "2026-01-30",
+    "value_date": "Viernes, 30 Enero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 367.30
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-01T12:00:00.000Z",
+    "date": "2026-02-01",
+    "value_date": "Domingo, 01 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 370.31
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-03T12:00:00.000Z",
     "date": "2026-02-03",
+    "value_date": "Martes, 03 Febrero 2026",
     "rates": {
       "bdv": {
         "usd": {
-          "rate": 372.1057
+          "rate": 372.10
         }
       }
     }
   },
   {
-    "timestamp": "2026-02-04T23:00:00.000Z",
+    "timestamp": "2026-02-04T12:00:00.000Z",
     "date": "2026-02-04",
+    "value_date": "Miércoles, 04 Febrero 2026",
     "rates": {
       "bdv": {
         "usd": {
-          "rate": 375.0825
+          "rate": 375.08
         }
       }
     }
   },
   {
-    "timestamp": "2026-02-08T15:47:27.852Z",
-    "date": "2026-02-08",
+    "timestamp": "2026-02-05T12:00:00.000Z",
+    "date": "2026-02-05",
+    "value_date": "Jueves, 05 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 378.45
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-06T12:00:00.000Z",
+    "date": "2026-02-06",
+    "value_date": "Viernes, 06 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 381.10
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-08T15:47:00.000Z",
+    "date": "2026-02-09",
+    "value_date": "Lunes, 09 Febrero 2026",
     "rates": {
       "bdv": {
         "usd": {

@@ -13,8 +13,13 @@ const Portfolio = ({ activeColors, history }) => {
         // Ensure we have data and sort it just in case, though usually comes sorted
         // API returns: [{ rates: { bdv: { usd: { rate: ... } } }, date: "YYYY-MM-DD", ... }]
 
-        // Take last 7 entries
-        let data = [...history].slice(-7);
+        // Filter and Take last 7 entries (Only dates <= Today)
+        let data = [...history]
+            .filter(item => {
+                const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+                return dateSource && dateSource <= todayStr;
+            })
+            .slice(-7);
 
         const todayStr = new Date().toISOString().split('T')[0];
 

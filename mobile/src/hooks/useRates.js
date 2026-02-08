@@ -109,6 +109,30 @@ export const useRates = () => {
         setRefreshing(false);
     };
 
+    // Process active rate when history updates
+    useEffect(() => {
+        if (!history || history.length === 0) return;
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // Find latest where date <= today
+        const activeItem = [...history]
+            .filter(item => {
+                const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+                return dateSource && dateSource <= todayStr;
+            })
+            .pop();
+
+        if (activeItem && activeItem.rates) {
+            setRates(activeItem.rates);
+            if (activeItem.value_date) setValueDate(activeItem.value_date);
+            if (activeItem.timestamp) {
+                const d = new Date(activeItem.timestamp);
+                setLastUpdated(d.toLocaleString('es-VE', { hour: 'numeric', minute: 'numeric', hour12: true }));
+            }
+        }
+    }, [history]);
+
     useEffect(() => {
         fetchRates();
         fetchHistory();
