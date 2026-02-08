@@ -13,6 +13,8 @@ const Portfolio = ({ activeColors, history }) => {
         // Ensure we have data and sort it just in case, though usually comes sorted
         // API returns: [{ rates: { bdv: { usd: { rate: ... } } }, date: "YYYY-MM-DD", ... }]
 
+        const todayStr = new Date().toISOString().split('T')[0];
+
         // Filter and Take last 7 entries (Only dates <= Today)
         let data = [...history]
             .filter(item => {
@@ -20,8 +22,6 @@ const Portfolio = ({ activeColors, history }) => {
                 return dateSource && dateSource <= todayStr;
             })
             .slice(-7);
-
-        const todayStr = new Date().toISOString().split('T')[0];
 
         let maxRate = 0;
         let minRate = Infinity;
@@ -42,7 +42,7 @@ const Portfolio = ({ activeColors, history }) => {
         // 2. Identify the "Active" rate index (latest where date <= today)
         let activeIndex = -1;
         for (let i = chartItems.length - 1; i >= 0; i--) {
-            if (chartItems[i].date <= todayStr) {
+            if (chartItems[i].date && chartItems[i].date <= todayStr) {
                 activeIndex = i;
                 break;
             }
@@ -56,9 +56,14 @@ const Portfolio = ({ activeColors, history }) => {
                 item.label = "Ayer";
             } else if (index > activeIndex && activeIndex !== -1) {
                 item.label = "Cierre";
-            } else if (item.date) {
+            } else if (item.date && item.date.includes('-')) {
                 const parts = item.date.split('-');
-                item.label = `${months[parseInt(parts[1], 10) - 1]} ${parts[2]}`;
+                if (parts.length >= 3) {
+                    const monthIdx = parseInt(parts[1], 10) - 1;
+                    item.label = `${months[monthIdx] || '???'} ${parts[2]}`;
+                } else {
+                    item.label = "???";
+                }
             } else {
                 item.label = "???";
             }
