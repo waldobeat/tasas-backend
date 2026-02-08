@@ -100,8 +100,8 @@ const Portfolio = ({ activeColors, history }) => {
                                 <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Toca los puntos para ver detalles</Text>
                             </View>
                             {selectedPoint && (
-                                <View style={{ backgroundColor: activeColors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
-                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                                <View style={{ backgroundColor: activeColors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 4 }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
                                         {selectedPoint.label}: {selectedPoint.value} Bs
                                     </Text>
                                 </View>
@@ -114,25 +114,29 @@ const Portfolio = ({ activeColors, history }) => {
                                     data: chartData.items.map(i => i.rate)
                                 }]
                             }}
-                            width={screenWidth - 60} // Adjusted width to prevent clipping
-                            height={180}
+                            width={screenWidth - 50}
+                            height={190}
                             chartConfig={{
                                 backgroundColor: activeColors.cardCtx,
                                 backgroundGradientFrom: activeColors.cardCtx,
                                 backgroundGradientTo: activeColors.cardCtx,
                                 decimalPlaces: 2,
-                                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`, // Blue primary color
-                                labelColor: (opacity = 1) => activeColors.textDark, // Dark text for labels
+                                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+                                labelColor: (opacity = 1) => activeColors.textDark,
                                 style: { borderRadius: 16 },
                                 propsForDots: {
-                                    r: "4", // Show dots slightly for better data point visibility
+                                    r: "6",
                                     strokeWidth: "2",
                                     stroke: activeColors.primary
                                 },
+                                propsForLabels: {
+                                    fontSize: 12, // Larger numbers for visibility
+                                    fontWeight: 'bold'
+                                },
                                 propsForBackgroundLines: {
-                                    strokeDasharray: "", // Solid lines
-                                    strokeWidth: 1,
-                                    stroke: activeColors.border // Subtle grid
+                                    strokeDasharray: "",
+                                    strokeWidth: 0.5,
+                                    stroke: activeColors.border
                                 }
                             }}
                             onDataPointClick={({ value, index }) => {
