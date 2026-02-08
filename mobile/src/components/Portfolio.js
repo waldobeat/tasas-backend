@@ -6,6 +6,8 @@ import { Dimensions } from 'react-native';
 const screenWidth = Dimensions.get('window').width;
 
 const Portfolio = ({ activeColors, history }) => {
+    const [selectedPoint, setSelectedPoint] = React.useState(null);
+
     // Process history data for chart
     const processData = () => {
         if (!history || history.length === 0) return { items: [], max: 0, min: 0 };
@@ -40,11 +42,12 @@ const Portfolio = ({ activeColors, history }) => {
         const chartItems = data.map(item => {
             const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
             const rate = item?.rates?.bdv?.usd?.rate ? parseFloat(item.rates.bdv.usd.rate) : 0;
+            const fullDate = item.value_date || dateSource;
 
             if (rate > maxRate) maxRate = rate;
             if (rate > 0 && rate < minRate) minRate = rate;
 
-            return { date: dateSource, rate, label: "" };
+            return { date: dateSource, fullDate, rate, label: "" };
         });
 
         // 2. Identify the "Active" rate index (latest where date <= effectiveToday)
@@ -91,13 +94,22 @@ const Portfolio = ({ activeColors, history }) => {
             <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, borderColor: activeColors.border }]}>
                 {hasData ? (
                     <View>
-                        <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5 }}>
-                            <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>Gráfica Histórica</Text>
-                            <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Últimos 7 días</Text>
+                        <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View>
+                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>Gráfica Histórica</Text>
+                                <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Toca los puntos para ver detalles</Text>
+                            </View>
+                            {selectedPoint && (
+                                <View style={{ backgroundColor: activeColors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 11 }}>
+                                        {selectedPoint.label}: {selectedPoint.value} Bs
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                         <LineChart
                             data={{
-                                labels: chartData.items.map(i => i.label),
+                                labels: chartData.items.map(() => ""), // HIDE DAYS AS REQUESTED
                                 datasets: [{
                                     data: chartData.items.map(i => i.rate)
                                 }]
@@ -117,26 +129,26 @@ const Portfolio = ({ activeColors, history }) => {
                                     strokeWidth: "2",
                                     stroke: activeColors.primary
                                 },
-                                propsForLabels: {
-                                    fontSize: 10,
-                                    fontWeight: 'bold',
-                                    rotation: 0
-                                },
                                 propsForBackgroundLines: {
                                     strokeDasharray: "", // Solid lines
                                     strokeWidth: 1,
                                     stroke: activeColors.border // Subtle grid
                                 }
                             }}
+                            onDataPointClick={({ value, index }) => {
+                                const item = chartData.items[index];
+                                setSelectedPoint({ value: value.toFixed(2), label: item.label, date: item.fullDate });
+                            }}
                             bezier
                             style={{
                                 marginVertical: 8,
                                 borderRadius: 16,
-                                paddingRight: 50 // Increased padding
+                                paddingRight: 40
                             }}
                             withInnerLines={true}
                             withOuterLines={false}
                             withVerticalLines={false}
+                            withHorizontalLabels={true}
                         />
                     </View>
                 ) : (
