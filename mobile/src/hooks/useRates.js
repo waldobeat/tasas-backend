@@ -113,13 +113,23 @@ export const useRates = () => {
     useEffect(() => {
         if (!history || history.length === 0) return;
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        // --- 7:00 AM Logic ---
+        const now = new Date();
+        const currentHour = now.getHours();
+        let effectiveToday = now.toISOString().split('T')[0];
 
-        // Find latest where date <= today
+        // If before 7 AM, we are still on the "previous" active date in terms of market opening
+        if (currentHour < 7) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - 1);
+            effectiveToday = d.toISOString().split('T')[0];
+        }
+
+        // Find latest where date <= effectiveToday
         const activeItem = [...history]
             .filter(item => {
                 const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
-                return dateSource && dateSource <= todayStr;
+                return dateSource && dateSource <= effectiveToday;
             })
             .pop();
 

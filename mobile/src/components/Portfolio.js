@@ -13,13 +13,21 @@ const Portfolio = ({ activeColors, history }) => {
         // Ensure we have data and sort it just in case, though usually comes sorted
         // API returns: [{ rates: { bdv: { usd: { rate: ... } } }, date: "YYYY-MM-DD", ... }]
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        // --- 7:00 AM Logic ---
+        const now = new Date();
+        const currentHour = now.getHours();
+        let effectiveToday = now.toISOString().split('T')[0];
+        if (currentHour < 7) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - 1);
+            effectiveToday = d.toISOString().split('T')[0];
+        }
 
-        // Filter and Take last 7 entries (Only dates <= Today)
+        // Filter and Take last 7 entries (Only dates <= effectiveToday)
         let data = [...history]
             .filter(item => {
                 const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
-                return dateSource && dateSource <= todayStr;
+                return dateSource && dateSource <= effectiveToday;
             })
             .slice(-7);
 
@@ -39,10 +47,10 @@ const Portfolio = ({ activeColors, history }) => {
             return { date: dateSource, rate, label: "" };
         });
 
-        // 2. Identify the "Active" rate index (latest where date <= today)
+        // 2. Identify the "Active" rate index (latest where date <= effectiveToday)
         let activeIndex = -1;
         for (let i = chartItems.length - 1; i >= 0; i--) {
-            if (chartItems[i].date && chartItems[i].date <= todayStr) {
+            if (chartItems[i].date && chartItems[i].date <= effectiveToday) {
                 activeIndex = i;
                 break;
             }
@@ -54,8 +62,6 @@ const Portfolio = ({ activeColors, history }) => {
                 item.label = "Hoy";
             } else if (activeIndex !== -1 && index === activeIndex - 1) {
                 item.label = "Ayer";
-            } else if (index > activeIndex && activeIndex !== -1) {
-                item.label = "Cierre";
             } else if (item.date && item.date.includes('-')) {
                 const parts = item.date.split('-');
                 if (parts.length >= 3) {
