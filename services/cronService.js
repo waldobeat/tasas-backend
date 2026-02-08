@@ -44,7 +44,10 @@ const checkAndLogRate = async () => {
         // If it's the same rate but a new day (unlikely for BCV to not change, but possible), we might just want to update the timestamp or ignore.
         // For simplicity: If Rate != LastRate, we Add + Notify.
 
-        if (Math.abs(newRateVal - lastRateVal) > 0.0001) {
+        const lastValueDate = lastEntry ? lastEntry.value_date : '';
+        const valueDateChanged = bcvData.value_date && bcvData.value_date !== lastValueDate;
+
+        if (Math.abs(newRateVal - lastRateVal) > 0.0001 || valueDateChanged) {
             const newEntry = {
                 timestamp: new Date().toISOString(),
                 date: dateKey,

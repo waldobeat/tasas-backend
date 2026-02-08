@@ -23,22 +23,31 @@ const Portfolio = ({ activeColors, history }) => {
 
         const chartItems = data.map(item => {
             let label = "???";
-
-            // Use the 'date' field directly "YYYY-MM-DD" which is reliable from backend
-            // Fallback to timestamp if date is missing
             const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
 
             if (dateSource) {
                 try {
-                    // Create date from string parts to avoid timezone issues: "2026-02-02"
-                    const parts = dateSource.split('-');
-                    const day = parts[2];
-                    const monthIndex = parseInt(parts[1], 10) - 1;
-                    const month = months[monthIndex];
+                    const today = new Date();
+                    const yesterday = new Date();
+                    yesterday.setDate(today.getDate() - 1);
 
-                    label = `${month} ${day}`;
+                    const todayStr = today.toISOString().split('T')[0];
+                    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+                    if (dateSource === todayStr) {
+                        label = "Hoy";
+                    } else if (dateSource === yesterdayStr) {
+                        label = "Ayer";
+                    } else if (dateSource > todayStr) {
+                        label = "Cierre"; // BCV's future value date
+                    } else {
+                        const parts = dateSource.split('-');
+                        const day = parts[2];
+                        const monthIndex = parseInt(parts[1], 10) - 1;
+                        label = `${months[monthIndex]} ${day}`;
+                    }
                 } catch (e) {
-                    console.log("Error parsing date:", e);
+                    console.log("Error processing label:", e);
                 }
             }
 
