@@ -93,7 +93,7 @@ export default function Calculator({
             {amount && parseFloat(amount.replace(',', '.')) > 0 && (
                 <TouchableOpacity
                     style={[styles.shareBtn, { backgroundColor: STATIC_COLORS.whatsapp }]}
-                    onPress={onShare}
+                    onPress={() => onShare(`Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\nCalculado con La Tasa App.`)}
                 >
                     <Ionicons name="logo-whatsapp" size={20} color="white" style={{ marginRight: 8 }} />
                     <Text style={styles.shareBtnText}>Compartir Resultado</Text>

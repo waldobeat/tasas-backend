@@ -13,7 +13,7 @@ const SettingsMenu = ({
     activeThemeKey,
     changeTheme,
     setActiveModule,
-    handleLogout,
+    onOpenPrivacy,
     theme
 }) => {
     return (
@@ -55,54 +55,41 @@ const SettingsMenu = ({
                                 />
                             </View>
 
-                            {isPremium && (
-                                <View style={{ padding: scale(12), borderBottomWidth: 1, borderBottomColor: activeColors.border }}>
-                                    <Text style={{ marginBottom: 10, color: activeColors.textDark }}>Tema de la App</Text>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                                        {Object.values(THEMES).map(t => (
-                                            <TouchableOpacity
-                                                key={t.key}
-                                                onPress={() => changeTheme(t.key)}
-                                                style={{
-                                                    width: 30,
-                                                    height: 30,
-                                                    borderRadius: 15,
-                                                    backgroundColor: t.primary,
-                                                    borderWidth: activeThemeKey === t.key ? 2 : 0,
-                                                    borderColor: activeColors.textDark,
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center'
-                                                }}
-                                            >
-                                                {activeThemeKey === t.key && <Ionicons name="checkmark" size={16} color="white" />}
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
+                            <View style={{ padding: scale(12), borderBottomWidth: 1, borderBottomColor: activeColors.border }}>
+                                <Text style={{ marginBottom: 10, color: activeColors.textDark, fontWeight: '700' }}>Personalizar Color</Text>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15, justifyContent: 'center' }}>
+                                    {Object.values(THEMES).map(t => (
+                                        <TouchableOpacity
+                                            key={t.key}
+                                            onPress={() => changeTheme(t.key)}
+                                            style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: 18,
+                                                backgroundColor: t.primary,
+                                                borderWidth: activeThemeKey === t.key ? 3 : 2,
+                                                borderColor: activeThemeKey === t.key ? activeColors.textDark : 'transparent',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                shadowColor: t.primary,
+                                                shadowOffset: { width: 0, height: 4 },
+                                                shadowOpacity: 0.3,
+                                                shadowRadius: 5,
+                                                elevation: 4
+                                            }}
+                                        >
+                                            {activeThemeKey === t.key && <Ionicons name="checkmark" size={20} color="white" />}
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
-                            )}
+                            </View>
 
                             <TouchableOpacity
-                                onPress={() => { setActiveModule('rates'); onClose(); }}
-                                style={{ flexDirection: 'row', padding: scale(12), borderBottomWidth: 1, borderBottomColor: activeColors.border }}
-                            >
-                                <Ionicons name="stats-chart-outline" size={18} color={activeColors.textDark} style={{ marginRight: 12 }} />
-                                <Text style={{ flex: 1, color: activeColors.textDark }}>Tasas y Calculadora</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={() => { setActiveModule('finance'); onClose(); }}
-                                style={{ flexDirection: 'row', padding: scale(12), borderBottomWidth: 1, borderBottomColor: activeColors.border }}
-                            >
-                                <Ionicons name="wallet-outline" size={18} color={activeColors.textDark} style={{ marginRight: 12 }} />
-                                <Text style={{ flex: 1, color: activeColors.textDark }}>Gestión Financiera</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={() => { handleLogout(); onClose(); }}
+                                onPress={() => { onOpenPrivacy(); onClose(); }}
                                 style={{ flexDirection: 'row', padding: scale(12) }}
                             >
-                                <Ionicons name="log-out-outline" size={18} color="#EF4444" style={{ marginRight: 12 }} />
-                                <Text style={{ flex: 1, color: "#EF4444" }}>Cerrar Sesión</Text>
+                                <Ionicons name="shield-checkmark-outline" size={18} color={activeColors.primary} style={{ marginRight: 12 }} />
+                                <Text style={{ flex: 1, color: activeColors.primary }}>Términos y Privacidad</Text>
                             </TouchableOpacity>
                         </View>
                     </ScrollView>

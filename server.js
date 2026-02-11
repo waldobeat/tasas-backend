@@ -28,6 +28,11 @@ app.use(express.json());
 
 
 
+// Health endpoint for keep-alive pings
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Logger Middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);

@@ -169,8 +169,8 @@ const RateCard = forwardRef(({
                         rateValue={rateValue}
                         activeColors={activeColors}
                         theme={theme}
-                        onShare={() => onShare(id)} // Passing ID for sharing context
-                        animValue={pulseAnim} // Passing the pulse animation for the flash icon
+                        onShare={() => onShare(`Tasa ${title} ${subtitle}: ${displayRate} Bs. \nCalculado con La Tasa App.`)}
+                        animValue={pulseAnim}
                     />
                 )}
             </View>
@@ -183,13 +183,14 @@ export default RateCard;
 const styles = StyleSheet.create({
     cardContainer: {
         flexDirection: 'row',
-        borderRadius: scale(24),
-        marginBottom: verticalScale(25),
-        borderWidth: 0, // Removed border for cleaner look
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 20,
-        elevation: 8,
+        borderRadius: scale(20),
+        marginBottom: verticalScale(20),
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)', // Subtle light border
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08, // Softer shadow
+        shadowRadius: 24,
+        elevation: 6,
         // Glassmorphism simulation (needs opaque background for react native unless using BlurView)
         // We rely on colors passed in props for transparency effects if desired
     },

@@ -1,14 +1,8 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import RateCard from './RateCard';
 
-const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
-    // Current theme fallback if not provided
-    const theme = {
-        primary: '#3498db',
-        primarySoft: 'rgba(52, 152, 219, 0.1)'
-    };
-
+const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) => {
     return (
         <View>
             {rates && rates.bdv ? (
@@ -19,7 +13,7 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
                     rateValue={rates.bdv.usd.rate}
                     isActive={activeCalc === 'bcv-usd'}
                     onToggle={toggleCalc}
-                    onShare={() => { }} // Removed for simplification
+                    onShare={onShare}
                     theme={theme}
                     activeColors={activeColors}
                 />
@@ -38,12 +32,24 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors }) => {
                     rateValue={rates.bdv.eur.rate}
                     isActive={activeCalc === 'bcv-eur'}
                     onToggle={toggleCalc}
-                    onShare={() => { }}
-                    theme={{ ...theme, primary: '#EA580C', primarySoft: '#FFF7ED' }} // Orange for Euro to distinguish
+                    onShare={onShare}
+                    theme={{ ...theme, primary: '#EA580C', primarySoft: '#FFF7ED' }}
                     activeColors={activeColors}
                     delay={200}
                 />
             )}
+
+            <TouchableOpacity onPress={() => Linking.openURL('http://bcv.org.ve')} style={{ paddingVertical: 5, width: '100%', alignItems: 'center' }}>
+                <Text style={{
+                    color: activeColors.primary,
+                    fontSize: 11,
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                    textDecorationLine: 'underline'
+                }}>
+                    Para validar su información consulte bcv.org.ve
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 };

@@ -36,11 +36,15 @@ export const COLORS = {
 };
 
 export const THEMES = {
-    DEFAULT: { key: 'DEFAULT', primary: '#2563EB', primarySoft: '#EFF6FF', label: 'Azul' },
-    PURPLE: { key: 'PURPLE', primary: '#7C3AED', primarySoft: '#F5F3FF', label: 'Morado' },
-    ORANGE: { key: 'ORANGE', primary: '#EA580C', primarySoft: '#FFF7ED', label: 'Naranja' },
-    TEAL: { key: 'TEAL', primary: '#0D9488', primarySoft: '#F0FDFA', label: 'Turquesa' },
-    BLACK: { key: 'BLACK', primary: '#1E293B', primarySoft: '#F1F5F9', label: 'Negro' },
+    DEFAULT: { key: 'DEFAULT', primary: '#2563EB', primarySoft: '#EFF6FF', label: 'Azul', secondary: '#475569' },
+    PURPLE: { key: 'PURPLE', primary: '#7C3AED', primarySoft: '#F5F3FF', label: 'Morado', secondary: '#5B21B6' },
+    ORANGE: { key: 'ORANGE', primary: '#EA580C', primarySoft: '#FFF7ED', label: 'Naranja', secondary: '#9A3412' },
+    TEAL: { key: 'TEAL', primary: '#0D9488', primarySoft: '#F0FDFA', label: 'Turquesa', secondary: '#115E59' },
+    BLACK: { key: 'BLACK', primary: '#1E293B', primarySoft: '#F1F5F9', label: 'Negro', secondary: '#0F172A' },
+    RED: { key: 'RED', primary: '#DC2626', primarySoft: '#FEF2F2', label: 'Rojo', secondary: '#991B1B' },
+    INDIGO: { key: 'INDIGO', primary: '#4F46E5', primarySoft: '#EEF2FF', label: 'Indigo', secondary: '#3730A3' },
+    PINK: { key: 'PINK', primary: '#DB2777', primarySoft: '#FDF2F8', label: 'Rosa', secondary: '#9D174D' },
+    GREEN: { key: 'GREEN', primary: '#16A34A', primarySoft: '#F0FDF4', label: 'Verde', secondary: '#166534' },
 };
 
 // RESPONSIVE DESIGN UTILITIES

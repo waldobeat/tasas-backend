@@ -169,11 +169,16 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     chartCard: {
-        paddingVertical: 10,
-        paddingHorizontal: 15, // Increased from 5 to 15
-        borderRadius: 18,
+        paddingVertical: 15,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+        marginBottom: 20,
         borderWidth: 1,
-        elevation: 3,
+        borderColor: 'rgba(255,255,255,0.1)',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
+        elevation: 6,
         overflow: 'hidden'
     }
 });
