@@ -112,9 +112,9 @@ const checkAndLogRate = async () => {
 const setupCronJobs = () => {
     const timezone = "America/Caracas";
 
-    // Run every hour at minute 0
-    cron.schedule('0 * * * *', async () => {
-        console.log(`⏰ Hourly Cron Triggered: ${new Date().toLocaleTimeString('es-VE', { timeZone: timezone })}`);
+    // Run every 2 minutes for real-time updates (Binance)
+    cron.schedule('*/2 * * * *', async () => {
+        console.log(`⏰ Cron Triggered: ${new Date().toLocaleTimeString('es-VE', { timeZone: timezone })}`);
         await checkAndLogRate();
     }, {
         scheduled: true,
