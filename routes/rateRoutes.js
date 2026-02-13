@@ -9,8 +9,16 @@ const HISTORY_FILE = path.join(__dirname, '../history.json');
 // --- RATES & HISTORY ---
 router.get('/rates', async (req, res) => {
     try {
-        const bcvData = await getBCVRate();
-        res.json({ rates: { bdv: bcvData }, timestamp: new Date().toISOString() });
+        const [bcvData, binanceData] = await Promise.all([
+            getBCVRate().catch(e => null),
+            require('../services/binance').getBinanceRate().catch(e => null)
+        ]);
+
+        const responseRates = { bdv: bcvData };
+        if (binanceData) {
+            responseRates.binance = { usd: { rate: binanceData.rate } };
+        }
+        res.json({ rates: responseRates, timestamp: new Date().toISOString() });
     } catch (error) {
         res.status(500).json({ error: 'Error fetching rates' });
     }

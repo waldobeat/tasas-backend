@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 const { getBCVRate } = require('./bcv');
+const { getBinanceRate } = require('./binance');
 const { broadcastNotification } = require('../utils/pushNotifications');
 
 const HISTORY_FILE = path.join(__dirname, '../history.json');
@@ -9,8 +10,16 @@ const HISTORY_FILE = path.join(__dirname, '../history.json');
 const checkAndLogRate = async () => {
     console.log('⏰ Checking for Rate Updates...');
     try {
-        const bcvData = await getBCVRate().catch(e => null);
-        if (!bcvData || !bcvData.usd || !bcvData.usd.rate) return;
+        // Fetch both rates
+        const [bcvData, binanceData] = await Promise.all([
+            getBCVRate().catch(e => null),
+            getBinanceRate().catch(e => null)
+        ]);
+
+        if (!bcvData || !bcvData.usd || !bcvData.usd.rate) {
+            console.log('⚠️ BCV fetch failed or empty.');
+            return;
+        }
 
         let dateKey;
         if (bcvData.value_date) {
@@ -32,29 +41,49 @@ const checkAndLogRate = async () => {
             history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
         }
 
-        const newRateVal = bcvData.usd.rate;
+        const newBCVRate = bcvData.usd.rate;
+        const newBinanceRate = binanceData ? binanceData.rate : 0;
+
         const lastEntry = history.length > 0 ? history[history.length - 1] : null;
-        const lastRateVal = lastEntry ? lastEntry.rates.bdv.usd.rate : 0;
 
-        // Condition to update: 
-        // 1. History is empty 
-        // OR 2. Rate has CHANGED significantly (avoids float jitter, though BCV is usually precise)
-        // OR 3. It's a new day (dateKey check inside logic if needed, but rate change is primary trigger for notification)
-
-        // We only append if the rate is DIFFERENT from the last entry. 
-        // If it's the same rate but a new day (unlikely for BCV to not change, but possible), we might just want to update the timestamp or ignore.
-        // For simplicity: If Rate != LastRate, we Add + Notify.
+        // Check BCV changes
+        const lastBCVRate = lastEntry && lastEntry.rates && lastEntry.rates.bdv ? lastEntry.rates.bdv.usd.rate : 0;
+        const lastBinanceRate = lastEntry && lastEntry.rates && lastEntry.rates.binance ? lastEntry.rates.binance.usd.rate : 0;
 
         const lastValueDate = lastEntry ? lastEntry.value_date : '';
         const valueDateChanged = bcvData.value_date && bcvData.value_date !== lastValueDate;
+        const bcvChanged = Math.abs(newBCVRate - lastBCVRate) > 0.0001;
 
-        if (Math.abs(newRateVal - lastRateVal) > 0.0001 || valueDateChanged) {
+        // Binance changes naturally all the time, so we check if it is valid (non-zero) and different
+        const binanceChanged = newBinanceRate > 0 && Math.abs(newBinanceRate - lastBinanceRate) > 0.001;
+
+        // Update if BCV changed OR Binance Changed OR Value Date Changed
+        // NOTE: We only notify for BCV.
+        if (bcvChanged || valueDateChanged || binanceChanged) {
+
             const newEntry = {
                 timestamp: new Date().toISOString(),
                 date: dateKey,
                 value_date: bcvData.value_date || dateKey,
-                rates: { bdv: { usd: { rate: newRateVal }, eur: { rate: bcvData.eur.rate } } }
+                rates: {
+                    bdv: {
+                        usd: { rate: newBCVRate },
+                        eur: { rate: bcvData.eur.rate }
+                    }
+                }
             };
+
+            // Add Binance only if available, otherwise keep last known or skip
+            if (newBinanceRate > 0) {
+                newEntry.rates.binance = {
+                    usd: { rate: newBinanceRate } // Binance P2P is essentially USD
+                };
+            } else if (lastBinanceRate > 0) {
+                // Keep previous if fetch failed
+                newEntry.rates.binance = {
+                    usd: { rate: lastBinanceRate }
+                };
+            }
 
             history.push(newEntry);
 
@@ -62,15 +91,17 @@ const checkAndLogRate = async () => {
             if (history.length > 100) history = history.slice(-100);
 
             fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
-            console.log(`✅ New Rate Logged: ${newRateVal} (Old: ${lastRateVal})`);
+            console.log(`✅ Rates Updated | BCV: ${newBCVRate} | Binance: ${newBinanceRate}`);
 
-            // SEND NOTIFICATION
-            const title = "🔔 ¡El Dólar BCV ha cambiado!";
-            const body = `Nueva Tasa: ${newRateVal} VES/USD\nFecha Valor: ${bcvData.value_date || 'Hoy'}`;
-            await broadcastNotification(title, body, { rate: newRateVal });
+            // SEND NOTIFICATION ONLY FOR BCV CHANGES
+            if (bcvChanged || valueDateChanged) {
+                const title = "🔔 ¡El Dólar BCV ha cambiado!";
+                const body = `Nueva Tasa: ${newBCVRate} VES/USD\nFecha Valor: ${bcvData.value_date || 'Hoy'}`;
+                await broadcastNotification(title, body, { rate: newBCVRate });
+            }
 
         } else {
-            console.log(`ℹ️ Rate unchanged (${newRateVal}). No update.`);
+            console.log(`ℹ️ Rates unchanged. No update.`);
         }
 
     } catch (e) {

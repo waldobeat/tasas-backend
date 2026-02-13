@@ -39,6 +39,21 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
                 />
             )}
 
+            {rates && rates.binance && rates.binance.usd && (
+                <RateCard
+                    id="binance-usd"
+                    title="BINANCE"
+                    subtitle="USDT P2P"
+                    rateValue={rates.binance.usd.rate}
+                    isActive={activeCalc === 'binance-usd'}
+                    onToggle={toggleCalc}
+                    onShare={onShare}
+                    theme={{ ...theme, primary: '#F0B90B', primarySoft: '#FEF9C3' }} // Binance Yellow theme
+                    activeColors={activeColors}
+                    delay={400}
+                />
+            )}
+
             <TouchableOpacity onPress={() => Linking.openURL('http://bcv.org.ve')} style={{ paddingVertical: 5, width: '100%', alignItems: 'center' }}>
                 <Text style={{
                     color: activeColors.primary,
