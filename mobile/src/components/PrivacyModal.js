@@ -75,6 +75,12 @@ const PrivacyModal = ({ visible, onClose, onAccept, theme }) => {
                             text="Para cualquier duda, sugerencia o reporte técnico, puede contactar directamente al equipo de soporte de cafesitoXpressVE Group a través de nuestros canales oficiales de atención al desarrollador."
                         />
 
+                        <InfoRow
+                            icon="warning-outline"
+                            title="6. Advertencia Binance P2P"
+                            text="Las tasas mostradas para Binance P2P son referenciales y altamente volátiles. Recomendamos encarecidamente verificar la disponibilidad y el precio final en la plataforma oficial de Binance antes de realizar cualquier operación."
+                        />
+
                         <View style={{ height: 20 }} />
                     </ScrollView>
 

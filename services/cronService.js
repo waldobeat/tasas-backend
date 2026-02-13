@@ -85,13 +85,30 @@ const checkAndLogRate = async () => {
                 };
             }
 
-            history.push(newEntry);
+            // --- HISTORY LOGIC FIX ---
+            // Check if last entry is from TODAY (by dateKey)
+            // If so, OVERWRITE it. If not, PUSH new.
+            let updated = false;
+            if (history.length > 0) {
+                const lastHistoryDate = history[history.length - 1].date;
+                if (lastHistoryDate === dateKey) {
+                    // Update existing
+                    history[history.length - 1] = newEntry;
+                    updated = true;
+                    console.log(`🔄 Updated existing entry for ${dateKey}`);
+                }
+            }
 
-            // Limit history
+            if (!updated) {
+                history.push(newEntry);
+                console.log(`➕ Added new entry for ${dateKey}`);
+            }
+
+            // Limit history (Keep last 100 DAYS now, not just 100 updates)
             if (history.length > 100) history = history.slice(-100);
 
             fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
-            console.log(`✅ Rates Updated | BCV: ${newBCVRate} | Binance: ${newBinanceRate}`);
+            console.log(`✅ Rates Processed | BCV: ${newBCVRate} | Binance: ${newBinanceRate}`);
 
             // SEND NOTIFICATION ONLY FOR BCV CHANGES
             if (bcvChanged || valueDateChanged) {

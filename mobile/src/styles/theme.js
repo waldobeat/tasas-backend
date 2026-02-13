@@ -1,50 +1,50 @@
 import { Dimensions } from 'react-native';
 
-// --- PALETTES ---
+// --- PALETTES (PREMIUM LOOK) ---
 export const LIGHT_PALETTE = {
-    bg: '#F1F5F9', // Slightly cooler light gray
+    bg: '#F8FAFC', // Ultra light blue-gray
     cardCtx: '#FFFFFF',
-    secondary: '#475569', // Darker gray for better readability
-    textDark: '#020617', // Almost black for maximum contrast
-    border: '#E2E8F0',
-    inputBg: '#F8FAFC',
-    shadow: '#94A3B8'
+    secondary: '#64748B', // Slate 500
+    textDark: '#0F172A', // Slate 900
+    border: '#E2E8F0', // Slate 200
+    inputBg: '#F1F5F9', // Slate 100
+    shadow: '#64748B' // Soft slate shadow
 };
 
 export const DARK_PALETTE = {
-    bg: '#0F172A',
-    cardCtx: '#1E293B',
-    secondary: '#94A3B8',
-    textDark: '#F8FAFC',
-    border: '#334155',
-    inputBg: '#0F172A',
+    bg: '#0B1120', // Ultra dark blue (Rich black)
+    cardCtx: '#1E293B', // Slate 800
+    secondary: '#94A3B8', // Slate 400
+    textDark: '#F8FAFC', // Slate 50
+    border: '#334155', // Slate 700
+    inputBg: '#0F172A', // Slate 900
     shadow: '#000000'
 };
 
 export const STATIC_COLORS = {
-    success: '#059669',
-    successBtn: '#10B981',
-    whatsapp: '#25D366',
+    success: '#10B981', // Emerald 500
+    successBtn: '#059669', // Emerald 600
+    whatsapp: '#22C55E', // Green 500
 };
 
 // COMPATIBILITY: Default COLORS for StyleSheet (Light Mode Initial)
 export const COLORS = {
     ...LIGHT_PALETTE,
     ...STATIC_COLORS,
-    primary: '#2563EB', // Default Blue
+    primary: '#3B82F6', // Blue 500 (Vibrant)
     primarySoft: '#EFF6FF',
 };
 
 export const THEMES = {
-    DEFAULT: { key: 'DEFAULT', primary: '#2563EB', primarySoft: '#EFF6FF', label: 'Azul', secondary: '#475569' },
-    PURPLE: { key: 'PURPLE', primary: '#7C3AED', primarySoft: '#F5F3FF', label: 'Morado', secondary: '#5B21B6' },
-    ORANGE: { key: 'ORANGE', primary: '#EA580C', primarySoft: '#FFF7ED', label: 'Naranja', secondary: '#9A3412' },
-    TEAL: { key: 'TEAL', primary: '#0D9488', primarySoft: '#F0FDFA', label: 'Turquesa', secondary: '#115E59' },
-    BLACK: { key: 'BLACK', primary: '#1E293B', primarySoft: '#F1F5F9', label: 'Negro', secondary: '#0F172A' },
-    RED: { key: 'RED', primary: '#DC2626', primarySoft: '#FEF2F2', label: 'Rojo', secondary: '#991B1B' },
-    INDIGO: { key: 'INDIGO', primary: '#4F46E5', primarySoft: '#EEF2FF', label: 'Indigo', secondary: '#3730A3' },
-    PINK: { key: 'PINK', primary: '#DB2777', primarySoft: '#FDF2F8', label: 'Rosa', secondary: '#9D174D' },
-    GREEN: { key: 'GREEN', primary: '#16A34A', primarySoft: '#F0FDF4', label: 'Verde', secondary: '#166534' },
+    DEFAULT: { key: 'DEFAULT', primary: '#3B82F6', primarySoft: '#EFF6FF', label: 'Azul Real', secondary: '#1E40AF' },
+    PURPLE: { key: 'PURPLE', primary: '#8B5CF6', primarySoft: '#F5F3FF', label: 'Violeta', secondary: '#5B21B6' },
+    ORANGE: { key: 'ORANGE', primary: '#F97316', primarySoft: '#FFF7ED', label: 'Naranja Solar', secondary: '#9A3412' },
+    TEAL: { key: 'TEAL', primary: '#14B8A6', primarySoft: '#F0FDFA', label: 'Menta', secondary: '#115E59' },
+    BLACK: { key: 'BLACK', primary: '#334155', primarySoft: '#F8FAFC', label: 'Grafito', secondary: '#0F172A' },
+    RED: { key: 'RED', primary: '#EF4444', primarySoft: '#FEF2F2', label: 'Carmesí', secondary: '#991B1B' },
+    INDIGO: { key: 'INDIGO', primary: '#6366F1', primarySoft: '#EEF2FF', label: 'Índigo', secondary: '#3730A3' },
+    PINK: { key: 'PINK', primary: '#EC4899', primarySoft: '#FDF2F8', label: 'Fucsia', secondary: '#9D174D' },
+    GREEN: { key: 'GREEN', primary: '#22C55E', primarySoft: '#F0FDF4', label: 'Esmeralda', secondary: '#166534' },
 };
 
 // RESPONSIVE DESIGN UTILITIES

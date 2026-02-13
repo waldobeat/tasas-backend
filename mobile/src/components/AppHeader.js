@@ -74,13 +74,13 @@ const AppHeader = ({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <View style={{ width: scale(55), height: scale(55), justifyContent: 'flex-end', alignItems: 'center', marginRight: scale(5) }}>
                     <Animated.View style={[{ position: 'absolute', bottom: 30, right: 20 }, getSmokeStyle(smoke1)]}>
-                        <Ionicons name="cloud" size={14} color="#FFFFFF" />
+                        <Ionicons name="cloud" size={14} color={activeColors.textDark} />
                     </Animated.View>
                     <Animated.View style={[{ position: 'absolute', bottom: 30, left: 20 }, getSmokeStyle(smoke2)]}>
-                        <Ionicons name="cloud" size={12} color="#FFFFFF" />
+                        <Ionicons name="cloud" size={12} color={activeColors.textDark} />
                     </Animated.View>
                     <Animated.View style={[{ position: 'absolute', bottom: 35, alignSelf: 'center' }, getSmokeStyle(smoke3)]}>
-                        <Ionicons name="cloud" size={10} color="#FFFFFF" />
+                        <Ionicons name="cloud" size={10} color={activeColors.textDark} />
                     </Animated.View>
                     <Ionicons name="cafe" size={scale(48)} color={activeColors.textDark} />
                 </View>

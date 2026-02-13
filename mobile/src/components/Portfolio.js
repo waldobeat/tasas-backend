@@ -25,13 +25,52 @@ const Portfolio = ({ activeColors, history }) => {
             effectiveToday = d.toISOString().split('T')[0];
         }
 
-        // Filter and Take last 7 entries (Only dates <= effectiveToday)
-        let data = [...history]
+
+        // --- Monday Logic ---
+        // Calculate the date of the most recent Monday
+        const getMonday = (d) => {
+            d = new Date(d);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            return new Date(d.setDate(diff));
+        }
+
+
+        // --- Deduplication Logic ---
+        // Create a map to keep only the latest entry per date
+        const uniqueDataMap = new Map();
+        history.forEach(item => {
+            const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+            if (dateSource) {
+                // By setting it repeatedly, we keep the last one found in the array (assuming chronological order)
+                // If history is not sorted, we might need to sort first, but usually API sends sorted.
+                uniqueDataMap.set(dateSource, item);
+            }
+        });
+
+        const uniqueHistory = Array.from(uniqueDataMap.values());
+
+        // --- Monday Logic ---
+        // Calculate the date of the most recent Monday
+        const mondayDate = getMonday(new Date(effectiveToday));
+        const mondayString = mondayDate.toISOString().split('T')[0];
+
+        // Filter: Date >= Monday AND Date <= EffectiveToday
+        let data = uniqueHistory
             .filter(item => {
                 const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
-                return dateSource && dateSource <= effectiveToday;
-            })
-            .slice(-7);
+                return dateSource && dateSource >= mondayString && dateSource <= effectiveToday;
+            });
+
+        // Fallback: If less than 3 points, take last 5 valid points (from unique history)
+        if (data.length < 3) {
+            data = uniqueHistory
+                .filter(item => {
+                    const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+                    return dateSource && dateSource <= effectiveToday;
+                })
+                .slice(-5);
+        }
 
         let maxRate = 0;
         let minRate = Infinity;
@@ -96,8 +135,12 @@ const Portfolio = ({ activeColors, history }) => {
                     <View>
                         <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                             <View>
-                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>Gráfica Histórica</Text>
-                                <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Toca los puntos para ver detalles</Text>
+                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>
+                                    {chartData.items.length < 3 ? "Histórico Recente" : "Histórico (Semana Actual)"}
+                                </Text>
+                                <Text style={{ color: activeColors.secondary, fontSize: 12 }}>
+                                    {chartData.items.length < 3 ? "Últimos 5 días" : "Desde el Lunes"}
+                                </Text>
                             </View>
                             {selectedPoint && (
                                 <View style={{ backgroundColor: activeColors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 4 }}>
@@ -109,7 +152,7 @@ const Portfolio = ({ activeColors, history }) => {
                         </View>
                         <LineChart
                             data={{
-                                labels: chartData.items.map(() => ""), // HIDE DAYS AS REQUESTED
+                                labels: chartData.items.map(i => i.label),
                                 datasets: [{
                                     data: chartData.items.map(i => i.rate)
                                 }]

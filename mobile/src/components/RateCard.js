@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, forwardRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import Calculator from './Calculator';
@@ -12,58 +14,81 @@ const RateCard = forwardRef(({
     rateValue,
     isActive,
     onToggle,
-    onShare,
+    onShare, // We might still use this for text fallback or analytics if needed
     theme,
     activeColors,
-    delay = 0 // Stagger animation start
+    delay = 0
 }, ref) => {
     const isUSD = id.includes('usd');
     const currencyIcon = isUSD ? "logo-usd" : "logo-euro";
     const flagEmoji = isUSD ? "🇺🇸" : "🇪🇺";
     const displayRate = formatNumber(rateValue);
 
+    // Ref for ViewShot
+    const cardRef = useRef();
+
     // Local Animations
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const bobAnim = useRef(new Animated.Value(0)).current;
 
+    const handleShareImage = async () => {
+        try {
+            const uri = await captureRef(cardRef, {
+                format: 'png',
+                quality: 1,
+                result: 'tmpfile'
+            });
+
+            if (Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri, {
+                    mimeType: 'image/png',
+                    dialogTitle: `Compartir Tasa ${title}`,
+                    UTI: 'public.png'
+                });
+            } else {
+                onShare(); // Fallback
+            }
+        } catch (error) {
+            console.error("Snapshot failed", error);
+            onShare(); // Fallback to text
+        }
+    };
+
     useEffect(() => {
-        // Pulse Animation Loop
         const animatePulse = Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
-                    toValue: 1.2,
-                    duration: 1000, // Slightly different durations for variety can be passed as prop if needed
+                    toValue: 1.05,
+                    duration: 1500,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.ease),
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
-                    duration: 1000,
+                    duration: 1500,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.ease),
                 }),
             ])
         );
 
-        // Bobbing Animation for button
         const animateBob = Animated.loop(
             Animated.sequence([
                 Animated.timing(bobAnim, {
                     toValue: 1,
-                    duration: 1500,
+                    duration: 2000,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.ease),
                 }),
                 Animated.timing(bobAnim, {
                     toValue: 0,
-                    duration: 1500,
+                    duration: 2000,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.ease),
                 }),
             ])
         );
 
-        // Stagger start
         const timer = setTimeout(() => {
             animatePulse.start();
             animateBob.start();
@@ -88,32 +113,52 @@ const RateCard = forwardRef(({
                 }
             ]}
         >
-            <View style={[styles.cardAccent, { backgroundColor: theme.primary }]} />
+            {/* View to Capture */}
+            <View
+                ref={cardRef}
+                collapsable={false}
+                style={{ flex: 1, backgroundColor: activeColors.cardCtx, borderRadius: scale(20), overflow: 'hidden' }}
+            >
+                <View style={[styles.cardAccent, { backgroundColor: theme.primary }]} />
 
-            <View style={{ flex: 1, padding: scale(20) }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <View style={{
-                            backgroundColor: theme.primarySoft,
-                            width: scale(45),
-                            height: scale(45),
-                            borderRadius: 15,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginRight: scale(12)
-                        }}>
-                            <Ionicons name={currencyIcon} size={scale(24)} color={theme.primary} />
+                <View style={{ flex: 1, padding: scale(20) }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{
+                                backgroundColor: theme.primarySoft,
+                                width: scale(48),
+                                height: scale(48),
+                                borderRadius: 16,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginRight: scale(14)
+                            }}>
+                                <Ionicons name={currencyIcon} size={scale(26)} color={theme.primary} />
+                            </View>
+                            <View>
+                                <Text style={{ color: activeColors.secondary, fontSize: scale(12), fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' }}>{title} {flagEmoji}</Text>
+                                <Text style={{ color: activeColors.textDark, fontSize: moderateScale(18), fontWeight: '800', marginTop: 2 }}>{subtitle}</Text>
+                            </View>
                         </View>
-                        <View>
-                            <Text style={{ color: activeColors.secondary, fontSize: scale(11), fontWeight: '900', letterSpacing: 1 }}>{title} {flagEmoji}</Text>
-                            <Text style={{ color: activeColors.textDark, fontSize: moderateScale(16), fontWeight: '800' }}>{subtitle}</Text>
-                        </View>
+
+                        {/* Share Button (Icon) */}
+                        <TouchableOpacity
+                            onPress={handleShareImage}
+                            style={{
+                                padding: 8,
+                                backgroundColor: activeColors.bg,
+                                borderRadius: 50,
+                                marginLeft: 8
+                            }}
+                        >
+                            <Ionicons name="share-social-outline" size={scale(20)} color={theme.primary} />
+                        </TouchableOpacity>
                     </View>
 
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: moderateScale(28), color: activeColors.textDark, fontWeight: '800', letterSpacing: -0.5 }}>
+                    <View style={{ marginTop: scale(15), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                        <Text style={{ fontSize: moderateScale(32), color: activeColors.textDark, fontWeight: '800', letterSpacing: -1 }}>
                             {displayRate}
-                            <Text style={{ fontSize: scale(14), color: activeColors.secondary, fontWeight: '700' }}> Bs</Text>
+                            <Text style={{ fontSize: scale(16), color: activeColors.secondary, fontWeight: '600' }}> Bs</Text>
                         </Text>
 
                         <TouchableOpacity
@@ -122,31 +167,19 @@ const RateCard = forwardRef(({
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 backgroundColor: theme.primary,
-                                paddingHorizontal: scale(16),
-                                paddingVertical: scale(10),
-                                borderRadius: 15,
-                                marginTop: scale(5),
+                                paddingHorizontal: scale(18),
+                                paddingVertical: scale(12),
+                                borderRadius: 16,
                                 shadowColor: theme.primary,
                                 shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.3,
-                                shadowRadius: 6,
-                                elevation: 5
+                                shadowOpacity: 0.25,
+                                shadowRadius: 8,
+                                elevation: 4
                             }}
                         >
                             <Animated.View style={{
                                 transform: [
-                                    {
-                                        scale: bobAnim.interpolate({
-                                            inputRange: [0, 1],
-                                            outputRange: [1, 1.3]
-                                        })
-                                    },
-                                    {
-                                        rotate: bobAnim.interpolate({
-                                            inputRange: [0, 0.5, 1],
-                                            outputRange: ['0deg', '15deg', '0deg']
-                                        })
-                                    }
+                                    { translateY: bobAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -2] }) }
                                 ],
                                 marginRight: 6
                             }}>
@@ -156,23 +189,36 @@ const RateCard = forwardRef(({
                                     color="white"
                                 />
                             </Animated.View>
-                            <Text style={{ fontSize: scale(12), fontWeight: '900', color: 'white', letterSpacing: 0.5 }}>
-                                {isActive ? "CERRAR" : "CALCULAR"}
+                            <Text style={{ fontSize: scale(13), fontWeight: '800', color: 'white' }}>
+                                {isActive ? "OCULTAR" : "CALCULAR"}
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </View>
 
-                {isActive && (
-                    <Calculator
-                        title={title}
-                        rateValue={rateValue}
-                        activeColors={activeColors}
-                        theme={theme}
-                        onShare={() => onShare(`Tasa ${title} ${subtitle}: ${displayRate} Bs. \nCalculado con La Tasa App.`)}
-                        animValue={pulseAnim}
-                    />
-                )}
+                    {isActive && (
+                        <View style={{ marginTop: scale(20) }}>
+                            <View style={{ height: 1, backgroundColor: activeColors.border, marginBottom: scale(20) }} />
+
+                            {id.includes('binance') && (
+                                <View style={{ backgroundColor: theme.primarySoft, padding: 10, borderRadius: 10, marginBottom: 15, flexDirection: 'row', alignItems: 'center' }}>
+                                    <Ionicons name="warning" size={20} color={theme.secondary} style={{ marginRight: 8 }} />
+                                    <Text style={{ color: theme.secondary, fontSize: 11, flex: 1, fontWeight: '600' }}>
+                                        Mercado volátil. Verifique en Binance antes de operar.
+                                    </Text>
+                                </View>
+                            )}
+
+                            <Calculator
+                                title={title}
+                                rateValue={rateValue}
+                                activeColors={activeColors}
+                                theme={theme}
+                                onShare={handleShareImage} // Use Image Share here too
+                                animValue={pulseAnim}
+                            />
+                        </View>
+                    )}
+                </View>
             </View>
         </Animated.View>
     );
@@ -186,15 +232,16 @@ const styles = StyleSheet.create({
         borderRadius: scale(20),
         marginBottom: verticalScale(20),
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)', // Subtle light border
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08, // Softer shadow
-        shadowRadius: 24,
-        elevation: 6,
-        // Glassmorphism simulation (needs opaque background for react native unless using BlurView)
-        // We rely on colors passed in props for transparency effects if desired
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
+        elevation: 3,
     },
     cardAccent: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
         width: 6,
         borderTopLeftRadius: scale(20),
         borderBottomLeftRadius: scale(20),
