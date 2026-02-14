@@ -113,7 +113,6 @@ const RateCard = forwardRef(({
                 }
             ]}
         >
-            {/* View to Capture */}
             <View
                 ref={cardRef}
                 collapsable={false}
@@ -141,7 +140,6 @@ const RateCard = forwardRef(({
                             </View>
                         </View>
 
-                        {/* Share Button (Icon) */}
                         <TouchableOpacity
                             onPress={handleShareImage}
                             style={{
@@ -156,10 +154,12 @@ const RateCard = forwardRef(({
                     </View>
 
                     <View style={{ marginTop: scale(15), flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <Text style={{ fontSize: moderateScale(32), color: activeColors.textDark, fontWeight: '800', letterSpacing: -1 }}>
-                            {displayRate}
-                            <Text style={{ fontSize: scale(16), color: activeColors.secondary, fontWeight: '600' }}> Bs</Text>
-                        </Text>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: moderateScale(32), color: activeColors.textDark, fontWeight: '800', letterSpacing: -1 }}>
+                                {displayRate}
+                                <Text style={{ fontSize: scale(16), color: activeColors.secondary, fontWeight: '600' }}> Bs</Text>
+                            </Text>
+                        </View>
 
                         <TouchableOpacity
                             onPress={() => onToggle(id)}
@@ -190,36 +190,24 @@ const RateCard = forwardRef(({
                                 />
                             </Animated.View>
                             <Text style={{ fontSize: scale(13), fontWeight: '800', color: 'white' }}>
-                                {isActive ? "OCULTAR" : "CALCULAR"}
+                                {isActive ? "CERRAR" : "CALCULAR"}
                             </Text>
                         </TouchableOpacity>
                     </View>
-
-                    {isActive && (
-                        <View style={{ marginTop: scale(20) }}>
-                            <View style={{ height: 1, backgroundColor: activeColors.border, marginBottom: scale(20) }} />
-
-                            {id.includes('binance') && (
-                                <View style={{ backgroundColor: theme.primarySoft, padding: 10, borderRadius: 10, marginBottom: 15, flexDirection: 'row', alignItems: 'center' }}>
-                                    <Ionicons name="warning" size={20} color={theme.secondary} style={{ marginRight: 8 }} />
-                                    <Text style={{ color: theme.secondary, fontSize: 11, flex: 1, fontWeight: '600' }}>
-                                        Mercado volátil. Verifique en Binance antes de operar.
-                                    </Text>
-                                </View>
-                            )}
-
-                            <Calculator
-                                title={title}
-                                rateValue={rateValue}
-                                activeColors={activeColors}
-                                theme={theme}
-                                onShare={handleShareImage} // Use Image Share here too
-                                animValue={pulseAnim}
-                            />
-                        </View>
-                    )}
                 </View>
             </View>
+
+            <Calculator
+                visible={isActive}
+                onClose={() => onToggle(id)}
+                title={title}
+                rateValue={rateValue}
+                activeColors={activeColors}
+                theme={theme}
+                onShare={handleShareImage}
+                animValue={pulseAnim}
+                id={id}
+            />
         </Animated.View>
     );
 });

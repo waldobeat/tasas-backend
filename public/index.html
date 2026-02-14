@@ -3,8 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0B1120">
     <meta name="5f770545e75f1b1aa57ed3056200162e87d36a9f" content="5f770545e75f1b1aa57ed3056200162e87d36a9f" />
+
+    <!-- AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9257287865743639"
+     crossorigin="anonymous"></script>
 
     <script>
         (function(qoew){
@@ -21,213 +26,213 @@
     <title>La Tasa - Dólar en Venezuela</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #0A0F1D;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --primary-accent: #3B82F6;
-            --secondary-accent: #60A5FA;
+            /* DARK PALETTE from mobile/src/styles/theme.js */
+            --bg-color: #0B1120;
+            --card-bg: #1E293B;
+            --secondary: #94A3B8;
             --text-main: #F8FAFC;
-            --text-dim: #94A3B8;
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --border: #334155;
+            --input-bg: #0F172A;
+            --primary-accent: #3B82F6;
             --success-color: #10B981;
+            
+            /* Additional Mobile-like styles */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        /* Hide arrows/spinners */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            appearance: none;
-            margin: 0;
-        }
-
-        input[type=number] {
-            -moz-appearance: textfield;
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-color);
-            background-image:
-                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.15) 0%, transparent 50%);
             color: var(--text-main);
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
         }
 
-        .container {
+        .app-container {
             width: 100%;
-            max-width: 600px;
-            margin-top: 40px;
+            max-width: 480px; /* Mobile width constraint */
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            background-color: var(--bg-color);
+            min-height: 100vh;
         }
 
+        /* HEADER */
         header {
-            text-align: left;
-            margin-bottom: 40px;
-            padding: 0 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-top: 10px;
         }
 
-        h1 {
-            font-size: 2.5rem;
+        .header-content h1 {
+            font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            background: linear-gradient(to right, #60A5FA, #3B82F6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
         }
 
-        .subtitle {
-            font-size: 1.1rem;
-            color: var(--text-dim);
-            margin-top: 5px;
+        .header-content .subtitle {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            font-weight: 500;
         }
 
-        .date-badge {
-            display: inline-block;
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            padding: 8px 16px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            color: var(--secondary-accent);
-            font-weight: 600;
-            margin-top: 15px;
-            backdrop-filter: blur(10px);
+        .user-badge {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            border: 1px solid var(--border);
         }
 
-        /* APK Download Section */
-        .download-section {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 41, 59, 0.4));
-            border: 1px solid var(--primary-accent);
-            padding: 25px;
-            border-radius: 24px;
-            margin-bottom: 40px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(12px);
+        /* DOWNLOAD BANNER */
+        .download-banner {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            color: white;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+            text-decoration: none;
+            display: block;
         }
-
-        .download-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            pointer-events: none;
+        
+        .download-banner:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s;
         }
 
         .download-title {
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .download-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+
+        .download-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* RATES SECTION */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 10px;
             color: var(--text-main);
         }
 
-        .download-desc {
-            font-size: 0.95rem;
-            color: var(--text-dim);
-            margin-bottom: 20px;
-            line-height: 1.4;
+        .loader {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+            color: var(--primary-accent);
         }
 
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            background: var(--primary-accent);
-            color: white;
-            text-decoration: none;
-            padding: 14px 28px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        /* RATE CARD */
+        .rate-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 15px;
+            /* Mobile-like feel */
+            transition: all 0.2s ease;
         }
 
-        .download-btn i {
-            margin-right: 12px;
-            font-size: 1.3rem;
-        }
-
-        .download-btn:hover {
-            transform: scale(1.05);
-            background: var(--secondary-accent);
-            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.6);
-        }
-
-        /* Rate Cards */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(30, 41, 59, 0.8);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
+        .card-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .card-title {
+        .card-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .currency-title {
+            font-size: 1.1rem;
             font-weight: 700;
-            font-size: 1.2rem;
             color: var(--text-main);
         }
 
-        .currency {
+        .currency-subtitle {
             font-size: 0.8rem;
-            color: var(--text-dim);
+            color: var(--secondary);
             font-weight: 600;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 2px;
         }
 
-        .rate {
-            font-size: 2rem;
+        .rate-value {
+            font-size: 1.5rem;
             font-weight: 700;
-            color: var(--success-color);
-            letter-spacing: -1px;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
         }
 
         .calc-toggle {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            transition: all 0.2s;
-            margin-left: 15px;
+            color: var(--text-main);
+            margin-left: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
 
         .calc-toggle:hover {
@@ -235,382 +240,277 @@
             border-color: var(--primary-accent);
         }
 
-        /* Calculator Section */
-        .calculator-section {
+        /* CALCULATOR */
+        .calculator {
             max-height: 0;
-            opacity: 0;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: max-height 0.3s ease-out, opacity 0.3s ease;
+            opacity: 0;
+            border-top: 1px solid transparent;
+            margin-top: 0;
+            padding-top: 0;
         }
 
-        .calculator-section.active {
-            max-height: 400px;
+        .calculator.open {
+            max-height: 300px;
             opacity: 1;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--glass-border);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top-color: var(--border);
         }
 
-        .presets-container {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .preset-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .preset-btn:hover {
-            background: var(--primary-accent);
-            color: white;
-            border-color: var(--primary-accent);
-        }
-
-        .input-group {
+        .input-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
-        .input-group input {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            color: white;
+        .amount-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
             padding: 12px;
-            border-radius: 12px;
-            width: 120px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 600;
             text-align: center;
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
         }
-
-        .input-group input:focus {
+        
+        .amount-input:focus {
             outline: none;
             border-color: var(--primary-accent);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
         }
 
-        .result-display {
-            font-weight: 700;
-            color: var(--secondary-accent);
-            font-size: 1.5rem;
+        .presets {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        footer {
-            margin-top: 60px;
-            padding: 40px 20px;
+        .preset-chip {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .preset-chip:hover {
+            background: var(--primary-accent);
+            border-color: var(--primary-accent);
+        }
+
+        .result-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius-md);
+            padding: 15px;
             text-align: center;
-            border-top: 1px solid var(--glass-border);
-            width: 100%;
-            max-width: 600px;
+            margin-top: 15px;
+        }
+
+        .result-label {
+            font-size: 0.75rem;
+            color: var(--primary-accent);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .result-amount {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-accent);
+        }
+
+        /* FOOTER */
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
         }
 
         .last-updated {
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            font-weight: 500;
-        }
-
-        .legal-link {
-            display: inline-block;
-            margin-top: 20px;
-            font-size: 0.85rem;
-            color: var(--primary-accent);
-            text-decoration: none;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .legal-link:hover {
-            text-decoration: underline;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            font-size: 0.8rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
             display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(8px);
+            gap: 6px;
         }
 
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: #1E293B;
-            padding: 30px;
-            border-radius: 24px;
-            max-width: 450px;
-            width: 90%;
-            color: white;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-
-        .modal-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--secondary-accent);
-        }
-
-        .modal-text {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: #CBD5E1;
-            text-align: left;
-            margin-bottom: 25px;
-        }
-
-        .modal-close {
-            background: var(--primary-accent);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 12px;
-            font-weight: 700;
+        .legal-links {
+            font-size: 0.8rem;
+            color: var(--primary-accent);
+            text-decoration: underline;
             cursor: pointer;
-            width: 100%;
-            font-size: 1rem;
+        }
+        
+        .copyright {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: var(--secondary);
         }
 
-        /* Cookie Banner */
-        .cookie-banner {
+        /* RAIN EFFECT */
+        .heart {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(200%);
-            width: 90%;
-            max-width: 500px;
-            background: #1E293B;
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            top: -50px;
+            font-size: 24px;
+            z-index: 9999;
+            pointer-events: none;
+            animation: fall linear forwards;
         }
 
-        .cookie-banner.active {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .cookie-text {
-            font-size: 0.9rem;
-            text-align: center;
-            color: #CBD5E1;
-        }
-
-        .cookie-btn {
-            background: var(--success-color);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 700;
-            width: 100%;
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 2rem;
+        @keyframes fall {
+            to {
+                transform: translateY(110vh);
             }
+        }
 
-            .rate {
-                font-size: 1.6rem;
-            }
-
-            .card {
-                padding: 18px;
-            }
+        /* Hide Scrollbar but allow scroll */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="app-container">
+        <!-- Header matches AppHeader.js -->
         <header>
-            <h1>La Tasa v2.1</h1>
-            <div class="subtitle">Dólar en Venezuela</div>
-            <div class="date-badge" id="currentDate">Cargando...</div>
+            <div class="header-content">
+                <div class="subtitle" id="currentDate">Cargando fecha...</div>
+                <h1>La Tasa</h1>
+            </div>
+            <div class="user-badge">
+                <i class="fas fa-user-circle" style="margin-right: 6px;"></i> Invitado
+            </div>
         </header>
 
-        <div class="download-section">
-            <div class="download-title">¡Descarga nuestra App! 📱</div>
-            <div class="download-desc">
-                Obtén notificaciones en tiempo real, gráficas interactivas y gestión financiera personal. sin publicidad
-                y totalmente segura.
+        <!-- Download Banner -->
+        <a href="/api/download" class="download-banner">
+            <div class="stats-badge">
+                <i class="fas fa-arrow-down"></i> <span id="downloadCount">0</span>
             </div>
-            <a href="/api/download" class="download-btn">
-                <i class="fab fa-android"></i> Descargar APK Directo
-            </a>
-            <div id="downloadCount"
-                style="margin-top: 25px; padding: 12px 20px; background-color: #10B981; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
-                <i class="fas fa-download" style="margin-right: 10px; color: white;"></i>
-                <span style="color: white; font-weight: 800; font-size: 1.1rem;">
-                    <span id="countText">0</span> descargas
-                </span>
+            <div class="download-title">Descarga la App 📱</div>
+            <p class="download-desc">Sin publicidad, notificaciones en tiempo real y modo offline.</p>
+            <div class="download-btn">
+                <i class="fab fa-android"></i> Instalar APK
             </div>
-        </div>
+        </a>
 
-        <div id="ratesContainer">
-            <div style="text-align: center; padding: 40px;">
-                <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary-accent);"></i>
+        <div style="height: 1px; background: var(--border); width: 100%;"></div>
+
+        <!-- Rates List -->
+        <div>
+            <div class="section-title">Tasas de Cambio</div>
+            <div id="ratesContainer">
+                <div class="loader">
+                    <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+                </div>
             </div>
         </div>
 
         <footer>
             <div class="last-updated" id="footer-text">
-                <i class="fas fa-sync-alt fa-spin"></i> Sincronizando datos...
+                <i class="fas fa-sync fa-spin"></i> Sincronizando...
             </div>
-            <div class="legal-link" onclick="toggleModal('legalModal')">Política de Privacidad y Aviso Legal</div>
-            <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-dim);">
-                &copy; 2026 La Tasa. Información oficial del BCV.
-            </div>
+            <div class="legal-links">Política de Privacidad</div>
+            <div class="copyright">© 2026 La Tasa. Datos oficiales del BCV.</div>
         </footer>
     </div>
 
-    <div class="modal-overlay" id="legalModal">
-        <div class="modal-content">
-            <div class="modal-title">Aviso Legal y Privacidad</div>
-            <div class="modal-text">
-                <p><strong>1. Fuente de Información:</strong> Esta herramienta se basa exclusivamente en las tasas
-                    oficiales del <strong>Banco Central de Venezuela (BCV)</strong>.</p>
-                <p style="margin-top: 12px;"><strong>2. Responsabilidad:</strong> Los resultados son referenciales. Esta
-                    aplicación no sustituye a la información oficial de entes bancarios.</p>
-                <p style="margin-top: 12px;"><strong>3. Privacidad:</strong> No recolectamos datos personales. Tu
-                    privacidad es nuestra prioridad.</p>
-            </div>
-            <button class="modal-close" onclick="acceptPrivacy()">Aceptar y Cerrar</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="cookieModal">
-        <div class="modal-content">
-            <div class="modal-title">Política de Cookies</div>
-            <div class="modal-text">
-                Utilizamos almacenamiento local para recordar tus preferencias y que no tengas que aceptar los términos
-                cada vez que entras. No rastreamos tu navegación externa.
-            </div>
-            <button class="modal-close" onclick="toggleModal('cookieModal')">Entendido</button>
-        </div>
-    </div>
-
-    <div id="cookieBanner" class="cookie-banner">
-        <div class="cookie-text">
-            Este sitio utiliza cookies para una mejor experiencia.
-            <span class="legal-link" style="font-size: 0.9rem;" onclick="toggleModal('cookieModal')">Leer más</span>
-        </div>
-        <button class="cookie-btn" onclick="acceptCookies()">Aceptar todas</button>
-    </div>
-
+    <!-- Valentine Rain Script -->
     <script>
-        function updateDate() {
-            const now = new Date();
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('currentDate').innerText = now.toLocaleDateString('es-VE', options);
+        const HEARTS = ['❤️', '💖', '💘', '💝', '💓', '💕', '🌹'];
+        
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerText = HEARTS[Math.floor(Math.random() * HEARTS.length)];
+            
+            // Random properties
+            const startLeft = Math.random() * 100;
+            const duration = Math.random() * 3 + 3; // 3-6s
+            const size = Math.random() * 20 + 15; // 15-35px
+            
+            heart.style.left = startLeft + 'vw';
+            heart.style.animationDuration = duration + 's';
+            heart.style.fontSize = size + 'px';
+            
+            document.body.appendChild(heart);
+            
+            // Remove after animation
+            setTimeout(() => {
+                heart.remove();
+            }, duration * 1000);
         }
 
-        function parseLocaleNumber(stringNumber) {
-            if (typeof stringNumber === 'number') return stringNumber;
-            return parseFloat(stringNumber.toString().replace(/\./g, '').replace(',', '.'));
-        }
+        // Start rain
+        setInterval(createHeart, 300);
+    </script>
 
+    <!-- App Logic -->
+    <script>
+        // --- UTILS ---
         function formatNumber(num) {
             return num.toLocaleString('es-VE', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
         }
-
-        const PRIVACY_KEY = 'privacy_accepted_v1';
-        const COOKIE_KEY = 'cookies_accepted_v1';
-
-        function checkAcceptance() {
-            if (!localStorage.getItem(PRIVACY_KEY)) {
-                setTimeout(() => toggleModal('legalModal'), 1000);
-            } else if (!localStorage.getItem(COOKIE_KEY)) {
-                setTimeout(() => document.getElementById('cookieBanner').classList.add('active'), 1000);
-            }
+        
+        function parseLocaleNumber(stringNumber) {
+            if (typeof stringNumber === 'number') return stringNumber;
+            return parseFloat(stringNumber.toString().replace(/\./g, '').replace(',', '.'));
         }
 
-        function acceptPrivacy() {
-            localStorage.setItem(PRIVACY_KEY, 'true');
-            toggleModal('legalModal');
-            checkAcceptance();
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = now.toLocaleDateString('es-VE', options);
+            // Capitalize first letter
+            document.getElementById('currentDate').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
         }
 
-        function acceptCookies() {
-            localStorage.setItem(COOKIE_KEY, 'true');
-            document.getElementById('cookieBanner').classList.remove('active');
-        }
-
-        function toggleModal(id) {
-            document.getElementById(id).classList.toggle('active');
-        }
-
-        function toggleCalculator(id) {
+        // --- CALCULATOR LOGIC ---
+        window.toggleCalculator = function(id) {
             const calc = document.getElementById(`calc-${id}`);
-            calc.classList.toggle('active');
-        }
+            calc.classList.toggle('open');
+        };
 
-        function calculate(id, rawRate) {
+        window.calculate = function(id, rawRate) {
             const input = document.getElementById(`input-${id}`);
             const resultDisplay = document.getElementById(`result-${id}`);
             const amount = parseFloat(input.value) || 0;
             const rate = parseLocaleNumber(rawRate);
             resultDisplay.innerText = formatNumber(amount * rate) + " Bs";
-        }
+        };
 
-        function setAmount(id, amount, rawRate) {
-            const input = document.getElementById(`input-${id}`);
-            input.value = amount;
+        window.setAmount = function(id, amount, rawRate) {
+            document.getElementById(`input-${id}`).value = amount;
             calculate(id, rawRate);
-        }
+        };
 
+        // --- DATA FETCHING ---
         async function fetchStats() {
             try {
                 const response = await fetch('/api/download-stats');
                 const data = await response.json();
-                document.getElementById('countText').innerText = data.apk_downloads.toLocaleString();
+                document.getElementById('downloadCount').innerText = data.apk_downloads.toLocaleString();
             } catch (error) {
-                console.error('Error fetching stats:', error);
+                console.error('Error stats:', error);
             }
         }
 
@@ -621,60 +521,87 @@
                 const container = document.getElementById('ratesContainer');
                 container.innerHTML = '';
 
-                const renderCard = (id, title, subtitle, rateValue) => {
+                const renderCard = (id, title, subtitle, rateValue, colorClass) => {
                     const cleanRate = parseLocaleNumber(rateValue);
+                    let themeColor = '#3B82F6'; // Default Blue
+                    // Override colors for specific cards to match app
+                    if(id === 'binance-usd') themeColor = '#F0B90B'; // Yellow
+                    if(id === 'bcv-eur') themeColor = '#EA580C'; // Orange
+
                     return `
-                        <div class="card">
-                            <div class="card-header">
-                                <div>
-                                    <div class="card-title">${title}</div>
-                                    <div class="currency">${subtitle}</div>
+                        <div class="rate-card">
+                            <div class="card-top">
+                                <div class="card-info">
+                                    <div class="currency-title">${title}</div>
+                                    <div class="currency-subtitle">${subtitle}</div>
                                 </div>
                                 <div style="display: flex; align-items: center;">
-                                    <div class="rate">${formatNumber(cleanRate)} Bs</div>
-                                    <button class="calc-toggle" onclick="toggleCalculator('${id}')">
+                                    <div class="rate-value" style="color: ${themeColor}">${formatNumber(cleanRate)} Bs</div>
+                                    <div class="calc-toggle" onclick="toggleCalculator('${id}')">
                                         <i class="fas fa-calculator"></i>
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div id="calc-${id}" class="calculator-section">
-                                <div class="presets-container">
-                                    ${[5, 10, 20, 50, 100].map(val =>
-                        `<button class="preset-btn" onclick="setAmount('${id}', ${val}, '${rateValue}')">${val}</button>`
-                    ).join('')}
+                            <div id="calc-${id}" class="calculator">
+                                <div class="input-row">
+                                    <input type="number" id="input-${id}" class="amount-input" value="1" 
+                                        oninput="calculate('${id}', '${rateValue}')" placeholder="Monto">
                                 </div>
-                                <div class="input-group">
-                                    <input type="number" id="input-${id}" value="1" oninput="calculate('${id}', '${rateValue}')">
-                                    <span class="result-display" id="result-${id}">${formatNumber(cleanRate)} Bs</span>
+                                <div class="presets">
+                                    ${[5, 10, 20, 50, 100].map(val => 
+                                        `<div class="preset-chip" onclick="setAmount('${id}', ${val}, '${rateValue}')">$${val}</div>`
+                                    ).join('')}
+                                </div>
+                                <div class="result-box" style="background: ${themeColor}15; border-color: ${themeColor}30;">
+                                    <div class="result-label" style="color: ${themeColor}">Total Estimado</div>
+                                    <div class="result-amount" id="result-${id}" style="color: ${themeColor}">
+                                        ${formatNumber(cleanRate)} Bs
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 };
 
-                if (data.rates.bdv) {
-                    container.innerHTML += renderCard('usd', 'Dólar (USD)', 'Tasa BCV', data.rates.bdv.usd.rate);
-                    container.innerHTML += renderCard('eur', 'Euro (EUR)', 'Tasa BCV', data.rates.bdv.eur.rate);
+                // BCV USD
+                if (data.rates.bdv && data.rates.bdv.usd) {
+                    container.innerHTML += renderCard('bcv-usd', 'Dólar (USD)', 'Tasa BCV', data.rates.bdv.usd.rate);
+                }
 
+                // BCV EUR
+                if (data.rates.bdv && data.rates.bdv.eur) {
+                    container.innerHTML += renderCard('bcv-eur', 'Euro (EUR)', 'Tasa BCV', data.rates.bdv.eur.rate);
+                    
                     if (data.rates.bdv.last_updated) {
                         const date = new Date(data.rates.bdv.last_updated);
-                        document.getElementById('footer-text').innerHTML =
-                            `<i class="fas fa-check-circle" style="color: var(--success-color)"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
+                        document.getElementById('footer-text').innerHTML = 
+                            `<i class="fas fa-check-circle" style="color: #10B981; margin-right: 5px;"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
                     }
                 }
+
+                // BINANCE
+                if (data.rates.binance && data.rates.binance.usd) {
+                   container.innerHTML += renderCard('binance-usd', 'Binance P2P', 'USDT', data.rates.binance.usd.rate);
+                }
+
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error rates:', error);
+                document.getElementById('ratesContainer').innerHTML = 
+                    `<div style="text-align:center; color: var(--secondary); padding: 20px;">
+                        <i class="fas fa-exclamation-triangle"></i> Error cargando tasas
+                    </div>`;
             }
         }
 
+        // Init
         updateDate();
-        checkAcceptance();
         fetchRates();
         fetchStats();
-        setInterval(fetchRates, 300000);
-        setInterval(fetchStats, 60000);
+        
+        // Auto-refresh
+        setInterval(fetchRates, 60000); // 1 min
+        setInterval(fetchStats, 30000); // 30 sec
     </script>
 </body>
-
 </html>

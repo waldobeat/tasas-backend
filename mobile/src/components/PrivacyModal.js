@@ -1,99 +1,99 @@
 import React from 'react';
-import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
 const PrivacyModal = ({ visible, onClose, onAccept, theme }) => {
 
-    // Componente para las filas de información
     const InfoRow = ({ icon, title, text }) => (
         <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
-                <View style={[styles.iconCircle, { backgroundColor: theme.primary + '15' }]}>
-                    <Ionicons name={icon} size={18} color={theme.primary} />
-                </View>
+                <Ionicons name={icon} size={20} color={theme.primary} style={styles.headerIcon} />
                 <Text style={[styles.sectionTitle, { color: theme.textDark }]}>{title}</Text>
             </View>
-            <Text style={[styles.sectionText, { color: theme.secondary }]}>{text}</Text>
+            <View style={[styles.textBorderLeft, { borderLeftColor: theme.border }]}>
+                <Text style={[styles.sectionText, { color: theme.secondary }]}>{text}</Text>
+            </View>
         </View>
     );
 
     return (
-        <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
+        <Modal visible={visible} animationType="fade" transparent statusBarTranslucent>
             <View style={styles.modalOverlay}>
-                <View style={[styles.modalContent, { backgroundColor: theme.cardCtx, shadowColor: theme.shadow }]}>
+                <View style={[styles.modalContent, { backgroundColor: theme.cardCtx }]}>
 
-                    <View style={[styles.topIndicator, { backgroundColor: theme.border }]} />
-
-                    <View style={styles.header}>
-                        <View>
-                            <Text style={[styles.title, { color: theme.textDark }]}>Política de Privacidad</Text>
-                            <Text style={[styles.subtitle, { color: theme.secondary }]}>Versión oficial • Feb 2026</Text>
+                    {/* Header Corporativo */}
+                    <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                        <View style={styles.headerTitleContainer}>
+                            <Text style={[styles.title, { color: theme.textDark }]}>Términos y Privacidad</Text>
+                            <View style={[styles.badge, { backgroundColor: theme.primary + '10' }]}>
+                                <Text style={[styles.badgeText, { color: theme.primary }]}>VERSIÓN 2.0</Text>
+                            </View>
                         </View>
-                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Ionicons name="close" size={24} color={theme.secondary} />
+                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                            <Ionicons name="close-outline" size={26} color={theme.secondary} />
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView
                         style={styles.scrollArea}
-                        showsVerticalScrollIndicator={true}
+                        showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.scrollContent}
                     >
                         <Text style={[styles.introText, { color: theme.secondary }]}>
-                            Esta aplicación es operada por <Text style={{ fontWeight: 'bold', color: theme.textDark }}>cafesitoXpressVE Group</Text>. Al utilizar nuestros servicios, usted acepta los siguientes términos:
+                            Bienvenido a <Text style={{ fontWeight: '700', color: theme.textDark }}>cafesitoXpressVE</Text>.
+                            El presente documento detalla el marco legal y de privacidad que rige el uso de nuestra plataforma informativa.
                         </Text>
 
                         <InfoRow
-                            icon="information-circle-outline"
-                            title="1. Naturaleza del Servicio"
-                            text="La Tasa es una herramienta estrictamente informativa. Su propósito es facilitar el acceso a indicadores económicos públicos (BCV, entre otros) para referencia personal. No garantizamos la exactitud absoluta de los datos externos."
+                            icon="shield-check-outline"
+                            title="Marco Legal e Informativo"
+                            text="Esta herramienta tiene carácter estrictamente referencial. Los datos provienen de fuentes públicas oficiales. No garantizamos la inmutabilidad de los valores externos."
                         />
 
                         <InfoRow
-                            icon="shield-checkmark-outline"
-                            title="2. Exención de Responsabilidad"
-                            text="Queremos ser transparentes: No somos una entidad bancaria ni financiera. No vendemos, compramos ni intercambiamos divisas de ningún tipo. No intermediamos en transacciones financieras ni captamos fondos del público."
+                            icon="briefcase-outline"
+                            title="Limitación de Servicios"
+                            text="cafesitoXpressVE no es una entidad financiera. No realizamos operaciones de cambio, captación de fondos ni intermediación bursátil bajo ningún concepto."
                         />
 
                         <InfoRow
-                            icon="cash-outline"
-                            title="3. Gratuidad y Publicidad"
-                            text="El uso de esta aplicación es completamente gratuito. Para sostener los costos de desarrollo y servidores, incluimos publicidad de terceros. Ofrecemos funciones voluntarias para desactivar anuncios temporalmente sin costo monetario."
+                            icon="lock-closed-outline"
+                            title="Tratamiento de Datos"
+                            text="No recolectamos Información de Identificación Personal (PII). Los datos técnicos se procesan de forma anónima para optimizar la experiencia del usuario y seguridad."
                         />
 
                         <InfoRow
-                            icon="eye-off-outline"
-                            title="4. Recopilación de Datos"
-                            text="Respetamos su privacidad. No recopilamos datos personales identificables (PII) como nombres o documentos. Se utilizan identificadores anónimos solo para guardar sus preferencias de configuración y gestionar la frecuencia de anuncios."
+                            icon="megaphone-outline"
+                            title="Sostenibilidad"
+                            text="El acceso es gratuito y se financia mediante publicidad de terceros. Al continuar, usted comprende que los anuncios permiten mantener la infraestructura técnica."
                         />
 
                         <InfoRow
-                            icon="mail-outline"
-                            title="5. Contacto y Soporte"
-                            text="Para cualquier duda, sugerencia o reporte técnico, puede contactar directamente al equipo de soporte de cafesitoXpressVE Group a través de nuestros canales oficiales de atención al desarrollador."
+                            icon="alert-circle-outline"
+                            title="Aviso de Volatilidad"
+                            text="Las referencias de mercados P2P son altamente fluctuantes. Se recomienda validación directa en las plataformas origen antes de cualquier decisión."
                         />
 
-                        <InfoRow
-                            icon="warning-outline"
-                            title="6. Advertencia Binance P2P"
-                            text="Las tasas mostradas para Binance P2P son referenciales y altamente volátiles. Recomendamos encarecidamente verificar la disponibilidad y el precio final en la plataforma oficial de Binance antes de realizar cualquier operación."
-                        />
-
-                        <View style={{ height: 20 }} />
+                        <View style={{ height: 10 }} />
                     </ScrollView>
 
+                    {/* Footer con Acción Clara */}
                     <View style={[styles.footer, { borderTopColor: theme.border }]}>
+                        <Text style={[styles.footerConsent, { color: theme.secondary }]}>
+                            Al pulsar el botón, usted confirma que ha leído y acepta nuestras políticas.
+                        </Text>
                         <TouchableOpacity
-                            style={[styles.acceptBtn, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
+                            style={[styles.acceptBtn, { backgroundColor: theme.primary }]}
                             onPress={onAccept}
-                            activeOpacity={0.8}
+                            activeOpacity={0.9}
                         >
-                            <Text style={styles.acceptBtnText}>Aceptar y Continuar</Text>
-                            <Ionicons name="chevron-forward" size={18} color="white" style={{ marginLeft: 8 }} />
+                            <Text style={styles.acceptBtnText}>Entendido y Aceptar</Text>
                         </TouchableOpacity>
-                        <Text style={[styles.footerNote, { color: theme.secondary }]}>Desarrollado con compromiso por cafesitoXpressVE</Text>
+                        <Text style={[styles.legalNote, { color: theme.secondary }]}>
+                            © 2026 cafesitoXpressVE Group • Soporte Técnico
+                        </Text>
                     </View>
                 </View>
             </View>
@@ -104,114 +104,112 @@ const PrivacyModal = ({ visible, onClose, onAccept, theme }) => {
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        width: width * 0.92,
-        maxHeight: height * 0.8, // Asegura que el modal no se salga de la pantalla
-        borderRadius: 30,
-        paddingHorizontal: 20,
-        paddingTop: 10,
-        paddingBottom: 20,
-        elevation: 20,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 15,
-    },
-    topIndicator: {
-        width: 35,
-        height: 4,
-        borderRadius: 2,
-        alignSelf: 'center',
-        marginBottom: 15,
+        width: width * 0.9,
+        maxHeight: height * 0.85,
+        borderRadius: 16, // Bordes menos curvos, más serios
+        overflow: 'hidden',
+        ...Platform.select({
+            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
+            android: { elevation: 5 }
+        })
     },
     header: {
+        paddingHorizontal: 24,
+        paddingVertical: 20,
+        borderBottomWidth: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 15,
-        paddingHorizontal: 4,
+    },
+    headerTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     title: {
-        fontSize: 20,
+        fontSize: 18,
+        fontWeight: '700',
+        marginRight: 10,
+    },
+    badge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    badgeText: {
+        fontSize: 10,
         fontWeight: '800',
-        letterSpacing: -0.5,
-    },
-    subtitle: {
-        fontSize: 11,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-    },
-    closeButton: {
-        padding: 4,
     },
     scrollArea: {
-        flexGrow: 0, // Importante para que el scroll no empuje el footer fuera
+        paddingHorizontal: 24,
     },
     scrollContent: {
-        paddingHorizontal: 4,
+        paddingVertical: 20,
     },
     introText: {
         fontSize: 14,
-        lineHeight: 20,
-        marginBottom: 20,
+        lineHeight: 22,
+        marginBottom: 24,
+        opacity: 0.9,
     },
     sectionContainer: {
-        marginBottom: 20,
+        marginBottom: 24,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 8,
     },
-    iconCircle: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
+    headerIcon: {
+        marginRight: 12,
     },
     sectionTitle: {
         fontSize: 15,
-        fontWeight: '700',
+        fontWeight: '600',
+        letterSpacing: 0.2,
+    },
+    textBorderLeft: {
+        borderLeftWidth: 2,
+        marginLeft: 9,
+        paddingLeft: 22,
     },
     sectionText: {
-        fontSize: 14,
-        lineHeight: 21,
-        paddingLeft: 42,
+        fontSize: 13,
+        lineHeight: 20,
+        opacity: 0.8,
     },
     footer: {
-        marginTop: 10,
-        paddingTop: 15,
+        padding: 24,
         borderTopWidth: 1,
-        alignItems: 'center',
+    },
+    footerConsent: {
+        fontSize: 12,
+        textAlign: 'center',
+        marginBottom: 16,
+        lineHeight: 18,
     },
     acceptBtn: {
-        flexDirection: 'row',
-        paddingVertical: 16, // Increased height
-        width: '100%',
-        borderRadius: 20, // Rounder corners
+        height: 54,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowOffset: { width: 0, height: 8 }, // Deeper shadow
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
-        elevation: 8,
-        marginTop: 10,
     },
     acceptBtnText: {
         color: '#FFFFFF',
-        fontSize: 18, // Larger text
-        fontWeight: '800', // Bolder
-        letterSpacing: 0.5,
+        fontSize: 16,
+        fontWeight: '700',
     },
-    footerNote: {
+    legalNote: {
         fontSize: 10,
-        marginTop: 10,
-        fontWeight: '500'
+        textAlign: 'center',
+        marginTop: 16,
+        opacity: 0.6,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });
 

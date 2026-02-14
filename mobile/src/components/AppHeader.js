@@ -9,7 +9,8 @@ const AppHeader = ({
     activeColors,
     setMenuVisible,
     updateTag = "CLEAN START (V12)",
-    isAdFree = false
+    isAdFree = false,
+    userName
 }) => {
     const smoke1 = useRef(new Animated.Value(0)).current;
     const smoke2 = useRef(new Animated.Value(0)).current;
@@ -89,7 +90,7 @@ const AppHeader = ({
                         La Tasa
                     </Text>
                     <Text style={{ color: activeColors.secondary, fontSize: scale(12), opacity: 1, fontWeight: '600' }}>
-                        Tus calculos en tiempo real
+                        {userName ? `Hola, ${userName}` : 'Tus calculos en tiempo real'}
                     </Text>
                 </View>
             </View>

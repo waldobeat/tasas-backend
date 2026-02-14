@@ -8,8 +8,8 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
             {rates && rates.bdv ? (
                 <RateCard
                     id="bcv-usd"
-                    title="BCV"
-                    subtitle="Dólar Oficial"
+                    title="DOLAR"
+                    subtitle="Tasa Oficial"
                     rateValue={rates.bdv.usd.rate}
                     isActive={activeCalc === 'bcv-usd'}
                     onToggle={toggleCalc}
@@ -27,8 +27,8 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
             {rates && rates.bdv && rates.bdv.eur && (
                 <RateCard
                     id="bcv-eur"
-                    title="BCV"
-                    subtitle="Euro Oficial"
+                    title="EURO"
+                    subtitle="Tasa Oficial"
                     rateValue={rates.bdv.eur.rate}
                     isActive={activeCalc === 'bcv-eur'}
                     onToggle={toggleCalc}
@@ -42,8 +42,8 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
             {rates && rates.binance && rates.binance.usd && (
                 <RateCard
                     id="binance-usd"
-                    title="BINANCE"
-                    subtitle="USDT P2P"
+                    title="BINANCE P2P"
+                    subtitle="USDT"
                     rateValue={rates.binance.usd.rate}
                     isActive={activeCalc === 'binance-usd'}
                     onToggle={toggleCalc}
@@ -54,15 +54,15 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
                 />
             )}
 
-            <TouchableOpacity onPress={() => Linking.openURL('http://bcv.org.ve')} style={{ paddingVertical: 5, width: '100%', alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => Linking.openURL('https://www.bcv.org.ve')} style={{ paddingVertical: 5, width: '100%', alignItems: 'center' }}>
                 <Text style={{
                     color: activeColors.primary,
-                    fontSize: 11,
+                    fontSize: 12,
                     textAlign: 'center',
                     fontStyle: 'italic',
                     textDecorationLine: 'underline'
                 }}>
-                    Para validar su información consulte bcv.org.ve
+                    Para validar su información consulte la fuente oficial aquí
                 </Text>
             </TouchableOpacity>
         </View>
