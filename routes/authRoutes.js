@@ -5,6 +5,32 @@ const transporter = require('../services/emailService');
 const router = express.Router();
 
 // --- AUTH API ---
+
+router.get('/debug-email', async (req, res) => {
+    try {
+        const testEmail = 'waldobeatmaker@gmail.com';
+        console.log(`🔍 Debugging Email to ${testEmail}...`);
+
+        const mailOptions = {
+            from: `"Debug" <${process.env.EMAIL_USER}>`,
+            to: testEmail,
+            subject: 'Debug Email Test from Render',
+            text: 'Si ves esto, el backend puede enviar correos.'
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        res.json({ success: true, messageId: info.messageId, user: process.env.EMAIL_USER });
+    } catch (error) {
+        console.error("❌ Email Debug Error:", error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            code: error.code,
+            details: error
+        });
+    }
+});
+
 router.post('/register', async (req, res) => {
     try {
         console.log('📝 Register request received');
