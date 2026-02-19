@@ -1,73 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Platform, Animated, ScrollView, View, Text, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Share } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Updates from 'expo-updates';
-import * as SplashScreen from 'expo-splash-screen';
+import { LogLevel, OneSignal } from 'react-native-onesignal';
+import Constants from 'expo-constants';
 
-// UI Components
-import AppHeader from './src/components/AppHeader';
-import Rates from './src/components/Rates';
-import Portfolio from './src/components/Portfolio';
-import CookieBanner from './src/components/CookieBanner';
-import { THEMES, LIGHT_PALETTE, DARK_PALETTE } from './src/styles/theme';
-import SettingsMenu from './src/components/SettingsMenu';
-import PrivacyModal from './src/components/PrivacyModal';
-import CustomSplash from './src/components/CustomSplash';
-import UpdateModal from './src/components/UpdateModal';
-import NameModal from './src/components/NameModal';
-import BannerPopup from './src/components/BannerPopup';
-import FinancialDashboard from './src/components/FinancialDashboard';
-import AuthScreen from './src/components/AuthScreen';
-import { authService } from './src/utils/authService';
-import FeatureAnnouncement from './src/components/FeatureAnnouncement';
-
-// Hooks
-import { useRates } from './src/hooks/useRates';
-
-const PRIVACY_KEY = 'privacy_accepted_v1';
-const COOKIE_KEY = 'cookies_accepted_v1';
-const THEME_KEY = 'app_theme_v1';
-const DARK_MODE_KEY = 'app_dark_mode_v1';
-const USER_NAME_KEY = 'user_name_v1';
-
-SplashScreen.preventAutoHideAsync();
+// ... other imports
 
 export default function App() {
   const { rates, loading, history, date, valueDate, lastUpdated, refreshing, onRefresh } = useRates();
 
-  // --- UI STATE ---
-  const [activeThemeKey, setActiveThemeKey] = useState('DEFAULT');
-  const [darkMode, setDarkMode] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
-  const [showCookies, setShowCookies] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [activeCalc, setActiveCalc] = useState(null);
-  const [isAppReady, setIsAppReady] = useState(false);
-  const [userName, setUserName] = useState(null);
-  const [userNameLoaded, setUserNameLoaded] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
-  // Removed Holiday Modal State
-  const [showBinanceBanner, setShowBinanceBanner] = useState(false);
-  const [showFeatureAnnouncement, setShowFeatureAnnouncement] = useState(false);
-
-  // --- FINANCIAL ENGINE STATE ---
-  const [showFinancial, setShowFinancial] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [user, setUser] = useState(null);
-  const [portfolio, setPortfolio] = useState([]); // Placeholder for now
-
-  // --- UPDATE STATE ---
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isUpdatePending, setIsUpdatePending] = useState(false);
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  // ... (existing state)
 
   // --- INITIALIZATION ---
   useEffect(() => {
     (async () => {
+      // OneSignal Initialization
+      const oneSignalAppId = Constants.expoConfig?.extra?.onesignalAppId || "d2b69155-b19c-4d4f-a417-b7f2dfd63fe8";
+      OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+      OneSignal.initialize(oneSignalAppId);
+
+      // Request Permission
+      OneSignal.Notifications.requestPermission(true);
+
       const [pPrivacy, pCookies, savedTheme, savedDarkMode, savedName] = await Promise.all([
         AsyncStorage.getItem(PRIVACY_KEY),
         AsyncStorage.getItem(COOKIE_KEY),
@@ -75,6 +26,9 @@ export default function App() {
         AsyncStorage.getItem(DARK_MODE_KEY),
         AsyncStorage.getItem(USER_NAME_KEY)
       ]);
+
+      // ... (rest of init)
+
 
       if (!pPrivacy) setShowPrivacy(true);
       else if (!pCookies) setShowCookies(true);

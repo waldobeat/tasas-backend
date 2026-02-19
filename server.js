@@ -14,11 +14,16 @@ if (result.error) {
 }
 
 const { setupCronJobs } = require('./services/cronService');
+const { setupDebtScheduler } = require('./services/schedulerService');
 const rateRoutes = require('./routes/rateRoutes');
 const connectDB = require('./config/db');
 
 // Connect to Database
 connectDB();
+
+// Start Schedulers
+setupCronJobs();
+setupDebtScheduler();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
