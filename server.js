@@ -15,6 +15,10 @@ if (result.error) {
 
 const { setupCronJobs } = require('./services/cronService');
 const rateRoutes = require('./routes/rateRoutes');
+const connectDB = require('./config/db');
+
+// Connect to Database
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
