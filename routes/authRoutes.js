@@ -50,7 +50,7 @@ router.post('/register', async (req, res) => {
                 console.log(`📧 Attempting to send email to ${email}...`);
                 const info = await Promise.race([
                     transporter.sendMail(mailOptions),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 4000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 15000))
                 ]);
                 emailSent = true;
                 console.log(`📧 Email sent successfully: ${info.messageId}`);
