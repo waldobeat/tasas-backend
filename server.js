@@ -42,7 +42,12 @@ app.use((req, res, next) => {
 const { saveToken } = require('./utils/pushNotifications');
 
 // Mount Routes
+const authRoutes = require('./routes/authRoutes');
+const financeRoutes = require('./routes/financeRoutes');
+
 app.use('/api', rateRoutes); // Mounts /rates and /history
+app.use('/api/auth', authRoutes);
+app.use('/api/finance', financeRoutes);
 
 const { broadcastNotification } = require('./utils/pushNotifications');
 
