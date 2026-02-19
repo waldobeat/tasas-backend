@@ -11,16 +11,19 @@ const transactionSchema = new mongoose.Schema({
     completed: { type: Boolean, default: false },
     // Debt specific fields
     debtType: { type: String, enum: ['loan', 'credit', null], default: null },
+    provider: { type: String, default: null }, // Added provider
     obtainedDate: { type: Date, default: null },
-    payments: [{
+    installments: [{
+        number: { type: Number },
+        amount: { type: Number, required: true },
+        dueDate: { type: Date, required: true },
+        status: { type: String, enum: ['pending', 'paid', 'overdue'], default: 'pending' },
+        paidDate: { type: Date }
+    }],
+    payments: [{ // Keeping for backward compatibility or direct payments
         id: { type: String },
         amount: { type: Number, required: true },
         date: { type: Date, required: true }
-    }],
-    installments: [{
-        date: { type: Date, required: true },
-        amount: { type: Number, required: true },
-        paid: { type: Boolean, default: false }
     }]
 });
 

@@ -17,9 +17,11 @@ import PrivacyModal from './src/components/PrivacyModal';
 import CustomSplash from './src/components/CustomSplash';
 import UpdateModal from './src/components/UpdateModal';
 import NameModal from './src/components/NameModal';
-import HolidayModal from './src/components/HolidayModal';
 import BannerPopup from './src/components/BannerPopup';
-import ValentineRain from './src/components/ValentineRain';
+import FinancialDashboard from './src/components/FinancialDashboard';
+import AuthScreen from './src/components/AuthScreen';
+import { authService } from './src/utils/authService';
+import FeatureAnnouncement from './src/components/FeatureAnnouncement';
 
 // Hooks
 import { useRates } from './src/hooks/useRates';
@@ -46,9 +48,15 @@ export default function App() {
   const [userName, setUserName] = useState(null);
   const [userNameLoaded, setUserNameLoaded] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
-  const [showHolidayModal, setShowHolidayModal] = useState(false);
-  const [holidayModalClosed, setHolidayModalClosed] = useState(false);
+  // Removed Holiday Modal State
   const [showBinanceBanner, setShowBinanceBanner] = useState(false);
+  const [showFeatureAnnouncement, setShowFeatureAnnouncement] = useState(false);
+
+  // --- FINANCIAL ENGINE STATE ---
+  const [showFinancial, setShowFinancial] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState(null);
+  const [portfolio, setPortfolio] = useState([]); // Placeholder for now
 
   // --- UPDATE STATE ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -79,6 +87,16 @@ export default function App() {
       }
       setUserNameLoaded(true);
 
+      // --- SESSION & FEATURE ANNOUNCEMENT ---
+      const storedUser = await authService.getUser();
+      if (storedUser) {
+        setUser(storedUser);
+      }
+
+      // Show Feature Announcement on EVERY startup as requested
+      setTimeout(() => setShowFeatureAnnouncement(true), 1500);
+
+      // --- OTA UPDATES LOGIC (NON-BLOCKING) ---
       // --- OTA UPDATES LOGIC (NON-BLOCKING) ---
       if (!__DEV__) {
         try {
@@ -87,15 +105,20 @@ export default function App() {
             setShowUpdateModal(true);
             setIsDownloading(true);
 
-            await Updates.fetchUpdateAsync();
+            // Parallel execution: Fetch update AND wait 5 seconds min
+            await Promise.all([
+              Updates.fetchUpdateAsync(),
+              new Promise(resolve => setTimeout(resolve, 5000))
+            ]);
 
             setDownloadProgress(1);
             Animated.timing(progressAnim, {
-              toValue: 1,
-              duration: 800,
+              toValue: 1, // Fill bar
+              duration: 500,
               useNativeDriver: false
             }).start();
 
+            // Show Restart Button
             setIsDownloading(false);
             setIsUpdatePending(true);
 
@@ -111,7 +134,7 @@ export default function App() {
 
   const onSplashFinish = useCallback(async () => {
     setIsAppReady(true);
-    setShowHolidayModal(true);
+    // Removed Holiday Modal trigger
     try {
       await SplashScreen.hideAsync();
     } catch (e) {
@@ -119,12 +142,12 @@ export default function App() {
     }
   }, []);
 
-  // Show name modal only when app is ready AND name is checked AND missing AND holiday modal is closed
+  // Show name modal only when app is ready AND name is checked AND missing
   useEffect(() => {
-    if (isAppReady && userNameLoaded && !userName && holidayModalClosed) {
+    if (isAppReady && userNameLoaded && !userName) {
       setShowNameModal(true);
     }
-  }, [isAppReady, userNameLoaded, userName, holidayModalClosed]);
+  }, [isAppReady, userNameLoaded, userName]);
 
   // --- ACTIONS ---
   const handleToggleDarkMode = (value) => {
@@ -181,12 +204,57 @@ export default function App() {
     AsyncStorage.setItem(THEME_KEY, key);
   };
 
+  // --- FINANCIAL ENGINE LOGIC ---
+  const handleOpenFinancial = () => {
+    if (user) {
+      setShowFinancial(true);
+    } else {
+      setShowAuth(true);
+    }
+  };
+
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+    setShowAuth(false);
+    setShowFinancial(true);
+  };
+
+  const handleCloseFinancial = () => {
+    setShowFinancial(false);
+  };
+
   if (!isAppReady) {
     return <CustomSplash onFinish={onSplashFinish} theme={activeColors} />;
   }
 
   if (showPrivacy) {
     return <PrivacyModal visible={true} onAccept={handleAcceptPrivacy} theme={activeColors} />;
+  }
+
+  if (showAuth) {
+    return (
+      <AuthScreen
+        onAuthSuccess={handleAuthSuccess}
+        theme={currentTheme}
+        activeColors={activeColors}
+        onShowPrivacy={() => setShowPrivacy(true)}
+      />
+    );
+  }
+
+  if (showFinancial) {
+    return (
+      <FinancialDashboard
+        theme={currentTheme}
+        activeColors={activeColors}
+        isPremium={true} // For now, assume premium to test
+        user={user}
+        portfolio={portfolio}
+        onClose={handleCloseFinancial}
+        onAddPress={() => console.log("Add transaction")}
+        onOpenPremium={() => console.log("Open Premium")}
+      />
+    );
   }
 
   return (
@@ -203,6 +271,7 @@ export default function App() {
           activeColors={activeColors}
           setMenuVisible={() => setShowSettings(true)}
           userName={userName}
+          onOpenFinancial={handleOpenFinancial}
         />
 
         <ScrollView
@@ -311,16 +380,21 @@ export default function App() {
           <CookieBanner onAccept={handleAcceptCookies} />
         )}
 
-        <HolidayModal
-          visible={showHolidayModal}
-          onClose={() => {
-            setShowHolidayModal(false);
-            setHolidayModalClosed(true);
+        <FeatureAnnouncement
+          visible={showFeatureAnnouncement}
+          onClose={() => setShowFeatureAnnouncement(false)}
+          onTryNow={() => {
+            setShowFeatureAnnouncement(false);
+            if (user) {
+              setShowFinancial(true);
+            } else {
+              setShowAuth(true); // Ask to login/register to use it
+            }
           }}
           activeColors={activeColors}
-          theme={currentTheme}
+          theme={activeColors}
         />
-        <ValentineRain />
+
       </SafeAreaView>
     </SafeAreaProvider>
   );

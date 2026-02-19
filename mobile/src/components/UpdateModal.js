@@ -89,7 +89,7 @@ const UpdateModal = ({
                         textAlign: 'center',
                         letterSpacing: -0.5
                     }}>
-                        {isUpdatePending ? 'Aplicando actualización' : 'Mejorando tu experiencia'}
+                        {isUpdatePending ? 'Actualización Completada' : 'Actualizando...'}
                     </Text>
 
                     <Text style={{
@@ -101,8 +101,8 @@ const UpdateModal = ({
                         opacity: 0.8
                     }}>
                         {isUpdatePending
-                            ? 'La aplicación se reactivará en un momento con las últimas mejoras.'
-                            : 'Estamos descargando nuevas funcionalidades para ti.'}
+                            ? 'Presiona reiniciar para aplicar los cambios.'
+                            : 'Estamos preparando todo, por favor espera...'}
                     </Text>
 
                     <View style={{

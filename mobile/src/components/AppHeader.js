@@ -10,7 +10,8 @@ const AppHeader = ({
     setMenuVisible,
     updateTag = "CLEAN START (V12)",
     isAdFree = false,
-    userName
+    userName,
+    onOpenFinancial
 }) => {
     const smoke1 = useRef(new Animated.Value(0)).current;
     const smoke2 = useRef(new Animated.Value(0)).current;
@@ -95,16 +96,30 @@ const AppHeader = ({
                 </View>
             </View>
 
-            <TouchableOpacity
-                onPress={setMenuVisible}
-                style={{
-                    padding: 6,
-                    backgroundColor: activeColors.bg,
-                    borderRadius: 12,
-                }}
-            >
-                <Ionicons name="settings-sharp" size={24} color={activeColors.secondary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity
+                    onPress={onOpenFinancial}
+                    style={{
+                        padding: 6,
+                        backgroundColor: activeColors.bg,
+                        borderRadius: 12,
+                        marginRight: 10,
+                    }}
+                >
+                    <Ionicons name="wallet-outline" size={24} color={activeColors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={setMenuVisible}
+                    style={{
+                        padding: 6,
+                        backgroundColor: activeColors.bg,
+                        borderRadius: 12,
+                    }}
+                >
+                    <Ionicons name="settings-sharp" size={24} color={activeColors.secondary} />
+                </TouchableOpacity>
+            </View>
         </View >
     );
 };

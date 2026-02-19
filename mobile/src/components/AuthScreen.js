@@ -73,11 +73,16 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         setLoading(true);
         try {
             const res = await authService.register(name, email, password, premiumCode);
-            // res usually contains { message, devCode, status }
+
+            // "Smart Fallback": Solo mostrar el código si el correo FALLÓ
+            // El backend envía un mensaje específico cuando falla.
             let alertMsg = res.message || "Hemos enviado un código de verificación a tu correo.";
-            if (res.devCode) {
-                alertMsg += `\n\nFallback (Solo Pruebas): ${res.devCode}`;
+
+            // Si el mensaje indica error (ej: "Error en servidor..."), mostramos el código para no bloquear al usuario
+            if (res.message && res.message.includes('Error') && res.devCode) {
+                alertMsg += `\n\nTu Código (Fallback): ${res.devCode}`;
             }
+
             Alert.alert("Registro", alertMsg);
             setMode('verify');
         } catch (error) {
