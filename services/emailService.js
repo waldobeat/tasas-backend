@@ -5,18 +5,16 @@ require('dotenv').config();
 // Email Transporter (configurar en .env)
 // Email Transporter (configurar en .env)
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Upgrade via STARTTLS
-    tls: {
-        ciphers: 'SSLv3'
-    },
-    ignoreTLS: false,
-    requireTLS: true,
+    service: 'gmail',
+    family: 4, // Force IPv4
     auth: {
         user: process.env.EMAIL_USER,
         pass: (process.env.EMAIL_PASS || '').replace(/\s+/g, '')
-    }
+    },
+    logger: true,
+    debug: true,
+    connectionTimeout: 20000, // 20 seconds
+    socketTimeout: 20000
 });
 
 // Verify connection configuration
