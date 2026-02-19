@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OneSignal } from 'react-native-onesignal';
+// import { OneSignal } from 'react-native-onesignal';
 
 const API_URL = 'https://tasas-backend.onrender.com/api/auth';
 const USER_KEY = '@auth_user_v1';
@@ -13,7 +13,7 @@ export const authService = {
                 await AsyncStorage.setItem(USER_KEY, JSON.stringify(response.data));
                 // Identify User in OneSignal
                 if (response.data.id) {
-                    OneSignal.login(response.data.id);
+                    // OneSignal.login(response.data.id);
                 }
             }
             return response.data;
@@ -38,7 +38,7 @@ export const authService = {
             });
             // Identify User in OneSignal if registration auto-logs in (it returns ID)
             if (response.data && response.data.id) {
-                OneSignal.login(response.data.id);
+                // OneSignal.login(response.data.id);
             }
             return response.data;
         } catch (error) {
@@ -59,7 +59,7 @@ export const authService = {
 
     logout: async () => {
         await AsyncStorage.removeItem(USER_KEY);
-        OneSignal.logout();
+        // OneSignal.logout();
     },
 
     updatePremiumStatus: async (userId, isPremium, expiresAt = null, premiumType = null) => {

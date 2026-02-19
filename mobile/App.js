@@ -1,4 +1,4 @@
-import { LogLevel, OneSignal } from 'react-native-onesignal';
+// import { LogLevel, OneSignal } from 'react-native-onesignal';
 import Constants from 'expo-constants';
 
 // ... other imports
@@ -11,13 +11,13 @@ export default function App() {
   // --- INITIALIZATION ---
   useEffect(() => {
     (async () => {
-      // OneSignal Initialization
-      const oneSignalAppId = Constants.expoConfig?.extra?.onesignalAppId || "d2b69155-b19c-4d4f-a417-b7f2dfd63fe8";
-      OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-      OneSignal.initialize(oneSignalAppId);
+      // OneSignal Initialization REVERTED due to missing native module in production build
+      // const oneSignalAppId = Constants.expoConfig?.extra?.onesignalAppId || "d2b69155-b19c-4d4f-a417-b7f2dfd63fe8";
+      // OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+      // OneSignal.initialize(oneSignalAppId);
 
       // Request Permission
-      OneSignal.Notifications.requestPermission(true);
+      // OneSignal.Notifications.requestPermission(true);
 
       const [pPrivacy, pCookies, savedTheme, savedDarkMode, savedName] = await Promise.all([
         AsyncStorage.getItem(PRIVACY_KEY),
