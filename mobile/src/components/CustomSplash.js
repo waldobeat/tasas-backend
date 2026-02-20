@@ -38,7 +38,7 @@ const CustomSplash = ({ onFinish, theme }) => {
                     resizeMode="contain"
                 />
                 <Text style={{ marginTop: 20, color: theme.text, fontSize: 18, fontWeight: '600' }}>
-                    La Tasa
+                    La Tasa V2
                 </Text>
                 <Text style={{ marginTop: 5, color: theme.secondary, fontSize: 12 }}>
                     Cargando información...

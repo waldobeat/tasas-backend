@@ -39,7 +39,7 @@ const IntroScreen = ({ onFinish }) => {
                         resizeMode="contain"
                     />
                 </View>
-                <Text style={styles.title}>La Tasa</Text>
+                <Text style={styles.title}>La Tasa V2</Text>
                 <Text style={styles.subtitle}>Tu gestor financiero sin publicidad</Text>
             </Animated.View>
 

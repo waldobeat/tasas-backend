@@ -163,7 +163,7 @@ export default function App() {
   const onShare = async (title, rate) => {
     try {
       await Share.share({
-        message: `${title}: ${rate} Bs.\nConsulta más en La Tasa App.`,
+        message: `${title}: ${rate} Bs.\nConsulta más en La Tasa V2 App.`,
       });
     } catch (error) {
       console.log('Error sharing:', error);

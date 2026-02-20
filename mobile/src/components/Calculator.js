@@ -64,7 +64,7 @@ export default function Calculator({
 
     const handleInternalShare = async () => {
         try {
-            const message = `Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\nCalculado con La Tasa App.`;
+            const message = `Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\nCalculado con La Tasa V2 App.`;
             await Share.share({ message });
         } catch (error) {
             console.error('Error sharing text:', error);
@@ -156,7 +156,7 @@ export default function Calculator({
                                     </View>
 
                                     <Text style={{ color: activeColors.secondary, fontSize: 9, textAlign: 'center', marginTop: 15, fontStyle: 'italic' }}>
-                                        Cálculo realizado con La Tasa
+                                        Cálculo realizado con La Tasa V2
                                     </Text>
                                 </View>
                             </TouchableOpacity>

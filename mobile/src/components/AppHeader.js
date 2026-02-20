@@ -87,7 +87,7 @@ const AppHeader = ({
                 </View>
                 <View style={{ marginLeft: scale(12) }}>
                     <Text style={{ color: activeColors.textDark, fontSize: moderateScale(24), fontWeight: '900', letterSpacing: -0.5 }}>
-                        La Tasa
+                        La Tasa V2
                     </Text>
                     <Text style={{ color: activeColors.secondary, fontSize: scale(12), opacity: 1, fontWeight: '600' }}>
                         {userName ? `Hola, ${userName}` : 'Tus calculos en tiempo real'}
