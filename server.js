@@ -29,8 +29,8 @@ const commentRoutes = require('./routes/commentRoutes');
 // const financeRoutes = require('./routes/financeRoutes'); // Keep if needed, preventing errors if missing
 
 app.use('/api/auth', authRoutes); // Priority: Auth routes first
+app.use('/api/comments', commentRoutes); // Priority: Comments before generic /api
 app.use('/api', rateRoutes); // Mounts /rates and /history
-app.use('/api/comments', commentRoutes);
 // app.use('/api/finance', financeRoutes); // Uncomment if finance module is active
 
 const { broadcastNotification } = require('./utils/pushNotifications');
