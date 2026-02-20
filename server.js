@@ -20,6 +20,10 @@ const rateRoutes = require('./routes/rateRoutes');
 const connectDB = require('./config/db');
 connectDB();
 
+const app = express();
+app.use(cors());
+app.use(express.json());
+
 // Start Schedulers
 setupCronJobs();
 
@@ -28,9 +32,18 @@ const authRoutes = require('./routes/authRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 // const financeRoutes = require('./routes/financeRoutes'); // Keep if needed, preventing errors if missing
 
-app.use('/api/auth', authRoutes); // Priority: Auth routes first
-app.use('/api/comments', commentRoutes); // Priority: Comments before generic /api
-app.use('/api', rateRoutes); // Mounts /rates and /history
+// Mount Routes
+app.get('/api/version', (req, res) => res.json({ version: '1.2', timestamp: new Date().toISOString() }));
+
+console.log('✅ Mounting authRoutes at /api/auth');
+app.use('/api/auth', authRoutes);
+
+console.log('✅ Mounting commentRoutes at /api/comments');
+app.use('/api/comments', commentRoutes);
+
+console.log('✅ Mounting rateRoutes at /api');
+app.use('/api', rateRoutes);
+
 // app.use('/api/finance', financeRoutes); // Uncomment if finance module is active
 
 const { broadcastNotification } = require('./utils/pushNotifications');
