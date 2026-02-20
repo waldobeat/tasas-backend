@@ -112,9 +112,15 @@ const checkAndLogRate = async () => {
 
             // SEND NOTIFICATION ONLY FOR BCV CHANGES
             if (bcvChanged || valueDateChanged) {
-                const title = "🔔 ¡El Dólar BCV ha cambiado!";
-                const body = `Nueva Tasa: ${newBCVRate} VES/USD\nFecha Valor: ${bcvData.value_date || 'Hoy'}`;
-                await broadcastNotification(title, body, { rate: newBCVRate });
+                try {
+                    const title = "🔔 ¡El Dólar BCV ha cambiado!";
+                    const body = `Nueva Tasa: ${newBCVRate} VES/USD\nFecha Valor: ${bcvData.value_date || 'Hoy'}`;
+                    console.log(`[CRON] Attempting to send notification: ${title}`);
+                    await broadcastNotification(title, body, { rate: newBCVRate });
+                    console.log(`[CRON] Notification sent successfully.`);
+                } catch (notifError) {
+                    console.error(`[CRON] ❌ Failed to send notification:`, notifError.message);
+                }
             }
 
         } else {

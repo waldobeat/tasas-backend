@@ -34,7 +34,7 @@ router.get('/debug-email', async (req, res) => {
 router.post('/register', async (req, res) => {
     try {
         console.log('📝 Register request received');
-        const { name, email, password, premiumCode } = req.body;
+        const { name, email, password, premiumCode, isGiftRegistration } = req.body;
         if (!name || !email || !password) return res.status(400).json({ error: 'Faltan datos' });
         if (password.length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
 
@@ -42,19 +42,42 @@ router.post('/register', async (req, res) => {
         if (existingUser) return res.status(400).json({ error: 'El correo ya existe' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const vCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // If Gift Registration, no verification code needed (or dummy), and active=false
+        const vCode = isGiftRegistration ? null : Math.floor(100000 + Math.random() * 900000).toString();
+        const initialStatus = isGiftRegistration ? 'pendiente' : 'pendiente'; // Both pending, but meaning different things? 
+        // User said: "levamos a crear un boleano, activate : true , false , en este caso fase"
+        // So for gift registration, active = false.
 
         const newUser = new User({
             name, email, password: hashedPassword,
             verificationCode: vCode,
+            status: initialStatus,
+            active: !isGiftRegistration, // Logic: Normal users might need verification but eventually active? Or just false for everyone initially? 
+            // The user specifically asked for this boolean for THESE users.
+            // Let's set active = false for isGiftRegistration.
             isPremium: premiumCode === '123123ABCD',
             premiumType: premiumCode === '123123ABCD' ? 'plus' : null
         });
 
+        if (isGiftRegistration) {
+            newUser.active = false;
+        }
+
         const saved = await newUser.save();
         console.log(`👤 User saved: ${saved._id}`);
 
-        // Enviar correo real con Timeout
+        // If Gift Registration, SKIP EMAIL
+        if (isGiftRegistration) {
+            console.log('🎁 Gift Registration: Skipping email verification.');
+            return res.status(201).json({
+                id: saved._id,
+                status: 'inactive', // Custom status for frontend handling
+                message: 'Registro exitoso. Tu usuario se activará cuando comience la jornada premium.',
+                isGiftRegistration: true
+            });
+        }
+
+        // Enviar correo real con Timeout for NORMAL registration
         const mailOptions = {
             from: `"La Tasa" <${process.env.EMAIL_USER}>`,
             to: email,

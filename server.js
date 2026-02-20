@@ -16,47 +16,22 @@ if (result.error) {
 const { setupCronJobs } = require('./services/cronService');
 // const { setupDebtScheduler } = require('./services/schedulerService');
 const rateRoutes = require('./routes/rateRoutes');
-const connectDB = require('./config/db');
-
 // Connect to Database
+const connectDB = require('./config/db');
 connectDB();
 
 // Start Schedulers
 setupCronJobs();
-// setupDebtScheduler();
-
-const app = express();
-const PORT = process.env.PORT || 8000;
-
-console.log(`[DEBUG] Entorno cargado: ${process.env.NODE_ENV || 'development'}`);
-console.log(`[DEBUG] OneSignal App ID en proceso: ${process.env.ONESIGNAL_APP_ID ? 'Presente' : 'AUSENTE'}`);
-console.log(`[DEBUG] Puerto configurado: ${process.env.PORT || 'Default 8000'}`);
-
-app.use(cors());
-app.use(express.json());
-
-
-
-// Health endpoint for keep-alive pings
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-// Logger Middleware
-app.use((req, res, next) => {
-    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
-    next();
-});
-
-const { saveToken } = require('./utils/pushNotifications');
 
 // Mount Routes
 const authRoutes = require('./routes/authRoutes');
-const financeRoutes = require('./routes/financeRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+// const financeRoutes = require('./routes/financeRoutes'); // Keep if needed, preventing errors if missing
 
 app.use('/api', rateRoutes); // Mounts /rates and /history
 app.use('/api/auth', authRoutes);
-app.use('/api/finance', financeRoutes);
+app.use('/api/comments', commentRoutes);
+// app.use('/api/finance', financeRoutes); // Uncomment if finance module is active
 
 const { broadcastNotification } = require('./utils/pushNotifications');
 

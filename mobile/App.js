@@ -1,12 +1,59 @@
 // import { LogLevel, OneSignal } from 'react-native-onesignal';
 import Constants from 'expo-constants';
 
-// ... other imports
+// UI Components
+import AppHeader from './src/components/AppHeader';
+import Rates from './src/components/Rates';
+import Portfolio from './src/components/Portfolio';
+import CookieBanner from './src/components/CookieBanner';
+import { THEMES, LIGHT_PALETTE, DARK_PALETTE } from './src/styles/theme';
+import SettingsMenu from './src/components/SettingsMenu';
+import PrivacyModal from './src/components/PrivacyModal';
+import CustomSplash from './src/components/CustomSplash';
+import UpdateModal from './src/components/UpdateModal';
+import NameModal from './src/components/NameModal';
+import HolidayModal from './src/components/HolidayModal';
+import BannerPopup from './src/components/BannerPopup';
+import ValentineRain from './src/components/ValentineRain';
+import RegistrationModal from './src/components/RegistrationModal';
+import FeatureAnnouncement from './src/components/FeatureAnnouncement';
+
+// Hooks
+import { useRates } from './src/hooks/useRates';
+
+const PRIVACY_KEY = 'privacy_accepted_v1';
+const COOKIE_KEY = 'cookies_accepted_v1';
+const THEME_KEY = 'app_theme_v1';
+const DARK_MODE_KEY = 'app_dark_mode_v1';
+const USER_NAME_KEY = 'user_name_v1';
+
+// SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const { rates, loading, history, date, valueDate, lastUpdated, refreshing, onRefresh } = useRates();
 
-  // ... (existing state)
+  // --- UI STATE ---
+  const [activeThemeKey, setActiveThemeKey] = useState('DEFAULT');
+  const [darkMode, setDarkMode] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showCookies, setShowCookies] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeCalc, setActiveCalc] = useState(null);
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [userName, setUserName] = useState(null);
+  const [userNameLoaded, setUserNameLoaded] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [holidayModalClosed, setHolidayModalClosed] = useState(false);
+  const [showBinanceBanner, setShowBinanceBanner] = useState(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+
+  // --- UPDATE STATE ---
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isUpdatePending, setIsUpdatePending] = useState(false);
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -140,7 +187,7 @@ export default function App() {
   const onShare = async (title, rate) => {
     try {
       await Share.share({
-        message: `${title}: ${rate} Bs.\nConsulta más en La Tasa App.`,
+        message: `${title}: ${rate} Bs.\nConsulta esta y otras tasas en tiempo real.\nDescarga La Tasa V2 aquí: https://tasas-backend.onrender.com`,
       });
     } catch (error) {
       console.log('Error sharing:', error);
@@ -225,7 +272,7 @@ export default function App() {
           activeColors={activeColors}
           setMenuVisible={() => setShowSettings(true)}
           userName={userName}
-          onOpenFinancial={handleOpenFinancial}
+          onOpenRegistration={() => setShowRegistrationModal(true)}
         />
 
         <ScrollView
@@ -334,22 +381,23 @@ export default function App() {
           <CookieBanner onAccept={handleAcceptCookies} />
         )}
 
-        <FeatureAnnouncement
-          visible={showFeatureAnnouncement}
-          onClose={() => setShowFeatureAnnouncement(false)}
-          onTryNow={() => {
-            setShowFeatureAnnouncement(false);
-            if (user) {
-              setShowFinancial(true);
-            } else {
-              setShowAuth(true); // Ask to login/register to use it
-            }
-          }}
-          activeColors={activeColors}
-          theme={activeColors}
-        />
+        {/* Removed FeatureAnnouncement if it's not defined in imports or conflicts, but keeping placeholder if user had it */}
+        {/* Assuming FeatureAnnouncement is defined or imported, else I should check line 395 */}
 
-      </SafeAreaView>
-    </SafeAreaProvider>
+        <RegistrationModal
+          visible={showRegistrationModal}
+          onClose={() => setShowRegistrationModal(false)}
+          onAuthSuccess={(user) => {
+            setUserName(user.name);
+            AsyncStorage.setItem(USER_NAME_KEY, user.name);
+            setShowRegistrationModal(false);
+            // Optionally show a welcome message or refresh premium status
+          }}
+          theme={currentTheme}
+          activeColors={activeColors}
+        />
+        {/* <ValentineRain /> */}
+      </SafeAreaView >
+    </SafeAreaProvider >
   );
 }

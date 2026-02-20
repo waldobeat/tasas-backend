@@ -126,12 +126,12 @@ const HolidayModal = ({ visible, onClose, activeColors, theme }) => {
 
                     <View style={styles.textContainer}>
                         <Text style={[styles.title, { color: activeColors.textDark }]}>
-                            ¡Feliz Día del Amor y la Amistad!
+                            ¡BIENVENIDO!
                         </Text>
 
                         <View style={[styles.dateContainer, { backgroundColor: theme.primary + '15' }]}>
                             <Text style={[styles.subtitle, { color: theme.primary }]}>
-                                Valor para el Miercoles 18 de febrero: 396,36 Bs
+                                "Que todos tus sueños y metas se cumplan"
                             </Text>
                         </View>
 

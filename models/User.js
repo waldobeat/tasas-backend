@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
     premiumType: { type: String, enum: ['plus', '30', 'free', null], default: null },
     expiresAt: { type: Date, default: null },
     status: { type: String, enum: ['pendiente', 'activo'], default: 'pendiente' },
+    active: { type: Boolean, default: false }, // New field requested
     verificationCode: { type: String, default: null },
     createdAt: { type: Date, default: Date.now }
 });
