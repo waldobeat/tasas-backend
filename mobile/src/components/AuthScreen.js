@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { authService } from '../utils/authService';
 
-const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy, onUnlockRegister }) => {
+const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy, onUnlockRegister, isGiftMode = false }) => {
     // Modes: 'login', 'register', 'verify'
-    const [mode, setMode] = useState('login');
+    const [mode, setMode] = useState(isGiftMode ? 'register' : 'login');
     const [loading, setLoading] = useState(false);
 
     // Form Data
@@ -15,6 +15,11 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
     const [password, setPassword] = useState('');
     const [premiumCode, setPremiumCode] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
+
+    // Comment State
+    const [comment, setComment] = useState('');
+    const [rating, setRating] = useState(5);
+    const [submittedComment, setSubmittedComment] = useState(false);
 
     // Captcha State
     const [captcha, setCaptcha] = useState({ num1: 0, num2: 0, answer: 0 });
@@ -40,6 +45,8 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         setLoading(true);
         try {
             const user = await authService.login(email, password);
+            // Instead of immediate success, check if we should ask for comment
+            // For now, let's just go to success mode if it's a new registration flow or just direct success
             onAuthSuccess(user);
         } catch (error) {
             if (error.status === 'pendiente') {
@@ -97,10 +104,34 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         setLoading(true);
         try {
             await authService.verify(email, verificationCode);
-            Alert.alert("¡Cuenta Activada!", "Iniciando sesión automáticamente...");
-            handleLogin(); // Auto-login
+            // After verification, log them in automatically
+            const user = await authService.login(email, password);
+            setMode('success'); // Show comment screen
+            // onAuthSuccess(user); // Don't close yet, wait for comment
         } catch (error) {
-            Alert.alert("Error", error);
+            Alert.alert("Error", error.message || "Error de verificación");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmitComment = async () => {
+        if (!comment.trim()) {
+            onAuthSuccess({ name, email }); // Skip if empty
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const user = await authService.getUser();
+            if (user) {
+                await authService.addComment(user.id, comment, rating);
+                Alert.alert("¡Gracias!", "Tu comentario ha sido enviado.");
+            }
+            onAuthSuccess(user || { name, email });
+        } catch (error) {
+            console.log("Comment error", error);
+            onAuthSuccess({ name, email }); // Proceed anyway
         } finally {
             setLoading(false);
         }
@@ -150,7 +181,15 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
 
     const renderRegister = () => (
         <View style={styles.formContainer}>
-            <Text style={[styles.headerTitle, { color: activeColors.textDark }]}>Crear Cuenta</Text>
+            <Text style={[styles.headerTitle, { color: activeColors.textDark }]}>
+                {isGiftMode ? "Obtén tu Pase Premium" : "Crear Cuenta"}
+            </Text>
+
+            {isGiftMode && (
+                <Text style={{ textAlign: 'center', marginBottom: 20, color: activeColors.secondary }}>
+                    Regístrate para obtener pases premium gratis y acceder a todas las mejoras.
+                </Text>
+            )}
 
             <View style={styles.inputGroup}>
                 <Ionicons name="person-outline" size={20} color={activeColors.secondary} style={styles.inputIcon} />
@@ -209,9 +248,11 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                 {loading ? <ActivityIndicator color="white" /> : <Text style={styles.mainBtnText}>Registrarse</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.linkBtn} onPress={() => setMode('login')}>
-                <Text style={{ color: activeColors.secondary }}>¿Ya tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Inicia Sesión</Text></Text>
-            </TouchableOpacity>
+            {!isGiftMode && (
+                <TouchableOpacity style={styles.linkBtn} onPress={() => setMode('login')}>
+                    <Text style={{ color: activeColors.secondary }}>¿Ya tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Inicia Sesión</Text></Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 
@@ -261,6 +302,55 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                 {mode === 'login' && renderLogin()}
                 {mode === 'register' && renderRegister()}
                 {mode === 'verify' && renderVerify()}
+
+                {/* Comment Section (Only if logged in context unavailable here, but usually this screen handles auth) 
+                    Actually, the user wants the comment prompt *after* registration. 
+                    We should probably handle this in the parent modal or add a "success" mode here.
+                    Let's add a success mode.
+                */}
+                {mode === 'success' && (
+                    <View style={styles.formContainer}>
+                        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                            <Ionicons name="checkmark-circle" size={60} color={theme.primary} />
+                            <Text style={[styles.headerTitle, { color: activeColors.textDark, marginTop: 10 }]}>¡Gracias por registrarte!</Text>
+                            <Text style={{ textAlign: 'center', color: activeColors.secondary }}>Deja tu comentario para ayudarnos a mejorar.</Text>
+                        </View>
+
+                        {/* Rating Stars */}
+                        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 20 }}>
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                                    <Ionicons
+                                        name={star <= rating ? "star" : "star-outline"}
+                                        size={32}
+                                        color="#F59E0B"
+                                        style={{ marginHorizontal: 5 }}
+                                    />
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <TextInput
+                                style={[styles.input, { height: 100, textAlignVertical: 'top', paddingTop: 15, color: activeColors.textDark, borderColor: activeColors.border }]}
+                                placeholder="Escribe tu opinión..."
+                                placeholderTextColor={activeColors.secondary}
+                                multiline
+                                numberOfLines={4}
+                                value={comment}
+                                onChangeText={setComment}
+                            />
+                        </View>
+
+                        <TouchableOpacity style={[styles.mainBtn, { backgroundColor: theme.primary }]} onPress={handleSubmitComment} disabled={loading}>
+                            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.mainBtnText}>Enviar y Continuar</Text>}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.linkBtn} onPress={() => onAuthSuccess({ name, email })}>
+                            <Text style={{ color: activeColors.secondary }}>Omitir por ahora</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
                 <View style={[styles.footerDocs, { marginTop: verticalScale(30) }]}>
                     <TouchableOpacity onPress={onShowPrivacy} style={{ marginTop: 10 }}>

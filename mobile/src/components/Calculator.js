@@ -64,7 +64,7 @@ export default function Calculator({
 
     const handleInternalShare = async () => {
         try {
-            const message = `Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\nCalculado con La Tasa V2 App.`;
+            const message = `Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\n\nDescarga La Tasa V2 aquí: https://tasas-backend.onrender.com`;
             await Share.share({ message });
         } catch (error) {
             console.error('Error sharing text:', error);

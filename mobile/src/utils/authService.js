@@ -94,5 +94,27 @@ export const authService = {
         }
 
         return user;
+    },
+
+    getComments: async () => {
+        try {
+            const baseUrl = API_URL.replace('/auth', '');
+            const response = await axios.get(`${baseUrl}/comments`);
+            return response.data;
+        } catch (error) {
+            console.error('Get comments error:', error);
+            return { comments: [], averageRating: 0, totalComments: 0 };
+        }
+    },
+
+    addComment: async (userId, text, rating) => {
+        try {
+            const baseUrl = API_URL.replace('/auth', '');
+            const response = await axios.post(`${baseUrl}/comments`, { userId, text, rating });
+            return response.data;
+        } catch (error) {
+            console.error('Add comment error:', error);
+            throw error;
+        }
     }
 };

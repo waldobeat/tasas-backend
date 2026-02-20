@@ -15,6 +15,8 @@ if (result.error) {
 
 const { setupCronJobs } = require('./services/cronService');
 const rateRoutes = require('./routes/rateRoutes');
+const authRoutes = require('./routes/authRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -42,7 +44,10 @@ app.use((req, res, next) => {
 const { saveToken } = require('./utils/pushNotifications');
 
 // Mount Routes
+// Mount Routes
 app.use('/api', rateRoutes); // Mounts /rates and /history
+app.use('/api/auth', authRoutes);
+app.use('/api/comments', commentRoutes);
 
 const { broadcastNotification } = require('./utils/pushNotifications');
 

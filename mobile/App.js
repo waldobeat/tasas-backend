@@ -20,6 +20,7 @@ import NameModal from './src/components/NameModal';
 import HolidayModal from './src/components/HolidayModal';
 import BannerPopup from './src/components/BannerPopup';
 import ValentineRain from './src/components/ValentineRain';
+import RegistrationModal from './src/components/RegistrationModal';
 
 // Hooks
 import { useRates } from './src/hooks/useRates';
@@ -49,6 +50,7 @@ export default function App() {
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [holidayModalClosed, setHolidayModalClosed] = useState(false);
   const [showBinanceBanner, setShowBinanceBanner] = useState(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
 
   // --- UPDATE STATE ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -163,7 +165,7 @@ export default function App() {
   const onShare = async (title, rate) => {
     try {
       await Share.share({
-        message: `${title}: ${rate} Bs.\nConsulta más en La Tasa V2 App.`,
+        message: `${title}: ${rate} Bs.\nConsulta esta y otras tasas en tiempo real.\nDescarga La Tasa V2 aquí: https://tasas-backend.onrender.com`,
       });
     } catch (error) {
       console.log('Error sharing:', error);
@@ -203,6 +205,7 @@ export default function App() {
           activeColors={activeColors}
           setMenuVisible={() => setShowSettings(true)}
           userName={userName}
+          onOpenRegistration={() => setShowRegistrationModal(true)}
         />
 
         <ScrollView
@@ -320,7 +323,19 @@ export default function App() {
           activeColors={activeColors}
           theme={currentTheme}
         />
-        <ValentineRain />
+        <RegistrationModal
+          visible={showRegistrationModal}
+          onClose={() => setShowRegistrationModal(false)}
+          onAuthSuccess={(user) => {
+            setUserName(user.name);
+            AsyncStorage.setItem(USER_NAME_KEY, user.name);
+            setShowRegistrationModal(false);
+            // Optionally show a welcome message or refresh premium status
+          }}
+          theme={currentTheme}
+          activeColors={activeColors}
+        />
+        {/* <ValentineRain /> */}
       </SafeAreaView>
     </SafeAreaProvider>
   );
