@@ -40,11 +40,11 @@ const FeatureAnnouncement = ({ visible, onClose, onTryNow, activeColors, theme }
                     </View>
 
                     <Text style={[styles.title, { color: activeColors.textDark }]}>
-                        ¡Nueva Gestión Financiera!
+                        Gestión Financiera Disponible
                     </Text>
 
                     <Text style={[styles.description, { color: activeColors.secondary }]}>
-                        Controla tus ingresos, gastos y deudas con herramientas avanzadas diseñadas para ti.
+                        Prueba nuestra gestión financiera. Regístrate y comienza a controlar tus ingresos, gastos y deudas de forma inteligente.
                     </Text>
 
                     <View style={styles.featureList}>
@@ -58,12 +58,8 @@ const FeatureAnnouncement = ({ visible, onClose, onTryNow, activeColors, theme }
                         style={[styles.mainBtn, { backgroundColor: theme.primary }]}
                         activeOpacity={0.8}
                     >
-                        <Text style={styles.mainBtnText}>Explorar Ahora</Text>
+                        <Text style={styles.mainBtnText}>Regístrate / Iniciar</Text>
                         <Ionicons name="arrow-forward" size={20} color="white" style={{ marginLeft: 8 }} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={onClose} style={styles.secondaryBtn}>
-                        <Text style={{ color: activeColors.secondary, fontSize: 14 }}>Quizás más tarde</Text>
                     </TouchableOpacity>
 
                 </Animated.View>

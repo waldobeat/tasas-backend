@@ -1,3 +1,9 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, RefreshControl, ActivityIndicator, StatusBar, Share, Linking, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Updates from 'expo-updates';
+import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 // import { LogLevel, OneSignal } from 'react-native-onesignal';
 import Constants from 'expo-constants';
 
@@ -11,12 +17,17 @@ import SettingsMenu from './src/components/SettingsMenu';
 import PrivacyModal from './src/components/PrivacyModal';
 import CustomSplash from './src/components/CustomSplash';
 import UpdateModal from './src/components/UpdateModal';
-import NameModal from './src/components/NameModal';
 import HolidayModal from './src/components/HolidayModal';
 import BannerPopup from './src/components/BannerPopup';
 import ValentineRain from './src/components/ValentineRain';
 import RegistrationModal from './src/components/RegistrationModal';
 import FeatureAnnouncement from './src/components/FeatureAnnouncement';
+import AuthScreen from './src/components/AuthScreen';
+import FinancialDashboard from './src/components/FinancialDashboard';
+import CommentsModal from './src/components/CommentsModal';
+
+// Utils
+import { authService } from './src/utils/authService';
 
 // Hooks
 import { useRates } from './src/hooks/useRates';
@@ -42,11 +53,18 @@ export default function App() {
   const [isAppReady, setIsAppReady] = useState(false);
   const [userName, setUserName] = useState(null);
   const [userNameLoaded, setUserNameLoaded] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [holidayModalClosed, setHolidayModalClosed] = useState(false);
   const [showBinanceBanner, setShowBinanceBanner] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  // --- FINANCIAL & AUTH STATE ---
+  const [user, setUser] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showFinancial, setShowFinancial] = useState(false);
+
+  const [showFeatureAnnouncement, setShowFeatureAnnouncement] = useState(false);
 
   // --- UPDATE STATE ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -143,13 +161,6 @@ export default function App() {
     }
   }, []);
 
-  // Show name modal only when app is ready AND name is checked AND missing
-  useEffect(() => {
-    if (isAppReady && userNameLoaded && !userName) {
-      setShowNameModal(true);
-    }
-  }, [isAppReady, userNameLoaded, userName]);
-
   // --- ACTIONS ---
   const handleToggleDarkMode = (value) => {
     setDarkMode(value);
@@ -166,12 +177,6 @@ export default function App() {
   const handleAcceptCookies = async () => {
     await AsyncStorage.setItem(COOKIE_KEY, 'true');
     setShowCookies(false);
-  };
-
-  const handleSaveName = async (name) => {
-    await AsyncStorage.setItem(USER_NAME_KEY, name);
-    setUserName(name);
-    setShowNameModal(false);
   };
 
   const toggleCalc = (id) => {
@@ -220,6 +225,12 @@ export default function App() {
     setShowFinancial(true);
   };
 
+  const handleLogout = async () => {
+    await authService.logout();
+    setUser(null);
+    setShowFinancial(false);
+  };
+
   const handleCloseFinancial = () => {
     setShowFinancial(false);
   };
@@ -234,12 +245,17 @@ export default function App() {
 
   if (showAuth) {
     return (
-      <AuthScreen
-        onAuthSuccess={handleAuthSuccess}
-        theme={currentTheme}
-        activeColors={activeColors}
-        onShowPrivacy={() => setShowPrivacy(true)}
-      />
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: activeColors.bg }} edges={['top']}>
+          <AuthScreen
+            onAuthSuccess={handleAuthSuccess}
+            theme={currentTheme}
+            activeColors={activeColors}
+            onShowPrivacy={() => setShowPrivacy(true)}
+            onClose={() => setShowAuth(false)}
+          />
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
@@ -248,10 +264,11 @@ export default function App() {
       <FinancialDashboard
         theme={currentTheme}
         activeColors={activeColors}
-        isPremium={true} // For now, assume premium to test
+        isPremium={user?.isPremium || false} // Use real user premium status
         user={user}
         portfolio={portfolio}
         onClose={handleCloseFinancial}
+        onLogout={handleLogout}
         onAddPress={() => console.log("Add transaction")}
         onOpenPremium={() => console.log("Open Premium")}
       />
@@ -273,6 +290,7 @@ export default function App() {
           setMenuVisible={() => setShowSettings(true)}
           userName={userName}
           onOpenRegistration={() => setShowRegistrationModal(true)}
+          onOpenComments={() => setShowComments(true)}
         />
 
         <ScrollView
@@ -353,13 +371,6 @@ export default function App() {
           theme={activeColors}
         />
 
-        <NameModal
-          visible={showNameModal}
-          onSave={handleSaveName}
-          activeColors={activeColors}
-          theme={activeColors}
-        />
-
         <BannerPopup
           visible={showBinanceBanner}
           onClose={() => setShowBinanceBanner(false)}
@@ -381,8 +392,17 @@ export default function App() {
           <CookieBanner onAccept={handleAcceptCookies} />
         )}
 
-        {/* Removed FeatureAnnouncement if it's not defined in imports or conflicts, but keeping placeholder if user had it */}
-        {/* Assuming FeatureAnnouncement is defined or imported, else I should check line 395 */}
+        <FeatureAnnouncement
+          visible={showFeatureAnnouncement}
+          onClose={() => setShowFeatureAnnouncement(false)}
+          onTryNow={() => {
+            setShowFeatureAnnouncement(false);
+            if (user) setShowFinancial(true);
+            else setShowAuth(true); // Or registration
+          }}
+          theme={currentTheme}
+          activeColors={activeColors}
+        />
 
         <RegistrationModal
           visible={showRegistrationModal}
@@ -391,8 +411,14 @@ export default function App() {
             setUserName(user.name);
             AsyncStorage.setItem(USER_NAME_KEY, user.name);
             setShowRegistrationModal(false);
-            // Optionally show a welcome message or refresh premium status
           }}
+          theme={currentTheme}
+          activeColors={activeColors}
+        />
+
+        <CommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
           theme={currentTheme}
           activeColors={activeColors}
         />

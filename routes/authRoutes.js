@@ -42,19 +42,16 @@ router.post('/register', async (req, res) => {
         if (existingUser) return res.status(400).json({ error: 'El correo ya existe' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        // If Gift Registration, no verification code needed (or dummy), and active=false
-        const vCode = isGiftRegistration ? null : Math.floor(100000 + Math.random() * 900000).toString();
-        const initialStatus = isGiftRegistration ? 'pendiente' : 'pendiente'; // Both pending, but meaning different things? 
-        // User said: "levamos a crear un boleano, activate : true , false , en este caso fase"
-        // So for gift registration, active = false.
+        // Eliminate verification code step
+        const vCode = null;
+        // Normal users become active immediately. Gift registrations might still wait if required, but the frontend treats them specially.
+        const initialStatus = isGiftRegistration ? 'pendiente' : 'activo';
 
         const newUser = new User({
             name, email, password: hashedPassword,
             verificationCode: vCode,
             status: initialStatus,
-            active: !isGiftRegistration, // Logic: Normal users might need verification but eventually active? Or just false for everyone initially? 
-            // The user specifically asked for this boolean for THESE users.
-            // Let's set active = false for isGiftRegistration.
+            active: !isGiftRegistration,
             isPremium: premiumCode === '123123ABCD',
             premiumType: premiumCode === '123123ABCD' ? 'plus' : null
         });
@@ -77,45 +74,14 @@ router.post('/register', async (req, res) => {
             });
         }
 
-        // Enviar correo real con Timeout for NORMAL registration
-        const mailOptions = {
-            from: `"La Tasa" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Código de Verificación - La Tasa',
-            text: `Hola ${name},\n\nTu código de verificación para activar tu cuenta en La Tasa es: ${vCode}\n\nIngrésalo en la aplicación para completar tu registro.`,
-            html: `<div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                    <h2>¡Hola ${name}!</h2>
-                    <p>Bienvenido a <b>La Tasa</b>. Para completar tu registro, utiliza el siguiente código de verificación:</p>
-                    <div style="font-size: 24px; font-weight: bold; background: #f4f4f4; padding: 10px; text-align: center; border-radius: 5px; color: #4F46E5;">
-                        ${vCode}
-                    </div>
-                    <p style="margin-top: 20px; color: #666;">Si no solicitaste este registro, puedes ignorar este correo.</p>
-                   </div>`
-        };
-
-        let emailSent = false;
-        try {
-            if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-                console.log(`📧 Attempting to send email to ${email}...`);
-                const info = await Promise.race([
-                    transporter.sendMail(mailOptions),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 15000))
-                ]);
-                emailSent = true;
-                console.log(`📧 Email sent successfully: ${info.messageId}`);
-            } else {
-                console.warn('⚠️ EMAIL_USER or EMAIL_PASS not configured. Skipping email.');
-            }
-        } catch (mailError) {
-            console.error('❌ Email Sending Error:', mailError.message);
-        }
+        // Enviar correo real con Timeout for NORMAL registration is now bypassed because verification code is eliminated
 
         console.log('🚀 Sending 201 response back to app...');
         res.status(201).json({
             id: saved._id,
-            status: 'pendiente',
-            message: emailSent ? 'Código enviado al correo' : 'Error en servidor de correo. Usa el código de prueba.',
-            devCode: vCode
+            status: isGiftRegistration ? 'pendiente' : 'activo',
+            message: 'Registro exitoso.',
+            devCode: null
         });
     } catch (err) {
         console.error('❌ Fatal Register Error:', err.message);
@@ -150,9 +116,8 @@ router.post('/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ error: 'Credenciales inválidas' });
 
-        if (user.status !== 'activo') {
-            return res.status(403).json({ error: 'Tu cuenta está pendiente de activación. Revisa tu correo.', status: 'pendiente' });
-        }
+        // Eliminado: Bloqueo de inicio de sesión por cuenta pendiente de activación
+        // ya que el envío de correos está temporalmente bloqueado.
 
         res.json({
             id: user._id,

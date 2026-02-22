@@ -8,7 +8,7 @@ import { PieChart, LineChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 
-const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpenPremium, refreshKey, user, onClose }) => {
+const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpenPremium, refreshKey, user, onClose, onLogout }) => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [localStats, setLocalStats] = useState({
@@ -299,9 +299,14 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                     <Text style={[styles.greeting, { color: activeColors.secondary }]}>Hola, {user?.name?.split(' ')[0] || 'Usuario'}</Text>
                     <Text style={[styles.title, { color: activeColors.textDark }]}>Tu Balance</Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: activeColors.cardCtx }]}>
-                    <Ionicons name="close" size={24} color={activeColors.textDark} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={onLogout} style={[styles.closeBtn, { backgroundColor: activeColors.cardCtx, marginRight: 10 }]}>
+                        <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: activeColors.cardCtx }]}>
+                        <Ionicons name="close" size={24} color={activeColors.textDark} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <FlatList

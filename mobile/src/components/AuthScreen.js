@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { authService } from '../utils/authService';
 
-const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy, onUnlockRegister, isGiftMode = false }) => {
-    // Modes: 'login', 'register', 'verify'
+const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastUpdated, onShowPrivacy, onUnlockRegister, isGiftMode = false, onClose }) => {
+    // Modes: 'login', 'register', 'verify', 'success'
     const [mode, setMode] = useState(isGiftMode ? 'register' : 'login');
     const [loading, setLoading] = useState(false);
 
@@ -84,40 +84,22 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
             const res = await authService.register(name, email, password, premiumCode, isGiftMode);
 
             if (isGiftMode) {
-                // Skip verification, show success message
                 Alert.alert("¡Registro Exitoso!", res.message || "Tu usuario se activará cuando comience la jornada premium.");
-                // We don't have a full user session (token), but we have the ID to post comments.
-                // We can either mock a user object or just store minimal info.
-                // The addComment function only needs userId.
-
-                // NOTE: Since we aren't "logged in" fully (no token, inactive), we can't call getUser().
-                // We need to persist this partial session or handle addComment differently.
-                // For now, let's verify if addComment relies on stored user.
-                // The UI relies on `authService.getUser()` in `handleSubmitComment`.
-                // We should mock this "user" for the session so `handleSubmitComment` works.
                 const mockUser = { id: res.id, name: name, email: email };
-                // We won't store it in valid storage to prevent auto-login next time if inactive.
-                // But we need it for the comment submission.
-                // Update: addComment uses `authService.getUser()` internally in the UI logic I wrote?
-                // Let's check `handleSubmitComment` in this file.
-                // It calls `await authService.getUser()`.
-
-                // Solution: Temporarily store user so getUser works, OR modify handleSubmitComment.
-                // Storing it temporarily is easier but risky if they close app.
-                // Actually, the user shouldn't be able to do anything else.
-                // Let's just override `authService.getUser` or better yet, pass the user object to `handleSubmitComment`.
-                // Valid solution: Save to AsyncStorage but knowing it might fail login later if check is strict on backend.
                 await AsyncStorage.setItem('@auth_user_v1', JSON.stringify(mockUser));
                 setMode('success');
             } else {
-                // Normal flow
-                // res usually contains { message, devCode, status }
-                let alertMsg = res.message || "Hemos enviado un código de verificación a tu correo.";
-                if (res.devCode) {
-                    alertMsg += `\n\nFallback (Solo Pruebas): ${res.devCode}`;
+                // Normal flow now behaves like instant success
+                Alert.alert("¡Registro Exitoso!", "Bienvenido a nuestra plataforma.");
+                const mockUser = { id: res.id || Date.now(), name: name, email: email };
+                await AsyncStorage.setItem('@auth_user_v1', JSON.stringify(mockUser));
+                // Try logging in instantly if the backend allows it
+                try {
+                    await authService.login(email, password);
+                } catch (e) {
+                    // Ignore login fail if backend needs a second for state consistency
                 }
-                Alert.alert("Registro", alertMsg);
-                setMode('verify');
+                setMode('success');
             }
         } catch (error) {
             Alert.alert("Error de Registro", typeof error === 'string' ? error : (error.message || "No se pudo completar el registro"));
@@ -139,7 +121,6 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
             // After verification, log them in automatically
             const user = await authService.login(email, password);
             setMode('success'); // Show comment screen
-            // onAuthSuccess(user); // Don't close yet, wait for comment
         } catch (error) {
             Alert.alert("Error", error.message || "Error de verificación");
         } finally {
@@ -147,23 +128,28 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         }
     };
 
+    const handleSkip = async () => {
+        const currentUser = await authService.getUser();
+        onAuthSuccess(currentUser || { name, email });
+    };
+
     const handleSubmitComment = async () => {
+        const currentUser = await authService.getUser();
         if (!comment.trim()) {
-            onAuthSuccess({ name, email }); // Skip if empty
+            onAuthSuccess(currentUser || { name, email });
             return;
         }
 
         setLoading(true);
         try {
-            const user = await authService.getUser();
-            if (user) {
-                await authService.addComment(user.id, comment, rating);
+            if (currentUser) {
+                await authService.addComment(currentUser.id, comment, rating);
                 Alert.alert("¡Gracias!", "Tu comentario ha sido enviado.");
             }
-            onAuthSuccess(user || { name, email });
+            onAuthSuccess(currentUser || { name, email });
         } catch (error) {
             console.log("Comment error", error);
-            onAuthSuccess({ name, email }); // Proceed anyway
+            onAuthSuccess(currentUser || { name, email });
         } finally {
             setLoading(false);
         }
@@ -219,7 +205,7 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
 
             {isGiftMode && (
                 <Text style={{ textAlign: 'center', marginBottom: 20, color: activeColors.secondary }}>
-                    Regístrate para obtener pases premium gratis y acceder a todas las mejoras.
+                    Regístrate y déjanos tu opinión para obtener pases premium gratis y acceder a todas las mejoras.
                 </Text>
             )}
 
@@ -318,11 +304,34 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         </View>
     );
 
+    const handleBack = () => {
+        if (mode === 'success') {
+            onAuthSuccess({ name, email });
+        } else if (mode === 'register' && !isGiftMode) {
+            setMode('login');
+        } else if (mode === 'verify') {
+            setMode('login');
+        } else if (onClose) {
+            onClose();
+        }
+    };
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={[styles.container, { backgroundColor: activeColors.bg }]}
         >
+            <View style={{ flexDirection: 'row', paddingTop: 15, paddingHorizontal: 20 }}>
+                {!(mode === 'success') && (
+                    <TouchableOpacity onPress={handleBack} style={{ padding: 5, zIndex: 10 }}>
+                        <Ionicons
+                            name={(mode === 'login' || isGiftMode) ? "close" : "arrow-back"}
+                            size={28}
+                            color={activeColors.textDark}
+                        />
+                    </TouchableOpacity>
+                )}
+            </View>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.logoArea}>
                     <View style={[styles.logoIcon, { backgroundColor: theme.primary }]}>
@@ -378,7 +387,7 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                             {loading ? <ActivityIndicator color="white" /> : <Text style={styles.mainBtnText}>Enviar y Continuar</Text>}
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.linkBtn} onPress={() => onAuthSuccess({ name, email })}>
+                        <TouchableOpacity style={styles.linkBtn} onPress={handleSkip}>
                             <Text style={{ color: activeColors.secondary }}>Omitir por ahora</Text>
                         </TouchableOpacity>
                     </View>

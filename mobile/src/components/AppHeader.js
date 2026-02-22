@@ -11,7 +11,8 @@ const AppHeader = ({
     updateTag = "CLEAN START (V12)",
     isAdFree = false,
     userName,
-    onOpenRegistration
+    onOpenRegistration,
+    onOpenComments
 }) => {
     // Smoke animations
     const smoke1 = useRef(new Animated.Value(0)).current;
@@ -113,6 +114,28 @@ const AppHeader = ({
         return () => clearInterval(interval);
     }, []);
 
+    // Gift Animation (Wobble/Pulse)
+    const giftAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const wobble = Animated.sequence([
+            Animated.timing(giftAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+            Animated.timing(giftAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+            Animated.timing(giftAnim, { toValue: 0.5, duration: 100, useNativeDriver: true }),
+            Animated.timing(giftAnim, { toValue: -0.5, duration: 100, useNativeDriver: true }),
+            Animated.timing(giftAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+            Animated.delay(2000) // Wait before next wiggle
+        ]);
+        Animated.loop(wobble).start();
+    }, []);
+
+    const getGiftStyle = () => ({
+        transform: [
+            { rotate: giftAnim.interpolate({ inputRange: [-1, 1], outputRange: ['-15deg', '15deg'] }) },
+            { scale: giftAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] }) }
+        ]
+    });
+
     return (
         <View style={{
             flexDirection: 'row',
@@ -165,7 +188,7 @@ const AppHeader = ({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* Rating Badge */}
                 {ratingData.total > 0 && (
-                    <View style={{ marginRight: 8, alignItems: 'flex-end' }}>
+                    <TouchableOpacity onPress={onOpenComments} style={{ marginRight: 8, alignItems: 'flex-end' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Ionicons name="star" size={12} color="#F59E0B" />
                             <Text style={{ color: activeColors.textDark, fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>
@@ -175,20 +198,25 @@ const AppHeader = ({
                         <Text style={{ color: activeColors.secondary, fontSize: 10 }}>
                             {ratingData.total} {ratingData.total === 1 ? 'opinión' : 'opiniones'}
                         </Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
-                <TouchableOpacity
-                    onPress={onOpenRegistration}
-                    style={{
-                        padding: 6,
-                        backgroundColor: activeColors.bg,
-                        borderRadius: 12,
-                        marginRight: 8
-                    }}
-                >
-                    <Ionicons name="gift-outline" size={24} color={activeColors.secondary} />
-                </TouchableOpacity>
+                {/* Gift Button - Hidden if User is Registered */}
+                {!userName && (
+                    <TouchableOpacity
+                        onPress={onOpenRegistration}
+                        style={{
+                            padding: 6,
+                            backgroundColor: activeColors.bg,
+                            borderRadius: 12,
+                            marginRight: 8
+                        }}
+                    >
+                        <Animated.View style={getGiftStyle()}>
+                            <Ionicons name="gift" size={24} color="#E11D48" />
+                        </Animated.View>
+                    </TouchableOpacity>
+                )}
 
                 <TouchableOpacity
                     onPress={setMenuVisible}
