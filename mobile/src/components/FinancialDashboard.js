@@ -5,12 +5,15 @@ import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import { financeService } from '../utils/financeService';
 import { PieChart, LineChart } from 'react-native-chart-kit';
+import VastVideoPlayer from './VastVideoPlayer';
 
 const screenWidth = Dimensions.get('window').width;
 
 const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpenPremium, refreshKey, user, onClose, onLogout }) => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [adCompleted, setAdCompleted] = useState(isPremium);
+
     const [localStats, setLocalStats] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -262,21 +265,24 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         return acc;
     }, {});
 
-    if (!isPremium) {
+    if (!isPremium && !adCompleted) {
         return (
-            <Modal visible={true} animationType="slide">
-                <View style={[styles.container, { backgroundColor: activeColors.bg, justifyContent: 'center', alignItems: 'center' }]}>
-                    <Ionicons name="lock-closed" size={80} color={theme.primary} />
-                    <Text style={[styles.premiumTitle, { color: activeColors.textDark }]}>Acceso Premium</Text>
-                    <Text style={[styles.premiumText, { color: activeColors.secondary }]}>Gestiona tus finanzas como un experto.</Text>
-                    <TouchableOpacity onPress={onOpenPremium} style={[styles.premiumBtn, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.premiumBtnText}>Desbloquear Ahora</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={onClose} style={{ marginTop: 20 }}>
-                        <Text style={{ color: activeColors.secondary }}>Volver</Text>
-                    </TouchableOpacity>
+            <View style={[styles.container, { backgroundColor: activeColors.bg, justifyContent: 'center', alignItems: 'center', padding: 0 }]}>
+                <Text style={[styles.premiumTitle, { color: activeColors.textDark, marginBottom: 10 }]}>Mensaje del Patrocinador</Text>
+                <Text style={[styles.premiumText, { color: activeColors.secondary, marginBottom: 20 }]}>Mira este video para acceder a tus finanzas gratis.</Text>
+                <View style={{ width: '100%', height: 300 }}>
+                    <VastVideoPlayer
+                        adTagUrl="https://youradexchange.com/video/select.php?r=11001886"
+                        onAdEnded={() => setAdCompleted(true)}
+                    />
                 </View>
-            </Modal>
+                <TouchableOpacity onPress={onOpenPremium} style={[styles.premiumBtn, { backgroundColor: theme.primary, marginTop: 40 }]}>
+                    <Text style={styles.premiumBtnText}>Obtener Premium sin Anuncios</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose} style={{ marginTop: 20 }}>
+                    <Text style={{ color: activeColors.secondary }}>Volver</Text>
+                </TouchableOpacity>
+            </View>
         );
     }
 
