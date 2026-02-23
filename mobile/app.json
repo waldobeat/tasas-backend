@@ -32,7 +32,8 @@
         {
           "mode": "production"
         }
-      ]
+      ],
+      "expo-video"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
