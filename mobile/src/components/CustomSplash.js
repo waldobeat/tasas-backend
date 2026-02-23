@@ -122,10 +122,7 @@ const CustomSplash = ({ onFinish, theme }) => {
                     </Animated.Text>
                 </View>
 
-                <Text style={{ marginTop: 20, color: theme.textDark || theme.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                    La Tasa V2
-                </Text>
-                <Text style={{ marginTop: 5, color: theme.secondary, fontSize: 14 }}>
+                <Text style={{ marginTop: 20, color: theme.secondary, fontSize: 14 }}>
                     Cargando información...
                 </Text>
             </Animated.View>
