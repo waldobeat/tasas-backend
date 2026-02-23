@@ -269,11 +269,9 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                 {loading ? <ActivityIndicator color="white" /> : <Text style={styles.mainBtnText}>Registrarse</Text>}
             </TouchableOpacity>
 
-            {!isGiftMode && (
-                <TouchableOpacity style={styles.linkBtn} onPress={() => setMode('login')}>
-                    <Text style={{ color: activeColors.secondary }}>¿Ya tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Inicia Sesión</Text></Text>
-                </TouchableOpacity>
-            )}
+            <TouchableOpacity style={styles.linkBtn} onPress={() => setMode('login')}>
+                <Text style={{ color: activeColors.secondary }}>¿Ya tienes cuenta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Inicia Sesión</Text></Text>
+            </TouchableOpacity>
         </View>
     );
 
