@@ -13,6 +13,7 @@ const CustomSplash = ({ onFinish, theme }) => {
     const smoke2 = useRef(new Animated.Value(0)).current;
     const smoke3 = useRef(new Animated.Value(0)).current;
     const textAnim = useRef(new Animated.Value(0)).current;
+    const loadAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         // Master Splash Entrance
@@ -26,6 +27,12 @@ const CustomSplash = ({ onFinish, theme }) => {
                 toValue: 1,
                 friction: 5,
                 useNativeDriver: true,
+            }),
+            Animated.timing(loadAnim, {
+                toValue: 1,
+                duration: 2500,
+                easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+                useNativeDriver: false,
             })
         ]).start();
 
@@ -122,9 +129,13 @@ const CustomSplash = ({ onFinish, theme }) => {
                     </Animated.Text>
                 </View>
 
-                <Text style={{ marginTop: 20, color: theme.secondary, fontSize: 14 }}>
-                    Cargando información...
-                </Text>
+                <View style={{ marginTop: 30, width: scale(160), height: 4, backgroundColor: theme.border || 'rgba(0,0,0,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                    <Animated.View style={{
+                        height: '100%',
+                        width: loadAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                        backgroundColor: theme.primary || '#E11D48'
+                    }} />
+                </View>
             </Animated.View>
         </View>
     );
