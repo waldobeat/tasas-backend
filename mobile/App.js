@@ -287,7 +287,7 @@ export default function App() {
           valueDate={valueDate}
           activeColors={activeColors}
           setMenuVisible={() => setShowSettings(true)}
-          userName={userName}
+          userName={user?.name || userName}
           onOpenRegistration={() => setShowRegistrationModal(true)}
           onOpenFinancial={handleOpenFinancial}
           onOpenComments={() => setShowComments(true)}
@@ -393,7 +393,7 @@ export default function App() {
         )}
 
         <FeatureAnnouncement
-          visible={showFeatureAnnouncement}
+          visible={showFeatureAnnouncement && !user}
           onClose={() => setShowFeatureAnnouncement(false)}
           onTryNow={() => {
             setShowFeatureAnnouncement(false);
