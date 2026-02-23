@@ -266,7 +266,6 @@ export default function App() {
         activeColors={activeColors}
         isPremium={user?.isPremium || false} // Use real user premium status
         user={user}
-        portfolio={portfolio}
         onClose={handleCloseFinancial}
         onLogout={handleLogout}
         onAddPress={() => console.log("Add transaction")}
@@ -290,6 +289,7 @@ export default function App() {
           setMenuVisible={() => setShowSettings(true)}
           userName={userName}
           onOpenRegistration={() => setShowRegistrationModal(true)}
+          onOpenFinancial={handleOpenFinancial}
           onOpenComments={() => setShowComments(true)}
         />
 

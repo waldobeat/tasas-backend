@@ -12,6 +12,7 @@ const AppHeader = ({
     isAdFree = false,
     userName,
     onOpenRegistration,
+    onOpenFinancial,
     onOpenComments
 }) => {
     // Smoke animations
@@ -202,7 +203,7 @@ const AppHeader = ({
                 )}
 
                 {/* Gift Button - Hidden if User is Registered */}
-                {!userName && (
+                {!userName ? (
                     <TouchableOpacity
                         onPress={onOpenRegistration}
                         style={{
@@ -215,6 +216,18 @@ const AppHeader = ({
                         <Animated.View style={getGiftStyle()}>
                             <Ionicons name="gift" size={24} color="#E11D48" />
                         </Animated.View>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        onPress={onOpenFinancial}
+                        style={{
+                            padding: 6,
+                            backgroundColor: activeColors.bg,
+                            borderRadius: 12,
+                            marginRight: 8
+                        }}
+                    >
+                        <Ionicons name="wallet" size={24} color={theme.primary} />
                     </TouchableOpacity>
                 )}
 
