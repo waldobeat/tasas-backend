@@ -262,23 +262,10 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         return acc;
     }, {});
 
-    if (!isPremium) {
-        return (
-            <Modal visible={true} animationType="slide">
-                <View style={[styles.container, { backgroundColor: activeColors.bg, justifyContent: 'center', alignItems: 'center' }]}>
-                    <Ionicons name="lock-closed" size={80} color={theme.primary} />
-                    <Text style={[styles.premiumTitle, { color: activeColors.textDark }]}>Acceso Premium</Text>
-                    <Text style={[styles.premiumText, { color: activeColors.secondary }]}>Gestiona tus finanzas como un experto.</Text>
-                    <TouchableOpacity onPress={onOpenPremium} style={[styles.premiumBtn, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.premiumBtnText}>Desbloquear Ahora</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={onClose} style={{ marginTop: 20 }}>
-                        <Text style={{ color: activeColors.secondary }}>Volver</Text>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
-        );
-    }
+    // Removed the "if (!isPremium)" physical lock Modal entirely.
+    // The user has requested to keep the dashboard unlocked for all users for now.
+    // However, we can keep the "Premium Banner" or similar if they want upsells, 
+    // but the physical lock that blocks the whole screen is removed.
 
     const chartConfig = {
         backgroundGradientFrom: activeColors.cardCtx,

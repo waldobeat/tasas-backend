@@ -411,6 +411,7 @@ export default function App() {
             setUserName(user.name);
             AsyncStorage.setItem(USER_NAME_KEY, user.name);
             setShowRegistrationModal(false);
+            handleAuthSuccess(user); // Automatically open Financial Dashboard
           }}
           theme={currentTheme}
           activeColors={activeColors}
