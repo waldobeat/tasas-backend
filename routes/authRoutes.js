@@ -47,29 +47,13 @@ router.post('/register', async (req, res) => {
         // Normal users become active immediately. Gift registrations might still wait if required, but the frontend treats them specially.
         const initialStatus = isGiftRegistration ? 'pendiente' : 'activo';
 
-        const userCount = await User.countDocuments();
-
-        // Grant 90 days of premium to the first 100 users automatically
-        let autoPremium = false;
-        let autoPremiumType = null;
-        let autoExpiresAt = null;
-
-        if (userCount < 100) {
-            autoPremium = true;
-            autoPremiumType = 'free'; // or custom promo type
-            const ninetyDays = new Date();
-            ninetyDays.setDate(ninetyDays.getDate() + 90);
-            autoExpiresAt = ninetyDays;
-        }
-
         const newUser = new User({
             name, email, password: hashedPassword,
             verificationCode: vCode,
             status: initialStatus,
             active: !isGiftRegistration,
-            isPremium: premiumCode === '123123ABCD' || autoPremium,
-            premiumType: premiumCode === '123123ABCD' ? 'plus' : autoPremiumType,
-            expiresAt: autoExpiresAt
+            isPremium: premiumCode === '123123ABCD',
+            premiumType: premiumCode === '123123ABCD' ? 'plus' : null
         });
 
         if (isGiftRegistration) {
