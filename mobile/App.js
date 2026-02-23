@@ -291,6 +291,7 @@ export default function App() {
           onOpenRegistration={() => setShowRegistrationModal(true)}
           onOpenFinancial={handleOpenFinancial}
           onOpenComments={() => setShowComments(true)}
+          theme={currentTheme}
         />
 
         <ScrollView

@@ -13,7 +13,8 @@ const AppHeader = ({
     userName,
     onOpenRegistration,
     onOpenFinancial,
-    onOpenComments
+    onOpenComments,
+    theme
 }) => {
     // Smoke animations
     const smoke1 = useRef(new Animated.Value(0)).current;
