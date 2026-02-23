@@ -25,7 +25,6 @@ import FeatureAnnouncement from './src/components/FeatureAnnouncement';
 import AuthScreen from './src/components/AuthScreen';
 import FinancialDashboard from './src/components/FinancialDashboard';
 import CommentsModal from './src/components/CommentsModal';
-import IntroVideo from './src/components/IntroVideo';
 
 // Utils
 import { authService } from './src/utils/authService';
@@ -66,7 +65,6 @@ export default function App() {
   const [showFinancial, setShowFinancial] = useState(false);
 
   const [showFeatureAnnouncement, setShowFeatureAnnouncement] = useState(false);
-  const [showIntroVideo, setShowIntroVideo] = useState(false);
 
   // --- UPDATE STATE ---
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -112,12 +110,10 @@ export default function App() {
       const storedUser = await authService.getUser();
       if (storedUser) {
         setUser(storedUser);
-        // Show Feature Announcement on EVERY startup as requested for logged in users
-        setTimeout(() => setShowFeatureAnnouncement(true), 1500);
-      } else {
-        // If no user, show the intro video first
-        setShowIntroVideo(true);
       }
+
+      // Show Feature Announcement on EVERY startup as requested
+      setTimeout(() => setShowFeatureAnnouncement(true), 1500);
 
       // --- OTA UPDATES LOGIC (NON-BLOCKING) ---
       // --- OTA UPDATES LOGIC (NON-BLOCKING) ---
@@ -245,17 +241,6 @@ export default function App() {
 
   if (showPrivacy) {
     return <PrivacyModal visible={true} onAccept={handleAcceptPrivacy} theme={activeColors} />;
-  }
-
-  if (showIntroVideo) {
-    return <IntroVideo
-      onFinish={() => {
-        setShowIntroVideo(false);
-        setShowAuth(true); // Jump to Auth Screen after video
-      }}
-      theme={currentTheme}
-      activeColors={activeColors}
-    />;
   }
 
   if (showAuth) {
