@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { scale, moderateScale, verticalScale } from '../styles/theme';
@@ -79,18 +79,19 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
         }
 
         setLoading(true);
+        Keyboard.dismiss(); // Dismiss keyboard to prevent Android UI crash
         try {
             // Pass isGiftMode as isGiftRegistration
             const res = await authService.register(name, email, password, premiumCode, isGiftMode);
 
             if (isGiftMode) {
-                Alert.alert("¡Registro Exitoso!", res.message || "Tu usuario se activará cuando comience la jornada premium.");
                 const mockUser = { id: res.id, name: name, email: email };
                 await AsyncStorage.setItem('@auth_user_v1', JSON.stringify(mockUser));
-                setMode('success');
+                Alert.alert("¡Registro Exitoso!", res.message || "Tu usuario se activará cuando comience la jornada premium.", [
+                    { text: "Continuar", onPress: () => setMode('success') }
+                ]);
             } else {
                 // Normal flow now behaves like instant success
-                Alert.alert("¡Registro Exitoso!", "Bienvenido a nuestra plataforma.");
                 const mockUser = { id: res.id || Date.now(), name: name, email: email };
                 await AsyncStorage.setItem('@auth_user_v1', JSON.stringify(mockUser));
                 // Try logging in instantly if the backend allows it
@@ -99,7 +100,9 @@ const AuthScreen = ({ onAuthSuccess, theme, activeColors, valueDate, date, lastU
                 } catch (e) {
                     // Ignore login fail if backend needs a second for state consistency
                 }
-                setMode('success');
+                Alert.alert("¡Registro Exitoso!", "Bienvenido a nuestra plataforma.", [
+                    { text: "Continuar", onPress: () => setMode('success') }
+                ]);
             }
         } catch (error) {
             Alert.alert("Error de Registro", typeof error === 'string' ? error : (error.message || "No se pudo completar el registro"));
