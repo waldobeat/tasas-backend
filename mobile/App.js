@@ -32,9 +32,6 @@ import { authService } from './src/utils/authService';
 // Hooks
 import { useRates } from './src/hooks/useRates';
 
-// Ads
-import mobileAds from 'react-native-google-mobile-ads';
-
 const PRIVACY_KEY = 'privacy_accepted_v1';
 const COOKIE_KEY = 'cookies_accepted_v1';
 const THEME_KEY = 'app_theme_v1';
@@ -86,12 +83,6 @@ export default function App() {
 
       // Request Permission
       // OneSignal.Notifications.requestPermission(true);
-
-      try {
-        await mobileAds().initialize();
-      } catch (e) {
-        console.log('AdMob Init Error:', e);
-      }
 
       const [pPrivacy, pCookies, savedTheme, savedDarkMode, savedName] = await Promise.all([
         AsyncStorage.getItem(PRIVACY_KEY),

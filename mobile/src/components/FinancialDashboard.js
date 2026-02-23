@@ -5,19 +5,12 @@ import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import { financeService } from '../utils/financeService';
 import { PieChart, LineChart } from 'react-native-chart-kit';
-import { RewardedAd, RewardedAdEventType, TestIds } from 'react-native-google-mobile-ads';
 
 const screenWidth = Dimensions.get('window').width;
 
 const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpenPremium, refreshKey, user, onClose, onLogout }) => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // AdMob State
-    const [adLoaded, setAdLoaded] = useState(false);
-    const [adCompleted, setAdCompleted] = useState(isPremium);
-    const [rewardedAd, setRewardedAd] = useState(null);
-
     const [localStats, setLocalStats] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -101,48 +94,6 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
     useEffect(() => {
         loadData();
     }, [refreshKey]);
-
-    useEffect(() => {
-        if (!isPremium && !adCompleted) {
-            const adUnitId = __DEV__ ? TestIds.REWARDED : 'ca-app-pub-3940256099942544/5224354917'; // Replace with real ID
-            const rewarded = RewardedAd.createForAdRequest(adUnitId, {
-                requestNonPersonalizedAdsOnly: true,
-            });
-
-            setRewardedAd(rewarded);
-
-            const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
-                setAdLoaded(true);
-            });
-            const unsubscribeEarned = rewarded.addAdEventListener(
-                RewardedAdEventType.EARNED_REWARD,
-                reward => {
-                    setAdCompleted(true);
-                }
-            );
-
-            rewarded.load();
-
-            return () => {
-                unsubscribeLoaded();
-                unsubscribeEarned();
-            };
-        }
-    }, [isPremium, adCompleted]);
-
-    const handleShowAd = () => {
-        if (adLoaded && rewardedAd) {
-            rewardedAd.show();
-        } else {
-            // Fallback: If ad fails to load completely, let them wait or pass through on error?
-            // For now, let's just alert them it's still loading to prevent bypassing,
-            // or let them bypass if AdMob fails (better UX).
-            Alert.alert(
-                "Cargando Anuncio",
-                "El anuncio aún está cargando o no hay conexión disponible. Por favor, inténtalo de nuevo en unos segundos."
-            );
-        }
-    };
 
     const loadData = async () => {
         setLoading(true);
@@ -311,31 +262,16 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         return acc;
     }, {});
 
-    if (!isPremium && !adCompleted) {
+    if (!isPremium) {
         return (
             <Modal visible={true} animationType="slide">
                 <View style={[styles.container, { backgroundColor: activeColors.bg, justifyContent: 'center', alignItems: 'center' }]}>
                     <Ionicons name="lock-closed" size={80} color={theme.primary} />
                     <Text style={[styles.premiumTitle, { color: activeColors.textDark }]}>Acceso Premium</Text>
-                    <Text style={[styles.premiumText, { color: activeColors.secondary }]}>
-                        Gestiona tus finanzas bloqueadas. Mira un anuncio para desbloquear el panel temporalmente o adquiere el Premium.
-                    </Text>
-
-                    <TouchableOpacity
-                        onPress={handleShowAd}
-                        style={[styles.premiumBtn, { backgroundColor: adLoaded ? '#10B981' : activeColors.cardCtx, width: '80%', alignItems: 'center' }]}
-                    >
-                        {adLoaded ? (
-                            <Text style={styles.premiumBtnText}>Ver Video para Desbloquear</Text>
-                        ) : (
-                            <ActivityIndicator color="white" />
-                        )}
+                    <Text style={[styles.premiumText, { color: activeColors.secondary }]}>Gestiona tus finanzas como un experto.</Text>
+                    <TouchableOpacity onPress={onOpenPremium} style={[styles.premiumBtn, { backgroundColor: theme.primary }]}>
+                        <Text style={styles.premiumBtnText}>Desbloquear Ahora</Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity onPress={onOpenPremium} style={[styles.premiumBtn, { backgroundColor: theme.primary, marginTop: 15, width: '80%', alignItems: 'center' }]}>
-                        <Text style={styles.premiumBtnText}>Modo Premium sin Anuncios</Text>
-                    </TouchableOpacity>
-
                     <TouchableOpacity onPress={onClose} style={{ marginTop: 20 }}>
                         <Text style={{ color: activeColors.secondary }}>Volver</Text>
                     </TouchableOpacity>
