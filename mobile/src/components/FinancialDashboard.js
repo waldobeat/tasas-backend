@@ -362,9 +362,15 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
             if (txType === 'debt') {
                 const count = Math.max(1, parseInt(numInst) || 1);
                 const base = firstDate ? new Date(firstDate) : new Date();
+                // Cashea and Krece: installments every 15 days; others: monthly
+                const isBiweekly = provider === 'Cashea' || provider === 'Krece';
                 const installments = Array.from({ length: count }, (_, i) => {
                     const d = new Date(base);
-                    d.setMonth(d.getMonth() + i);
+                    if (isBiweekly) {
+                        d.setDate(d.getDate() + (i * 15));
+                    } else {
+                        d.setMonth(d.getMonth() + i);
+                    }
                     return { number: i + 1, amount: parseFloat((amt / count).toFixed(2)), dueDate: d, status: 'pending' };
                 });
                 body = { ...body, provider, installments, completed: false };
@@ -445,7 +451,11 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
 
             {/* ── HEADER ── */}
             <View style={S.header}>
-                <View style={{ flex: 1 }}>
+                <TouchableOpacity onPress={onClose} style={[S.backBtn, { backgroundColor: activeColors.cardCtx }]}>
+                    <Ionicons name="arrow-back" size={20} color={activeColors.textDark} />
+                    <Text style={{ color: activeColors.textDark, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Tasas</Text>
+                </TouchableOpacity>
+                <View style={{ flex: 1, alignItems: 'center' }}>
                     <Text style={[S.appTitle, { color: activeColors.textDark }]}>Mis Finanzas</Text>
                     <Text style={[S.userGreet, { color: activeColors.secondary }]}>
                         {user?.name ? `👤 ${user.name}` : ''}
@@ -456,12 +466,9 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
                         { text: 'Cancelar', style: 'cancel' },
                         { text: 'Salir', style: 'destructive', onPress: onLogout }
                     ])}
-                    style={[S.hBtn, { backgroundColor: '#FEE2E2', marginRight: 8 }]}
+                    style={[S.hBtn, { backgroundColor: '#FEE2E2' }]}
                 >
                     <Ionicons name="log-out-outline" size={19} color="#EF4444" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={onClose} style={[S.hBtn, { backgroundColor: activeColors.cardCtx }]}>
-                    <Ionicons name="close" size={21} color={activeColors.textDark} />
                 </TouchableOpacity>
             </View>
 
@@ -897,9 +904,10 @@ const S = StyleSheet.create({
 
     // Header
     header: { flexDirection: 'row', alignItems: 'center', paddingTop: 14, paddingBottom: 10 },
-    appTitle: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
-    userGreet: { fontSize: 12, fontWeight: '600', marginTop: 1 },
+    appTitle: { fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+    userGreet: { fontSize: 11, fontWeight: '600', marginTop: 1 },
     hBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    backBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
 
     // Balance card
     balCard: { borderRadius: 24, padding: 20, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 10 },
