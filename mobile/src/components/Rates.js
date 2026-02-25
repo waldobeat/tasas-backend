@@ -8,7 +8,7 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
             {rates && rates.bdv ? (
                 <RateCard
                     id="bcv-usd"
-                    title="DOLAR"
+                    title="$"
                     subtitle="Tasa Oficial"
                     rateValue={rates.bdv.usd.rate}
                     isActive={activeCalc === 'bcv-usd'}
@@ -27,7 +27,7 @@ const Rates = ({ rates, activeCalc, toggleCalc, activeColors, onShare, theme }) 
             {rates && rates.bdv && rates.bdv.eur && (
                 <RateCard
                     id="bcv-eur"
-                    title="EURO"
+                    title="€"
                     subtitle="Tasa Oficial"
                     rateValue={rates.bdv.eur.rate}
                     isActive={activeCalc === 'bcv-eur'}

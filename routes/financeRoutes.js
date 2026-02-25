@@ -5,20 +5,25 @@ const router = express.Router();
 
 // --- FINANCE API ---
 router.get('/:userId', async (req, res) => {
+    console.log(`[FINANCE] Fetching transactions for user: ${req.params.userId}`);
     try {
         const transactions = await Transaction.find({ userId: req.params.userId }).sort({ date: -1 });
         res.json(transactions);
     } catch (err) {
+        console.error(`[FINANCE] Error fetching:`, err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
 router.post('/', async (req, res) => {
+    console.log(`[FINANCE] Saving transaction:`, JSON.stringify(req.body));
     try {
         const newTrans = new Transaction(req.body);
         const saved = await newTrans.save();
+        console.log(`[FINANCE] Saved successfully: ${saved._id}`);
         res.status(201).json(saved);
     } catch (err) {
+        console.error(`[FINANCE] Error saving:`, err.message);
         res.status(400).json({ error: err.message });
     }
 });

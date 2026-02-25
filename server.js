@@ -32,7 +32,7 @@ setupCronJobs();
 // Mount Routes
 const authRoutes = require('./routes/authRoutes');
 const commentRoutes = require('./routes/commentRoutes');
-// const financeRoutes = require('./routes/financeRoutes'); // Keep if needed, preventing errors if missing
+const financeRoutes = require('./routes/financeRoutes'); // Enabled finance routes
 
 // Mount Routes
 app.get('/api/version', (req, res) => res.json({ version: '1.2', timestamp: new Date().toISOString() }));
@@ -46,7 +46,8 @@ app.use('/api/comments', commentRoutes);
 console.log('✅ Mounting rateRoutes at /api');
 app.use('/api', rateRoutes);
 
-// app.use('/api/finance', financeRoutes); // Uncomment if finance module is active
+console.log('✅ Mounting financeRoutes at /api/finance');
+app.use('/api/finance', financeRoutes);
 
 const { broadcastNotification } = require('./utils/pushNotifications');
 
