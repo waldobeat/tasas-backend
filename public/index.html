@@ -1,34 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0B1120">
     <meta name="5f770545e75f1b1aa57ed3056200162e87d36a9f" content="5f770545e75f1b1aa57ed3056200162e87d36a9f" />
 
-    <!-- AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9257287865743639"
-     crossorigin="anonymous"></script>
-    <script type="text/javascript">
-    aclib.runAutoTag({
-        zoneId: '1zicywopmg',
-    });
-</script>
-
-
-    <script>
-        (function(qoew){
-        var d = document,
-            s = d.createElement('script'),
-            l = d.scripts[d.scripts.length - 1];
-        s.settings = qoew || {};
-        s.src = "\/\/shimmering-working.com\/cuD.9b6pbs2m5\/l\/S\/WlQI9vNdjKc\/5zMozwU\/y\/OrSz0y2ZNqzxkZzsNBTKMMzn";
-        s.async = true;
-        s.referrerPolicy = 'no-referrer-when-downgrade';
-        l.parentNode.insertBefore(s, l);
-        })({})
-    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9257287865743639" crossorigin="anonymous"></script>
+    
     <title>La Tasa - Dólar en Venezuela</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +16,6 @@
 
     <style>
         :root {
-            /* DARK PALETTE from mobile/src/styles/theme.js */
             --bg-color: #0B1120;
             --card-bg: #1E293B;
             --secondary: #94A3B8;
@@ -46,11 +24,8 @@
             --input-bg: #0F172A;
             --primary-accent: #3B82F6;
             --success-color: #10B981;
-            
-            /* Additional Mobile-like styles */
             --radius-lg: 20px;
             --radius-md: 12px;
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         * {
@@ -63,7 +38,6 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
-            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -72,36 +46,29 @@
 
         .app-container {
             width: 100%;
-            max-width: 480px; /* Mobile width constraint */
+            max-width: 480px;
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            position: relative;
-            background-color: var(--bg-color);
             min-height: 100vh;
         }
 
-        /* HEADER */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
             padding-top: 10px;
         }
 
         .header-content h1 {
             font-size: 1.5rem;
-            font-weight: 700;
             margin: 0;
-            letter-spacing: -0.5px;
         }
 
         .header-content .subtitle {
             font-size: 0.85rem;
             color: var(--secondary);
-            font-weight: 500;
         }
 
         .user-badge {
@@ -111,87 +78,83 @@
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
-            color: var(--text-main);
             border: 1px solid var(--border);
         }
 
-        /* DOWNLOAD BANNER */
+        /* DOWNLOAD SECTION */
+        .download-options {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
         .download-banner {
+            flex: 1;
             background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
             border-radius: var(--radius-lg);
-            padding: 20px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+            padding: 15px;
             text-decoration: none;
-            display: block;
-        }
-        
-        .download-banner:hover {
-            transform: translateY(-2px);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
             transition: transform 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .uptodown-banner {
+            flex: 1;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            transition: transform 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .uptodown-banner img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .download-banner:hover, .uptodown-banner:hover {
+            transform: translateY(-2px);
         }
 
         .download-title {
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 700;
             margin-bottom: 5px;
         }
 
-        .download-desc {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 15px;
-            max-width: 80%;
-        }
-
-        .download-btn {
+        .download-btn-small {
             background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stats-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.2);
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* RATES SECTION */
+        /* RATES */
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 10px;
-            color: var(--text-main);
         }
 
-        .loader {
-            display: flex;
-            justify-content: center;
-            padding: 40px;
-            color: var(--primary-accent);
-        }
-
-        /* RATE CARD */
         .rate-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             padding: 20px;
             margin-bottom: 15px;
-            /* Mobile-like feel */
-            transition: all 0.2s ease;
         }
 
         .card-top {
@@ -200,30 +163,20 @@
             align-items: center;
         }
 
-        .card-info {
-            display: flex;
-            flex-direction: column;
-        }
-
         .currency-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: var(--text-main);
         }
 
         .currency-subtitle {
             font-size: 0.8rem;
             color: var(--secondary);
-            font-weight: 600;
-            letter-spacing: 0.5px;
             text-transform: uppercase;
         }
 
         .rate-value {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.5px;
         }
 
         .calc-toggle {
@@ -235,26 +188,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-main);
             margin-left: 12px;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .calc-toggle:hover {
-            background: var(--primary-accent);
-            border-color: var(--primary-accent);
         }
 
         /* CALCULATOR */
         .calculator {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease;
+            transition: all 0.3s ease;
             opacity: 0;
-            border-top: 1px solid transparent;
-            margin-top: 0;
-            padding-top: 0;
         }
 
         .calculator.open {
@@ -262,81 +205,48 @@
             opacity: 1;
             margin-top: 15px;
             padding-top: 15px;
-            border-top-color: var(--border);
-        }
-
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            border-top: 1px solid var(--border);
         }
 
         .amount-input {
-            flex: 1;
+            width: 100%;
             background: var(--input-bg);
             border: 1px solid var(--border);
             color: var(--text-main);
             padding: 12px;
             border-radius: var(--radius-md);
-            font-family: inherit;
             font-size: 1.1rem;
-            font-weight: 600;
             text-align: center;
-        }
-        
-        .amount-input:focus {
-            outline: none;
-            border-color: var(--primary-accent);
+            margin-bottom: 10px;
         }
 
         .presets {
             display: flex;
             justify-content: center;
             gap: 8px;
-            flex-wrap: wrap;
+            margin-bottom: 15px;
         }
 
         .preset-chip {
             background: var(--bg-color);
             border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.8rem;
             cursor: pointer;
         }
 
-        .preset-chip:hover {
-            background: var(--primary-accent);
-            border-color: var(--primary-accent);
-        }
-
         .result-box {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
             border-radius: var(--radius-md);
             padding: 15px;
             text-align: center;
-            margin-top: 15px;
-        }
-
-        .result-label {
-            font-size: 0.75rem;
-            color: var(--primary-accent);
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 4px;
         }
 
         .result-amount {
             font-size: 1.8rem;
             font-weight: 800;
-            color: var(--primary-accent);
         }
 
-        /* FOOTER */
         footer {
             margin-top: auto;
             text-align: center;
@@ -344,56 +254,16 @@
             border-top: 1px solid var(--border);
         }
 
-        .last-updated {
-            font-size: 0.8rem;
-            color: var(--secondary);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .legal-links {
-            font-size: 0.8rem;
-            color: var(--primary-accent);
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        
         .copyright {
-            margin-top: 10px;
             font-size: 0.7rem;
             color: var(--secondary);
-        }
-
-        /* RAIN EFFECT */
-        .heart {
-            position: fixed;
-            top: -50px;
-            font-size: 24px;
-            z-index: 9999;
-            pointer-events: none;
-            animation: fall linear forwards;
-        }
-
-        @keyframes fall {
-            to {
-                transform: translateY(110vh);
-            }
-        }
-
-        /* Hide Scrollbar but allow scroll */
-        ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
+            margin-top: 10px;
         }
     </style>
 </head>
 
 <body>
     <div class="app-container">
-        <!-- Header matches AppHeader.js -->
         <header>
             <div class="header-content">
                 <div class="subtitle" id="currentDate">Cargando fecha...</div>
@@ -404,77 +274,42 @@
             </div>
         </header>
 
-        <!-- Download Banner -->
-        <a href="/api/download" class="download-banner">
-            <div class="stats-badge">
-                <i class="fas fa-arrow-down"></i> <span id="downloadCount">0</span>
-            </div>
-            <div class="download-title">Descarga la App 📱</div>
-            <p class="download-desc">Sin publicidad, notificaciones en tiempo real y modo offline.</p>
-            <div class="download-btn">
-                <i class="fab fa-android"></i> DESCARGAR YA! 
-            </div>
-        </a>
+        <div class="download-options">
+            <a href="/api/download" class="download-banner">
+                <div class="download-title">DESCARGA DIRECTA</div>
+                <div class="download-btn-small">
+                    <i class="fab fa-android"></i> APK Gratis
+                </div>
+            </a>
+
+            <a href="https://la-tasa-dolar-en-venezuela.en.uptodown.com/android" class="uptodown-banner" target="_blank" rel="noopener">
+                <img src="https://stc.utdstc.com/img/mediakit/download-gio-small.png" alt="Descargar en Uptodown">
+            </a>
+        </div>
 
         <div style="height: 1px; background: var(--border); width: 100%;"></div>
 
-        <!-- Rates List -->
         <div>
             <div class="section-title">Tasas de Cambio</div>
             <div id="ratesContainer">
-                <div class="loader">
+                <div class="loader" style="text-align: center; padding: 40px; color: var(--primary-accent);">
                     <i class="fas fa-circle-notch fa-spin fa-2x"></i>
                 </div>
             </div>
         </div>
 
         <footer>
-            <div class="last-updated" id="footer-text">
+            <div class="last-updated" id="footer-text" style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 10px;">
                 <i class="fas fa-sync fa-spin"></i> Sincronizando...
             </div>
-            <div class="legal-links">Política de Privacidad</div>
             <div class="copyright">© 2026 La Tasa. Datos oficiales del BCV.</div>
         </footer>
     </div>
 
-    <!-- Valentine Rain Script -->
-    <script>
-        const HEARTS = ['❤️', '💖', '💘', '💝', '💓', '💕', '🌹'];
-        
-        function createHeart() {
-            const heart = document.createElement('div');
-            heart.classList.add('heart');
-            heart.innerText = HEARTS[Math.floor(Math.random() * HEARTS.length)];
-            
-            // Random properties
-            const startLeft = Math.random() * 100;
-            const duration = Math.random() * 3 + 3; // 3-6s
-            const size = Math.random() * 20 + 15; // 15-35px
-            
-            heart.style.left = startLeft + 'vw';
-            heart.style.animationDuration = duration + 's';
-            heart.style.fontSize = size + 'px';
-            
-            document.body.appendChild(heart);
-            
-            // Remove after animation
-            setTimeout(() => {
-                heart.remove();
-            }, duration * 1000);
-        }
-
-        // Start rain
-        setInterval(createHeart, 300);
-    </script>
-
-    <!-- App Logic -->
     <script>
         // --- UTILS ---
         function formatNumber(num) {
-            return num.toLocaleString('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+            return num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         
         function parseLocaleNumber(stringNumber) {
@@ -486,14 +321,11 @@
             const now = new Date();
             const options = { weekday: 'long', day: 'numeric', month: 'long' };
             const dateStr = now.toLocaleDateString('es-VE', options);
-            // Capitalize first letter
             document.getElementById('currentDate').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
         }
 
-        // --- CALCULATOR LOGIC ---
         window.toggleCalculator = function(id) {
-            const calc = document.getElementById(`calc-${id}`);
-            calc.classList.toggle('open');
+            document.getElementById(`calc-${id}`).classList.toggle('open');
         };
 
         window.calculate = function(id, rawRate) {
@@ -509,17 +341,6 @@
             calculate(id, rawRate);
         };
 
-        // --- DATA FETCHING ---
-        async function fetchStats() {
-            try {
-                const response = await fetch('/api/download-stats');
-                const data = await response.json();
-                document.getElementById('downloadCount').innerText = data.apk_downloads.toLocaleString();
-            } catch (error) {
-                console.error('Error stats:', error);
-            }
-        }
-
         async function fetchRates() {
             try {
                 const response = await fetch('/api/rates');
@@ -527,12 +348,11 @@
                 const container = document.getElementById('ratesContainer');
                 container.innerHTML = '';
 
-                const renderCard = (id, title, subtitle, rateValue, colorClass) => {
+                const renderCard = (id, title, subtitle, rateValue) => {
                     const cleanRate = parseLocaleNumber(rateValue);
-                    let themeColor = '#3B82F6'; // Default Blue
-                    // Override colors for specific cards to match app
-                    if(id === 'binance-usd') themeColor = '#F0B90B'; // Yellow
-                    if(id === 'bcv-eur') themeColor = '#EA580C'; // Orange
+                    let themeColor = '#3B82F6';
+                    if(id === 'binance-usd') themeColor = '#F0B90B';
+                    if(id === 'bcv-eur') themeColor = '#EA580C';
 
                     return `
                         <div class="rate-card">
@@ -548,66 +368,37 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div id="calc-${id}" class="calculator">
-                                <div class="input-row">
-                                    <input type="number" id="input-${id}" class="amount-input" value="1" 
-                                        oninput="calculate('${id}', '${rateValue}')" placeholder="Monto">
-                                </div>
+                                <input type="number" id="input-${id}" class="amount-input" value="1" oninput="calculate('${id}', '${rateValue}')">
                                 <div class="presets">
                                     ${[5, 10, 20, 50, 100].map(val => 
                                         `<div class="preset-chip" onclick="setAmount('${id}', ${val}, '${rateValue}')">$${val}</div>`
                                     ).join('')}
                                 </div>
-                                <div class="result-box" style="background: ${themeColor}15; border-color: ${themeColor}30;">
-                                    <div class="result-label" style="color: ${themeColor}">Total Estimado</div>
-                                    <div class="result-amount" id="result-${id}" style="color: ${themeColor}">
-                                        ${formatNumber(cleanRate)} Bs
-                                    </div>
+                                <div class="result-box" style="background: ${themeColor}15; border: 1px solid ${themeColor}30;">
+                                    <div style="font-size: 0.7rem; color: ${themeColor}; font-weight: 700;">TOTAL ESTIMADO</div>
+                                    <div class="result-amount" id="result-${id}" style="color: ${themeColor}">${formatNumber(cleanRate)} Bs</div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 };
 
-                // BCV USD
-                if (data.rates.bdv && data.rates.bdv.usd) {
-                    container.innerHTML += renderCard('bcv-usd', 'Dólar (USD)', 'Tasa BCV', data.rates.bdv.usd.rate);
-                }
+                if (data.rates.bdv?.usd) container.innerHTML += renderCard('bcv-usd', 'Dólar (USD)', 'Tasa BCV', data.rates.bdv.usd.rate);
+                if (data.rates.bdv?.eur) container.innerHTML += renderCard('bcv-eur', 'Euro (EUR)', 'Tasa BCV', data.rates.bdv.eur.rate);
+                if (data.rates.binance?.usd) container.innerHTML += renderCard('binance-usd', 'Binance P2P', 'USDT', data.rates.binance.usd.rate);
 
-                // BCV EUR
-                if (data.rates.bdv && data.rates.bdv.eur) {
-                    container.innerHTML += renderCard('bcv-eur', 'Euro (EUR)', 'Tasa BCV', data.rates.bdv.eur.rate);
-                    
-                    if (data.rates.bdv.last_updated) {
-                        const date = new Date(data.rates.bdv.last_updated);
-                        document.getElementById('footer-text').innerHTML = 
-                            `<i class="fas fa-check-circle" style="color: #10B981; margin-right: 5px;"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
-                    }
+                if (data.rates.bdv?.last_updated) {
+                    const date = new Date(data.rates.bdv.last_updated);
+                    document.getElementById('footer-text').innerHTML = `<i class="fas fa-check-circle" style="color: #10B981;"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
                 }
-
-                // BINANCE
-                if (data.rates.binance && data.rates.binance.usd) {
-                   container.innerHTML += renderCard('binance-usd', 'Binance P2P', 'USDT', data.rates.binance.usd.rate);
-                }
-
             } catch (error) {
-                console.error('Error rates:', error);
-                document.getElementById('ratesContainer').innerHTML = 
-                    `<div style="text-align:center; color: var(--secondary); padding: 20px;">
-                        <i class="fas fa-exclamation-triangle"></i> Error cargando tasas
-                    </div>`;
+                container.innerHTML = `<div style="text-align:center; color: var(--secondary);">Error cargando tasas</div>`;
             }
         }
 
-        // Init
         updateDate();
         fetchRates();
-        fetchStats();
-        
-        // Auto-refresh
-        setInterval(fetchRates, 60000); // 1 min
-        setInterval(fetchStats, 30000); // 30 sec
+        setInterval(fetchRates, 60000);
     </script>
 </body>
 </html>
