@@ -149,6 +149,8 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
     const [dueDate, setDueDate] = useState('');
     const [debtProvider, setDebtProvider] = useState('Cashea');
     const [installments, setInstallments] = useState('1');
+    // First installment start date (YYYY-MM-DD) — subsequent ones auto-increment monthly
+    const [firstInstallmentDate, setFirstInstallmentDate] = useState('');
 
     const PROVIDERS = ['Cashea', 'Krece', 'TDC', 'Prestame', 'Bodegas', 'Panas', 'Otro'];
 
@@ -190,6 +192,7 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
         setNote('');
         setDueDate('');
         setInstallments('1');
+        setFirstInstallmentDate('');
         setDebtProvider('Cashea');
         setActionModalVisible(true);
     };
@@ -215,8 +218,10 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                 const count = parseInt(installments) || 1;
                 const portion = parseFloat(amount) / count;
                 const debtInstallments = [];
+                // Use firstInstallmentDate if provided, otherwise default to today
+                const baseDate = firstInstallmentDate ? new Date(firstInstallmentDate) : new Date();
                 for (let i = 0; i < count; i++) {
-                    const d = new Date();
+                    const d = new Date(baseDate);
                     d.setMonth(d.getMonth() + i);
                     debtInstallments.push({ number: i + 1, amount: portion, dueDate: d, status: 'pending' });
                 }
@@ -314,14 +319,10 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                     <Text style={[styles.greeting, { color: activeColors.secondary }]}>Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋</Text>
                     <Text style={[styles.title, { color: activeColors.textDark }]}>Mis Finanzas</Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <TouchableOpacity onPress={onLogout} style={[styles.headerBtn, { backgroundColor: '#FEE2E2' }]}>
-                        <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={onClose} style={[styles.headerBtn, { backgroundColor: activeColors.cardCtx }]}>
-                        <Ionicons name="close" size={20} color={activeColors.textDark} />
-                    </TouchableOpacity>
-                </View>
+                {/* Only Close button in header — Logout moved to bottom bar */}
+                <TouchableOpacity onPress={onClose} style={[styles.headerBtn, { backgroundColor: activeColors.cardCtx }]}>
+                    <Ionicons name="close" size={22} color={activeColors.textDark} />
+                </TouchableOpacity>
             </View>
 
             <FlatList
@@ -678,7 +679,7 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                                     ))}
                                 </ScrollView>
 
-                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13 }}>Cuotas:</Text>
+                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13 }}>Número de Cuotas:</Text>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <TextInput placeholder="1" placeholderTextColor={activeColors.secondary}
                                         style={[styles.input, { flex: 1, marginRight: 10, backgroundColor: activeColors.bg, color: activeColors.textDark }]}
@@ -687,6 +688,23 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                                         {amount ? `≈ $${(parseFloat(amount || 0) / (parseInt(installments) || 1)).toFixed(2)} / cuota` : ''}
                                     </Text>
                                 </View>
+
+                                {/* First installment date */}
+                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13, marginTop: 4 }}>
+                                    📅 Fecha primera cuota:
+                                </Text>
+                                <TextInput
+                                    placeholder="AAAA-MM-DD (ej: 2025-03-01)"
+                                    placeholderTextColor={activeColors.secondary}
+                                    style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
+                                    value={firstInstallmentDate}
+                                    onChangeText={setFirstInstallmentDate}
+                                />
+                                {firstInstallmentDate && parseInt(installments) > 1 && (
+                                    <Text style={{ color: activeColors.secondary, fontSize: 11, marginTop: -8, marginBottom: 8 }}>
+                                        Las siguientes cuotas se asignan mes a mes automáticamente.
+                                    </Text>
+                                )}
                             </View>
                         )}
 
@@ -726,6 +744,14 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                     </View>
                 </View>
             </Modal>
+
+            {/* ── BOTTOM LOGOUT BAR ── */}
+            <View style={[styles.bottomBar, { backgroundColor: activeColors.cardCtx, borderTopColor: activeColors.border || '#2a2a2a' }]}>
+                <TouchableOpacity onPress={onLogout} style={styles.logoutBarBtn}>
+                    <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+                    <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 13, marginLeft: 8 }}>Cerrar sesión</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -778,6 +804,10 @@ const styles = StyleSheet.create({
     btn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
     payBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
     closeSheetBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 12 },
+
+    // Bottom Bar
+    bottomBar: { flexDirection: 'row', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 18, borderTopWidth: 1 },
+    logoutBarBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FEE2E2' },
 });
 
 export default FinancialDashboard;
