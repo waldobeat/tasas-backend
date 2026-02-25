@@ -139,10 +139,10 @@ const calStyles = StyleSheet.create({
 // ═══════════════════════════════════════════════════════════════
 /**
  * Balance Rules (accrual accounting):
- *  + Income          → adds to balance when recorded
- *  - Expense         → subtracts from balance when recorded
- *  - Debt installment → subtracts ONLY when status === 'paid'
- *  + Receivable      → adds ONLY when status === 'collected'
+ * + Income        → adds to balance when recorded
+ * - Expense       → subtracts from balance when recorded
+ * - Debt installment → subtracts ONLY when status === 'paid'
+ * + Receivable      → adds ONLY when status === 'collected'
  *
  * Pending values are shown as separate KPIs, not included in balance.
  */
@@ -451,24 +451,28 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
 
             {/* ── HEADER ── */}
             <View style={S.header}>
-                <TouchableOpacity onPress={onClose} style={[S.backBtn, { backgroundColor: activeColors.cardCtx }]}>
-                    <Ionicons name="arrow-back" size={20} color={activeColors.textDark} />
-                    <Text style={{ color: activeColors.textDark, fontWeight: '700', fontSize: 13, marginLeft: 6 }}>Tasas</Text>
+                <TouchableOpacity
+                    onPress={onClose}
+                    style={[S.backBtn, { backgroundColor: activeColors.cardCtx }]}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                >
+                    <Ionicons name="chevron-back" size={22} color={activeColors.textDark} />
+                    <Text style={[S.backBtnText, { color: activeColors.textDark }]}>Tasas</Text>
                 </TouchableOpacity>
-                <View style={{ flex: 1, alignItems: 'center' }}>
+
+                <View style={S.headerCenter}>
                     <Text style={[S.appTitle, { color: activeColors.textDark }]}>Mis Finanzas</Text>
-                    <Text style={[S.userGreet, { color: activeColors.secondary }]}>
-                        {user?.name ? `👤 ${user.name}` : ''}
-                    </Text>
                 </View>
+
                 <TouchableOpacity
                     onPress={() => Alert.alert('Cerrar sesión', '¿Deseas cerrar tu sesión?', [
                         { text: 'Cancelar', style: 'cancel' },
                         { text: 'Salir', style: 'destructive', onPress: onLogout }
                     ])}
-                    style={[S.hBtn, { backgroundColor: '#FEE2E2' }]}
+                    style={[S.logoutBtn, { backgroundColor: activeColors.cardCtx }]}
+                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
                 >
-                    <Ionicons name="log-out-outline" size={19} color="#EF4444" />
+                    <Ionicons name="log-out-outline" size={20} color={activeColors.textDark} />
                 </TouchableOpacity>
             </View>
 
@@ -480,6 +484,9 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
                 ListHeaderComponent={<>
                     {/* ── BALANCE CARD ── */}
                     <Animated.View style={[S.balCard, { backgroundColor: theme?.primary || '#6C63FF', transform: [{ scale: balAnim }] }]}>
+                        {user?.name && (
+                            <Text style={S.walletOwner}>Billetera de {user.name.split(' ')[0]}</Text>
+                        )}
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <View>
                                 <Text style={S.balLabel}>Balance Real</Text>
@@ -490,7 +497,7 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
                             </View>
                             <View style={S.liveBadge}>
                                 <View style={S.liveDot} />
-                                <Text style={S.liveText}>EN VIVO</Text>
+                                <Text style={S.liveText}>WALLET</Text>
                             </View>
                         </View>
 
@@ -650,7 +657,7 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
             />
 
             {/* ══════════════════════════════════════════════════
-                  MODAL: ADD TRANSACTION
+                 MODAL: ADD TRANSACTION
             ══════════════════════════════════════════════════ */}
             <Modal visible={modal} transparent animationType="slide" onRequestClose={() => setModal(false)}>
                 <View style={S.modalBg}>
@@ -770,7 +777,7 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
                                     )}
                                     {firstDate && parseInt(numInst) > 1 && (
                                         <Text style={{ color: activeColors.secondary, fontSize: 11, marginBottom: 8 }}>
-                                            ℹ️ Las cuotas siguientes se asignan mes a mes automáticamente.
+                                            ℹ️ Las siguientes cuotas se programarán automáticamente cada 15 días.
                                         </Text>
                                     )}
                                 </>
@@ -791,7 +798,7 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
             </Modal>
 
             {/* ══════════════════════════════════════════════════
-                  MODAL: DEBT DETAIL
+                 MODAL: DEBT DETAIL
             ══════════════════════════════════════════════════ */}
             <Modal visible={debtModal} transparent animationType="slide" onRequestClose={() => setDebtModal(false)}>
                 <View style={[S.modalBg, { justifyContent: 'flex-end', padding: 0 }]}>
@@ -871,7 +878,7 @@ const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) =>
             </Modal>
 
             {/* ══════════════════════════════════════════════════
-                  MODAL: DELETE CONFIRM
+                 MODAL: DELETE CONFIRM
             ══════════════════════════════════════════════════ */}
             <Modal visible={!!delTarget} transparent animationType="fade" onRequestClose={() => setDelTarget(null)}>
                 <View style={S.modalBg}>
@@ -903,14 +910,63 @@ const S = StyleSheet.create({
     root: { flex: 1, paddingHorizontal: 16 },
 
     // Header
-    header: { flexDirection: 'row', alignItems: 'center', paddingTop: 14, paddingBottom: 10 },
-    appTitle: { fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-    userGreet: { fontSize: 11, fontWeight: '600', marginTop: 1 },
-    hBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    backBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: 16,
+        paddingBottom: 16
+    },
+    headerCenter: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 10,
+    },
+    appTitle: {
+        fontSize: 17,
+        fontWeight: '800',
+        letterSpacing: -0.3
+    },
+    userGreet: {
+        fontSize: 13,
+        fontWeight: '500',
+        marginTop: 2
+    },
+    backBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 6,
+        paddingRight: 14,
+        height: 44,
+        borderRadius: 22,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2
+    },
+    backBtnText: {
+        fontWeight: '700',
+        fontSize: 14,
+        marginLeft: 2,
+    },
+    logoutBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2
+    },
 
     // Balance card
     balCard: { borderRadius: 24, padding: 20, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 10 },
+    walletOwner: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '800', marginBottom: 10 },
     balLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700' },
     balAmt: { color: '#fff', fontSize: 36, fontWeight: '900', letterSpacing: -1, marginTop: 4 },
     balSub: { color: 'rgba(255,255,255,0.55)', fontSize: 9, marginTop: 3, fontStyle: 'italic' },
