@@ -1,627 +1,853 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity,
+    View, Text, StyleSheet, TouchableOpacity,
     Dimensions, ActivityIndicator, Alert, Modal, TextInput,
-    FlatList, Animated
+    FlatList, Animated, ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { scale, moderateScale, verticalScale } from '../styles/theme';
 import { formatNumber } from '../utils/helpers';
 import { financeService } from '../utils/financeService';
-import { PieChart, LineChart } from 'react-native-chart-kit';
+import { PieChart } from 'react-native-chart-kit';
 
-const screenWidth = Dimensions.get('window').width;
+const { width: SCREEN_W } = Dimensions.get('window');
 
-// ─── Helper Functions ─────────────────────────────────────────────────────────
-const formatDate = (dateStr) => {
-    try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('es-VE', { day: 'numeric', month: 'short' });
-    } catch { return 'N/A'; }
+// ═══════════════════════════════════════════════════════════════
+// CUSTOM CALENDAR — pure RN, no external deps
+// ═══════════════════════════════════════════════════════════════
+const DAYS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
+const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+const CalendarPicker = ({ value, onSelect, onClose, activeColors, theme }) => {
+    const initial = value ? new Date(value) : new Date();
+    const [viewYear, setViewYear] = useState(initial.getFullYear());
+    const [viewMonth, setViewMonth] = useState(initial.getMonth());
+    const [selected, setSelected] = useState(value || null);
+
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const selectedStr = selected;
+
+    const toISO = (d) => {
+        const m = String(viewMonth + 1).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return `${viewYear}-${m}-${dd}`;
+    };
+
+    const prevMonth = () => {
+        if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+        else setViewMonth(m => m - 1);
+    };
+    const nextMonth = () => {
+        if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+        else setViewMonth(m => m + 1);
+    };
+
+    return (
+        <View style={[calStyles.wrap, { backgroundColor: activeColors.cardCtx }]}>
+            {/* Month nav */}
+            <View style={calStyles.nav}>
+                <TouchableOpacity onPress={prevMonth} style={calStyles.navBtn}>
+                    <Ionicons name="chevron-back" size={20} color={activeColors.textDark} />
+                </TouchableOpacity>
+                <Text style={[calStyles.monthLabel, { color: activeColors.textDark }]}>
+                    {MONTHS[viewMonth]} {viewYear}
+                </Text>
+                <TouchableOpacity onPress={nextMonth} style={calStyles.navBtn}>
+                    <Ionicons name="chevron-forward" size={20} color={activeColors.textDark} />
+                </TouchableOpacity>
+            </View>
+
+            {/* Week headers */}
+            <View style={calStyles.row}>
+                {DAYS.map(d => (
+                    <Text key={d} style={[calStyles.dayLabel, { color: activeColors.secondary }]}>{d}</Text>
+                ))}
+            </View>
+
+            {/* Grid */}
+            {Array.from({ length: cells.length / 7 }, (_, wi) => (
+                <View key={wi} style={calStyles.row}>
+                    {cells.slice(wi * 7, wi * 7 + 7).map((day, ci) => {
+                        if (!day) return <View key={ci} style={calStyles.cell} />;
+                        const iso = toISO(day);
+                        const isSelected = iso === selectedStr;
+                        const isToday = iso === todayStr;
+                        return (
+                            <TouchableOpacity
+                                key={ci}
+                                onPress={() => setSelected(iso)}
+                                style={[
+                                    calStyles.cell,
+                                    isSelected && { backgroundColor: theme?.primary || '#6C63FF', borderRadius: 20 },
+                                    !isSelected && isToday && { borderWidth: 1.5, borderRadius: 20, borderColor: theme?.primary || '#6C63FF' }
+                                ]}
+                            >
+                                <Text style={[
+                                    calStyles.dayNum,
+                                    { color: isSelected ? '#fff' : activeColors.textDark },
+                                    isToday && !isSelected && { color: theme?.primary || '#6C63FF', fontWeight: '800' }
+                                ]}>
+                                    {day}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            ))}
+
+            {/* Actions */}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <TouchableOpacity onPress={onClose} style={[calStyles.calBtn, { borderWidth: 1, borderColor: activeColors.secondary }]}>
+                    <Text style={{ color: activeColors.secondary, fontWeight: '600' }}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => { onSelect(selected); onClose(); }}
+                    style={[calStyles.calBtn, { backgroundColor: theme?.primary || '#6C63FF' }]}
+                    disabled={!selected}
+                >
+                    <Text style={{ color: '#fff', fontWeight: '700' }}>
+                        {selected ? `Seleccionar ${selected}` : 'Sin fecha'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 };
 
-const formatDueDate = (dateStr) => {
-    try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: '2-digit' });
-    } catch { return 'N/A'; }
-};
+const calStyles = StyleSheet.create({
+    wrap: { borderRadius: 20, padding: 16, marginTop: 8, marginBottom: 4 },
+    nav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    navBtn: { padding: 6 },
+    monthLabel: { fontSize: 16, fontWeight: '800' },
+    row: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 4 },
+    dayLabel: { width: 34, textAlign: 'center', fontSize: 11, fontWeight: '700' },
+    cell: { width: 34, height: 34, justifyContent: 'center', alignItems: 'center' },
+    dayNum: { fontSize: 13 },
+    calBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+});
 
-const daysUntil = (dateStr) => {
-    try {
-        const d = new Date(dateStr);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-        if (diff < 0) return { label: `Venció hace ${Math.abs(diff)}d`, color: '#EF4444' };
-        if (diff === 0) return { label: 'Vence HOY', color: '#F59E0B' };
-        if (diff <= 7) return { label: `Vence en ${diff}d`, color: '#F59E0B' };
-        return { label: `Vence el ${formatDueDate(dateStr)}`, color: '#10B981' };
-    } catch { return { label: '', color: '#6B7280' }; }
-};
+// ═══════════════════════════════════════════════════════════════
+// ACCOUNTING ENGINE — Senior Financial Logic
+// ═══════════════════════════════════════════════════════════════
+/**
+ * Balance Rules (accrual accounting):
+ *  + Income          → adds to balance when recorded
+ *  - Expense         → subtracts from balance when recorded
+ *  - Debt installment → subtracts ONLY when status === 'paid'
+ *  + Receivable      → adds ONLY when status === 'collected'
+ *
+ * Pending values are shown as separate KPIs, not included in balance.
+ */
+const buildLedger = (transactions) => {
+    let balance = 0;
+    let totalIncome = 0;
+    let totalExpense = 0;
+    let totalPaidDebt = 0;       // debt installments already paid
+    let totalPendingDebt = 0;    // debt installments yet to pay
+    let totalCollected = 0;      // receivables already collected
+    let totalPending = 0;        // receivables not yet collected
 
-const getNextPendingInstallment = (t) => {
-    if (!t.installments?.length) return null;
-    return t.installments.find(i => i.status !== 'paid') || null;
-};
+    const expenseByCategory = {};
 
-// ─── Stats Calculator ─────────────────────────────────────────────────────────
-const calculateStats = (data, activeColors, themePrimary) => {
-    let income = 0, expense = 0, debt = 0, receivable = 0;
-    const catMap = {};
-    const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
-    const historyLabels = [];
-    const historyData = [];
-    let runningBalance = 0;
-
-    sortedData.forEach(t => {
+    for (const t of transactions) {
+        if (!t) continue;
         const amt = parseFloat(t.amount) || 0;
-        if (t.type === 'income') { income += amt; runningBalance += amt; }
-        else if (t.type === 'expense') {
-            expense += amt; runningBalance -= amt;
+
+        if (t.type === 'income') {
+            totalIncome += amt;
+            balance += amt;
+        } else if (t.type === 'expense') {
+            totalExpense += amt;
+            balance -= amt;
             const cat = t.category || 'Otros';
-            catMap[cat] = (catMap[cat] || 0) + amt;
-        } else if (t.type === 'receivable') { receivable += amt; runningBalance += amt; }
-        else if (t.type === 'debt' && !t.completed) {
-            let paid = 0;
-            if (t.installments) paid = t.installments.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
-            else paid = (t.payments || []).reduce((s, p) => s + p.amount, 0);
-            debt += Math.max(0, amt - paid);
-        }
-
-        const dateLabel = formatDate(t.date);
-        if (historyLabels[historyLabels.length - 1] !== dateLabel) {
-            if (historyLabels.length < 7) {
-                historyLabels.push(dateLabel);
-                historyData.push(parseFloat(runningBalance.toFixed(2)));
+            expenseByCategory[cat] = (expenseByCategory[cat] || 0) + amt;
+        } else if (t.type === 'debt') {
+            // Each paid installment reduces balance; pending ones are just a liability
+            for (const inst of (t.installments || [])) {
+                const iAmt = parseFloat(inst.amount) || 0;
+                if (inst.status === 'paid') {
+                    totalPaidDebt += iAmt;
+                    balance -= iAmt;
+                } else {
+                    totalPendingDebt += iAmt;
+                }
             }
-        } else {
-            historyData[historyData.length - 1] = parseFloat(runningBalance.toFixed(2));
+        } else if (t.type === 'receivable') {
+            // Only collected receivables count as income
+            if (t.status === 'collected') {
+                totalCollected += amt;
+                balance += amt;
+            } else {
+                totalPending += amt;
+            }
         }
-    });
-
-    const catColors = ['#6C63FF', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#8B5CF6'];
-    const categories = Object.keys(catMap).map((key, index) => ({
-        name: key,
-        population: catMap[key],
-        color: catColors[index % catColors.length],
-        legendFontColor: activeColors.secondary,
-        legendFontSize: 10,
-    }));
+    }
 
     return {
-        totalIncome: income,
-        totalExpense: expense,
-        totalDebt: debt,
-        totalReceivable: receivable,
-        balance: income + receivable - expense,
-        categories: categories.length > 0
-            ? categories
-            : [{ name: 'Sin Gastos', population: 1, color: activeColors.border || '#333', legendFontColor: activeColors.secondary, legendFontSize: 10 }],
-        history: {
-            labels: historyLabels.length > 0 ? historyLabels : ['Hoy'],
-            data: historyData.length > 0 ? historyData : [0],
-        },
+        balance,
+        totalIncome,
+        totalExpense,
+        totalPaidDebt,
+        totalPendingDebt,
+        totalCollected,
+        totalPending,
+        expenseByCategory,
     };
 };
 
-// ─── Mini Stat Card ───────────────────────────────────────────────────────────
-const StatCard = ({ label, amount, color, icon, activeColors }) => (
-    <View style={[miniStyles.card, { backgroundColor: activeColors.cardCtx }]}>
-        <View style={[miniStyles.iconBox, { backgroundColor: color + '20' }]}>
-            <Ionicons name={icon} size={18} color={color} />
+// ═══════════════════════════════════════════════════════════════
+// HELPER FORMATTERS
+// ═══════════════════════════════════════════════════════════════
+const formatDateShort = (d) => {
+    try {
+        return new Date(d).toLocaleDateString('es-VE', { day: 'numeric', month: 'short' });
+    } catch { return '—'; }
+};
+
+const formatDateFull = (d) => {
+    try {
+        return new Date(d).toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: '2-digit' });
+    } catch { return '—'; }
+};
+
+const dueBadge = (dateStr) => {
+    try {
+        const diff = Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+        if (diff < 0) return { label: `Vencida hace ${Math.abs(diff)}d`, color: '#EF4444' };
+        if (diff === 0) return { label: 'Vence HOY', color: '#F59E0B' };
+        if (diff <= 7) return { label: `Vence en ${diff}d`, color: '#F59E0B' };
+        return { label: `${formatDateFull(dateStr)}`, color: '#10B981' };
+    } catch { return { label: '', color: '#9CA3AF' }; }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SUB-COMPONENTS
+// ═══════════════════════════════════════════════════════════════
+const KpiCard = ({ label, value, color, icon, note, activeColors }) => (
+    <View style={[kpiStyles.card, { backgroundColor: activeColors.cardCtx }]}>
+        <View style={[kpiStyles.icon, { backgroundColor: color + '20' }]}>
+            <Ionicons name={icon} size={16} color={color} />
         </View>
-        <Text style={[miniStyles.label, { color: activeColors.secondary }]}>{label}</Text>
-        <Text style={[miniStyles.amount, { color }]}>${formatNumber(amount)}</Text>
+        <Text style={[kpiStyles.label, { color: activeColors.secondary }]}>{label}</Text>
+        <Text style={[kpiStyles.value, { color }]} numberOfLines={1}>${formatNumber(value)}</Text>
+        {note ? <Text style={[kpiStyles.note, { color: activeColors.secondary }]}>{note}</Text> : null}
     </View>
 );
 
-const miniStyles = StyleSheet.create({
-    card: { flex: 1, borderRadius: 16, padding: 12, marginHorizontal: 4, alignItems: 'flex-start' },
-    iconBox: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-    label: { fontSize: 10, fontWeight: '600', marginBottom: 4 },
-    amount: { fontSize: 14, fontWeight: '900' },
+const kpiStyles = StyleSheet.create({
+    card: { flex: 1, borderRadius: 16, padding: 12, marginHorizontal: 3, alignItems: 'flex-start', minHeight: 90 },
+    icon: { width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+    label: { fontSize: 10, fontWeight: '700', marginBottom: 2 },
+    value: { fontSize: 13, fontWeight: '900' },
+    note: { fontSize: 9, marginTop: 3 },
 });
 
-// ─── Action Button ────────────────────────────────────────────────────────────
-const ActionButton = ({ icon, label, color, onPress, activeColors }) => (
+const ActionBtn = ({ icon, label, color, onPress, activeColors }) => (
     <TouchableOpacity onPress={onPress} style={{ alignItems: 'center', flex: 1 }}>
-        <View style={[styles.actionBtnCircle, { backgroundColor: color + '18', borderWidth: 1.5, borderColor: color + '40' }]}>
+        <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: color + '18', borderWidth: 1.5, borderColor: color + '40', justifyContent: 'center', alignItems: 'center', marginBottom: 5 }}>
             <Ionicons name={icon} size={22} color={color} />
         </View>
-        <Text style={[styles.actionLabel, { color: activeColors.secondary }]}>{label}</Text>
+        <Text style={{ fontSize: 10, fontWeight: '700', color: activeColors.secondary }}>{label}</Text>
     </TouchableOpacity>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpenPremium, refreshKey, user, onClose, onLogout }) => {
+// ═══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════
+const FinancialDashboard = ({ theme, activeColors, user, onClose, onLogout }) => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState(null);
-    const balanceAnim = useState(new Animated.Value(0))[0];
+    const balAnim = useState(new Animated.Value(0.95))[0];
 
-    // Action Modal
-    const [actionModalVisible, setActionModalVisible] = useState(false);
-    const [actionType, setActionType] = useState(null);
+    // ── Add Transaction Modal
+    const [modal, setModal] = useState(false);
+    const [txType, setTxType] = useState('income');
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('');
     const [note, setNote] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [debtProvider, setDebtProvider] = useState('Cashea');
-    const [installments, setInstallments] = useState('1');
-    // First installment start date (YYYY-MM-DD) — subsequent ones auto-increment monthly
-    const [firstInstallmentDate, setFirstInstallmentDate] = useState('');
+    const [provider, setProvider] = useState('Cashea');
+    const [numInst, setNumInst] = useState('1');
+    const [firstDate, setFirstDate] = useState('');
+    const [showCalendar, setShowCalendar] = useState(false); // for receivable due date
+    const [showInstCal, setShowInstCal] = useState(false);  // for debt first installment
 
-    const PROVIDERS = ['Cashea', 'Krece', 'TDC', 'Prestame', 'Bodegas', 'Panas', 'Otro'];
+    // ── Debt Detail modal
+    const [debtModal, setDebtModal] = useState(false);
+    const [selDebt, setSelDebt] = useState(null);
 
-    // Debt Detail Modal
-    const [debtDetailVisible, setDebtDetailVisible] = useState(false);
-    const [selectedDebt, setSelectedDebt] = useState(null);
+    // ── Delete confirm
+    const [delTarget, setDelTarget] = useState(null);
 
-    // Delete confirm modal
-    const [deleteTarget, setDeleteTarget] = useState(null);
+    const PROVIDERS = ['Cashea', 'Krece', 'TDC', 'Préstamo', 'Amigos', 'Tienda', 'Otro'];
+    const EXPENSE_CATS = ['Comida', 'Transporte', 'Servicios', 'Salud', 'Ropa', 'Entretenimiento', 'Educación', 'Otro'];
+    const INCOME_CATS = ['Sueldo', 'Freelance', 'Ventas', 'Bono', 'Dividendos', 'Otro'];
 
-    useEffect(() => { loadData(); }, [refreshKey]);
+    // ── Load
+    useEffect(() => { load(); }, []);
 
-    const loadData = async () => {
+    const load = async () => {
         setLoading(true);
         try {
             const data = await financeService.getAllTransactions();
             const valid = Array.isArray(data) ? data : [];
             setTransactions(valid);
-            updateStats(valid);
+            animBalance();
         } catch (e) {
-            console.error('Finance load error:', e);
-            setTransactions([]);
-        } finally {
-            setLoading(false);
-        }
+            console.error('[Finance] load error:', e);
+        } finally { setLoading(false); }
     };
 
-    const updateStats = useCallback((data) => {
-        const newStats = calculateStats(data, activeColors, theme?.primary);
-        setStats(newStats);
-        // Animate balance change
-        Animated.spring(balanceAnim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }).start();
-    }, [activeColors, theme]);
-
-    const openActionModal = (type) => {
-        setActionType(type);
-        setAmount('');
-        setCategory('');
-        setNote('');
-        setDueDate('');
-        setInstallments('1');
-        setFirstInstallmentDate('');
-        setDebtProvider('Cashea');
-        setActionModalVisible(true);
+    const animBalance = () => {
+        balAnim.setValue(0.93);
+        Animated.spring(balAnim, { toValue: 1, tension: 90, friction: 8, useNativeDriver: true }).start();
     };
 
-    const openDebtDetails = (debt) => { setSelectedDebt(debt); setDebtDetailVisible(true); };
-    const closeDebtDetails = () => { setDebtDetailVisible(false); setSelectedDebt(null); };
+    // ── Accounting
+    const ledger = useMemo(() => buildLedger(transactions), [transactions]);
 
-    const handleAddTransaction = async () => {
-        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-            Alert.alert('Error', 'Monto inválido'); return;
-        }
-        if (!category) { Alert.alert('Error', 'La categoría es obligatoria'); return; }
+    // ── Grouped for list
+    const grouped = useMemo(() => {
+        const map = {};
+        [...transactions]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .forEach(t => {
+                const k = formatDateShort(t.date);
+                if (!map[k]) map[k] = [];
+                map[k].push(t);
+            });
+        return map;
+    }, [transactions]);
+
+    // ── Pie chart data
+    const pieData = useMemo(() => {
+        const colors = ['#6C63FF', '#EF4444', '#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899'];
+        const entries = Object.entries(ledger.expenseByCategory);
+        if (!entries.length) return [{ name: 'Sin gastos', population: 1, color: '#374151', legendFontColor: activeColors.secondary, legendFontSize: 10 }];
+        return entries.map(([name, val], i) => ({
+            name, population: val, color: colors[i % colors.length],
+            legendFontColor: activeColors.secondary, legendFontSize: 10
+        }));
+    }, [ledger]);
+
+    // ── Open modal helpers
+    const openModal = (type) => {
+        setTxType(type); setAmount(''); setCategory(''); setNote('');
+        setProvider('Cashea'); setNumInst('1'); setFirstDate('');
+        setShowCalendar(false); setShowInstCal(false); setModal(true);
+    };
+
+    // ── Save transaction
+    const save = async () => {
+        const amt = parseFloat(amount);
+        if (!amt || amt <= 0) { Alert.alert('Error', 'Monto inválido'); return; }
+        if (!category) { Alert.alert('Error', 'Selecciona una categoría'); return; }
 
         try {
             setLoading(true);
-            let newTrans = { type: actionType, amount: parseFloat(amount), category, note, date: new Date() };
+            let body = { type: txType, amount: amt, category, note, date: new Date() };
 
-            if (actionType === 'receivable' && dueDate) {
-                newTrans.dueDate = new Date(dueDate);
+            if (txType === 'receivable') {
+                body.status = 'pending';
+                if (firstDate) body.dueDate = new Date(firstDate);
             }
 
-            if (actionType === 'debt') {
-                const count = parseInt(installments) || 1;
-                const portion = parseFloat(amount) / count;
-                const debtInstallments = [];
-                // Use firstInstallmentDate if provided, otherwise default to today
-                const baseDate = firstInstallmentDate ? new Date(firstInstallmentDate) : new Date();
-                for (let i = 0; i < count; i++) {
-                    const d = new Date(baseDate);
+            if (txType === 'debt') {
+                const count = Math.max(1, parseInt(numInst) || 1);
+                const base = firstDate ? new Date(firstDate) : new Date();
+                const installments = Array.from({ length: count }, (_, i) => {
+                    const d = new Date(base);
                     d.setMonth(d.getMonth() + i);
-                    debtInstallments.push({ number: i + 1, amount: portion, dueDate: d, status: 'pending' });
-                }
-                newTrans = { ...newTrans, provider: debtProvider, installments: debtInstallments, completed: false };
+                    return { number: i + 1, amount: parseFloat((amt / count).toFixed(2)), dueDate: d, status: 'pending' };
+                });
+                body = { ...body, provider, installments, completed: false };
             }
 
-            const saved = await financeService.addTransaction(newTrans);
-            // Real-time update: add to state directly
-            const updated = [saved, ...transactions];
-            setTransactions(updated);
-            updateStats(updated);
-
-            setActionModalVisible(false);
-            Alert.alert('✅ Éxito', 'Movimiento registrado');
+            const saved = await financeService.addTransaction(body);
+            const next = [saved, ...transactions];
+            setTransactions(next);
+            animBalance();
+            setModal(false);
         } catch (e) {
-            Alert.alert('Error', 'No se pudo guardar');
-        } finally {
-            setLoading(false);
-        }
+            Alert.alert('Error', 'No se pudo guardar. Verifica la conexión.');
+        } finally { setLoading(false); }
     };
 
-    const handleDelete = async (id) => {
-        try {
-            await financeService.deleteTransaction(id);
-            const updated = transactions.filter(t => t._id !== id);
-            setTransactions(updated);
-            updateStats(updated); // Real-time balance update
-            setDeleteTarget(null);
-            Alert.alert('✅ Eliminado');
-        } catch {
-            Alert.alert('Error', 'No se pudo eliminar');
-        }
-    };
-
-    const handlePayInstallment = async (debt, installment) => {
-        if (installment.status === 'paid') return;
-        Alert.alert(
-            'Pagar Cuota',
-            `¿Confirmas el pago de la cuota #${installment.number} por $${installment.amount.toFixed(2)}?`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Pagar', onPress: async () => {
-                        try {
-                            setLoading(true);
-                            const updatedInst = debt.installments.map(i =>
-                                i.number === installment.number ? { ...i, status: 'paid', paidDate: new Date() } : i
-                            );
-                            const allPaid = updatedInst.every(i => i.status === 'paid');
-                            const updatedDebt = { ...debt, installments: updatedInst, completed: allPaid };
-                            await financeService.updateTransaction(debt._id, updatedDebt);
-
-                            // Real-time update
-                            const updated = transactions.map(t => t._id === debt._id ? updatedDebt : t);
-                            setTransactions(updated);
-                            updateStats(updated);
-
-                            // Refresh selected debt view
-                            setSelectedDebt(updatedDebt);
-                            Alert.alert('✅ Éxito', 'Cuota marcada como pagada');
-                        } catch { Alert.alert('Error', 'No se pudo actualizar la deuda'); }
-                        finally { setLoading(false); }
-                    }
+    // ── Mark receivable as collected
+    const markCollected = async (t) => {
+        Alert.alert('Confirmar', `¿Marcar $${formatNumber(t.amount)} como cobrado?`, [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: '✓ Cobrado', onPress: async () => {
+                    try {
+                        const updated = { ...t, status: 'collected', collectedDate: new Date() };
+                        await financeService.updateTransaction(t._id, updated);
+                        const next = transactions.map(x => x._id === t._id ? updated : x);
+                        setTransactions(next);
+                        animBalance();
+                    } catch { Alert.alert('Error', 'No se pudo actualizar'); }
                 }
-            ]
-        );
+            }
+        ]);
     };
 
-    const groupedTransactions = transactions.reduce((acc, curr) => {
-        if (!curr) return acc;
-        const key = formatDate(curr.date);
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(curr);
-        return acc;
-    }, {});
-
-    const chartConfig = {
-        backgroundGradientFrom: activeColors.cardCtx,
-        backgroundGradientTo: activeColors.cardCtx,
-        color: () => theme?.primary || '#6C63FF',
-        labelColor: () => activeColors.secondary,
-        strokeWidth: 2,
-        decimalPlaces: 0,
-        propsForDots: { r: '4', strokeWidth: '2', stroke: theme?.primary || '#6C63FF' },
+    // ── Pay debt installment
+    const payInstallment = async (debt, inst) => {
+        if (inst.status === 'paid') return;
+        Alert.alert('Pagar Cuota', `¿Pagar cuota #${inst.number} → $${formatNumber(inst.amount)}?`, [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: 'Pagar ✓', onPress: async () => {
+                    try {
+                        const updInst = debt.installments.map(i =>
+                            i.number === inst.number ? { ...i, status: 'paid', paidDate: new Date() } : i
+                        );
+                        const allPaid = updInst.every(i => i.status === 'paid');
+                        const updDebt = { ...debt, installments: updInst, completed: allPaid };
+                        await financeService.updateTransaction(debt._id, updDebt);
+                        const next = transactions.map(t => t._id === debt._id ? updDebt : t);
+                        setTransactions(next);
+                        setSelDebt(updDebt);
+                        animBalance();
+                    } catch { Alert.alert('Error', 'No se pudo actualizar'); }
+                }
+            }
+        ]);
     };
 
-    const pendingDebt = stats?.totalDebt || 0;
-    const balanceColor = (stats?.balance || 0) >= 0 ? '#10B981' : '#EF4444';
+    // ── Delete
+    const doDelete = async () => {
+        if (!delTarget) return;
+        try {
+            await financeService.deleteTransaction(delTarget._id);
+            const next = transactions.filter(t => t._id !== delTarget._id);
+            setTransactions(next);
+            animBalance();
+        } catch { Alert.alert('Error', 'No se pudo eliminar'); }
+        finally { setDelTarget(null); }
+    };
+
+    // ── Category chips
+    const cats = txType === 'income' ? INCOME_CATS : txType === 'expense' ? EXPENSE_CATS : [];
+
+    // ─── RENDER ───────────────────────────────────────────────
+    const balColor = ledger.balance >= 0 ? '#10B981' : '#EF4444';
 
     return (
-        <View style={[styles.container, { backgroundColor: activeColors.bg }]}>
-            {/* HEADER */}
-            <View style={styles.header}>
-                <View>
-                    <Text style={[styles.greeting, { color: activeColors.secondary }]}>Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋</Text>
-                    <Text style={[styles.title, { color: activeColors.textDark }]}>Mis Finanzas</Text>
+        <View style={[S.root, { backgroundColor: activeColors.bg }]}>
+
+            {/* ── HEADER ── */}
+            <View style={S.header}>
+                <View style={{ flex: 1 }}>
+                    <Text style={[S.appTitle, { color: activeColors.textDark }]}>Mis Finanzas</Text>
+                    <Text style={[S.userGreet, { color: activeColors.secondary }]}>
+                        {user?.name ? `👤 ${user.name}` : ''}
+                    </Text>
                 </View>
-                {/* Only Close button in header — Logout moved to bottom bar */}
-                <TouchableOpacity onPress={onClose} style={[styles.headerBtn, { backgroundColor: activeColors.cardCtx }]}>
-                    <Ionicons name="close" size={22} color={activeColors.textDark} />
+                <TouchableOpacity
+                    onPress={() => Alert.alert('Cerrar sesión', '¿Deseas cerrar tu sesión?', [
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Salir', style: 'destructive', onPress: onLogout }
+                    ])}
+                    style={[S.hBtn, { backgroundColor: '#FEE2E2', marginRight: 8 }]}
+                >
+                    <Ionicons name="log-out-outline" size={19} color="#EF4444" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onClose} style={[S.hBtn, { backgroundColor: activeColors.cardCtx }]}>
+                    <Ionicons name="close" size={21} color={activeColors.textDark} />
                 </TouchableOpacity>
             </View>
 
             <FlatList
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                data={Object.keys(groupedTransactions)}
-                keyExtractor={item => item}
-                ListHeaderComponent={
-                    <>
-                        {/* MAIN BALANCE CARD */}
-                        <Animated.View style={[styles.balanceCard, {
-                            backgroundColor: theme?.primary || '#6C63FF',
-                            transform: [{ scale: balanceAnim.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1] }) }]
-                        }]}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <View>
-                                    <Text style={styles.balanceLabel}>Balance Neto</Text>
-                                    <Text style={styles.balanceAmount}>
-                                        {loading ? '...' : `$${formatNumber(stats?.balance || 0)}`}
-                                    </Text>
-                                </View>
-                                <View style={styles.cardBadge}>
-                                    <Ionicons name="wallet" size={18} color="white" />
-                                    <Text style={styles.cardBadgeText}>EN VIVO</Text>
-                                </View>
+                contentContainerStyle={{ paddingBottom: 40 }}
+                data={Object.keys(grouped)}
+                keyExtractor={k => k}
+                ListHeaderComponent={<>
+                    {/* ── BALANCE CARD ── */}
+                    <Animated.View style={[S.balCard, { backgroundColor: theme?.primary || '#6C63FF', transform: [{ scale: balAnim }] }]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <View>
+                                <Text style={S.balLabel}>Balance Real</Text>
+                                <Text style={S.balAmt} numberOfLines={1}>
+                                    {loading ? '...' : `$${formatNumber(ledger.balance)}`}
+                                </Text>
+                                <Text style={S.balSub}>Ingresos − Gastos − Deuda pagada + Cobros recibidos</Text>
                             </View>
-
-                            {/* quick stats row */}
-                            <View style={styles.cardStatsRow}>
-                                <View style={styles.cardStat}>
-                                    <Ionicons name="arrow-up-circle" size={14} color="rgba(255,255,255,0.8)" />
-                                    <Text style={styles.cardStatLabel}>Ingresos</Text>
-                                    <Text style={styles.cardStatAmt}>${formatNumber(stats?.totalIncome || 0)}</Text>
-                                </View>
-                                <View style={styles.cardStatDivider} />
-                                <View style={styles.cardStat}>
-                                    <Ionicons name="arrow-down-circle" size={14} color="rgba(255,255,255,0.8)" />
-                                    <Text style={styles.cardStatLabel}>Gastos</Text>
-                                    <Text style={styles.cardStatAmt}>${formatNumber(stats?.totalExpense || 0)}</Text>
-                                </View>
-                                <View style={styles.cardStatDivider} />
-                                <View style={styles.cardStat}>
-                                    <Ionicons name="cash-outline" size={14} color="rgba(255,255,255,0.8)" />
-                                    <Text style={styles.cardStatLabel}>Por cobrar</Text>
-                                    <Text style={styles.cardStatAmt}>${formatNumber(stats?.totalReceivable || 0)}</Text>
-                                </View>
+                            <View style={S.liveBadge}>
+                                <View style={S.liveDot} />
+                                <Text style={S.liveText}>EN VIVO</Text>
                             </View>
-
-                            {/* Debt bar */}
-                            {pendingDebt > 0 && (
-                                <View style={{ marginTop: 14 }}>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
-                                        <Text style={styles.debtBarLabel}>⚠️ Deuda pendiente</Text>
-                                        <Text style={styles.debtBarLabel}>${formatNumber(pendingDebt)}</Text>
-                                    </View>
-                                    <View style={styles.debtBarBg}>
-                                        <View style={[styles.debtBarFill, {
-                                            width: `${Math.min(100, (pendingDebt / Math.max(stats?.totalIncome || 1, 1)) * 100)}%`
-                                        }]} />
-                                    </View>
-                                </View>
-                            )}
-                        </Animated.View>
-
-                        {/* MINI STAT CARDS */}
-                        {stats && (
-                            <View style={{ flexDirection: 'row', marginBottom: 20 }}>
-                                <StatCard label="Ingresos" amount={stats.totalIncome} color="#10B981" icon="trending-up" activeColors={activeColors} />
-                                <StatCard label="Gastos" amount={stats.totalExpense} color="#EF4444" icon="trending-down" activeColors={activeColors} />
-                                <StatCard label="Deudas" amount={stats.totalDebt} color="#F59E0B" icon="alert-circle" activeColors={activeColors} />
-                            </View>
-                        )}
-
-                        {/* ACTION BUTTONS */}
-                        <View style={styles.actionContainer}>
-                            <ActionButton icon="arrow-up" label="Ingreso" color="#10B981" onPress={() => openActionModal('income')} activeColors={activeColors} />
-                            <ActionButton icon="arrow-down" label="Gasto" color="#EF4444" onPress={() => openActionModal('expense')} activeColors={activeColors} />
-                            <ActionButton icon="alert-circle" label="Deuda" color="#F59E0B" onPress={() => openActionModal('debt')} activeColors={activeColors} />
-                            <ActionButton icon="cash-outline" label="Cobrar" color="#3B82F6" onPress={() => openActionModal('receivable')} activeColors={activeColors} />
                         </View>
 
-                        {/* CHARTS */}
-                        {!loading && stats && (
-                            <>
-                                <Text style={[styles.sectionTitle, { color: activeColors.textDark, marginBottom: 12 }]}>Analíticas</Text>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-                                    {/* Pie */}
-                                    <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx }]}>
-                                        <Text style={[styles.chartTitle, { color: activeColors.textDark }]}>Gastos</Text>
-                                        <PieChart
-                                            data={stats.categories}
-                                            width={screenWidth * 0.65}
-                                            height={140}
-                                            chartConfig={chartConfig}
-                                            accessor="population"
-                                            backgroundColor="transparent"
-                                            paddingLeft="10"
-                                            absolute={false}
-                                            hasLegend={true}
-                                        />
-                                    </View>
-                                    {/* Line */}
-                                    {stats.history.data.length > 1 && (
-                                        <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, marginLeft: 12 }]}>
-                                            <Text style={[styles.chartTitle, { color: activeColors.textDark }]}>Historial Balance</Text>
-                                            <LineChart
-                                                data={{ labels: stats.history.labels, datasets: [{ data: stats.history.data }] }}
-                                                width={screenWidth * 0.65}
-                                                height={140}
-                                                chartConfig={chartConfig}
-                                                bezier
-                                                style={{ borderRadius: 12 }}
-                                                withDots={true}
-                                                withShadow={false}
-                                            />
-                                        </View>
-                                    )}
-                                    {/* Upcoming payments summary */}
-                                    <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, marginLeft: 12, minWidth: screenWidth * 0.55 }]}>
-                                        <Text style={[styles.chartTitle, { color: activeColors.textDark }]}>Próximos Pagos</Text>
-                                        {transactions
-                                            .filter(t => t.type === 'debt' && !t.completed)
-                                            .flatMap(t => (t.installments || [])
-                                                .filter(i => i.status !== 'paid')
-                                                .slice(0, 1)
-                                                .map(i => ({ ...i, provider: t.provider || t.category }))
-                                            )
-                                            .slice(0, 4)
-                                            .map((item, idx) => {
-                                                const info = daysUntil(item.dueDate);
-                                                return (
-                                                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                                                        <View style={[{ width: 8, height: 8, borderRadius: 4, marginRight: 8, backgroundColor: info.color }]} />
-                                                        <View style={{ flex: 1 }}>
-                                                            <Text style={{ color: activeColors.textDark, fontSize: 11, fontWeight: '700' }}>{item.provider}</Text>
-                                                            <Text style={{ color: info.color, fontSize: 10 }}>{info.label}</Text>
-                                                        </View>
-                                                        <Text style={{ color: activeColors.textDark, fontSize: 11, fontWeight: '900' }}>${item.amount?.toFixed(2)}</Text>
-                                                    </View>
-                                                );
-                                            })
-                                        }
-                                        {transactions.filter(t => t.type === 'debt' && !t.completed).length === 0 && (
-                                            <Text style={{ color: activeColors.secondary, fontSize: 12, marginTop: 10 }}>Sin deudas pendientes 🎉</Text>
-                                        )}
-                                    </View>
-                                </ScrollView>
-                            </>
-                        )}
+                        <View style={S.balRow}>
+                            <View style={S.balCol}><Text style={S.balColLabel}>↑ Ingresos</Text><Text style={S.balColVal}>${formatNumber(ledger.totalIncome)}</Text></View>
+                            <View style={S.balDivider} />
+                            <View style={S.balCol}><Text style={S.balColLabel}>↓ Gastos</Text><Text style={S.balColVal}>${formatNumber(ledger.totalExpense)}</Text></View>
+                            <View style={S.balDivider} />
+                            <View style={S.balCol}><Text style={S.balColLabel}>⚠ Deuda paid</Text><Text style={S.balColVal}>${formatNumber(ledger.totalPaidDebt)}</Text></View>
+                        </View>
+                    </Animated.View>
 
-                        <Text style={[styles.sectionTitle, { color: activeColors.textDark }]}>Movimientos Recientes</Text>
-                        {loading && <ActivityIndicator size="large" color={theme?.primary} style={{ marginTop: 20 }} />}
-                    </>
-                }
-                renderItem={({ item: date }) => (
-                    <View style={{ marginBottom: 15 }}>
-                        <Text style={[styles.dateHeader, { color: activeColors.secondary }]}>{date}</Text>
-                        {groupedTransactions[date].map((t, index) => {
+                    {/* ── KPIs ── */}
+                    <View style={{ flexDirection: 'row', marginBottom: 18 }}>
+                        <KpiCard label="Por cobrar" value={ledger.totalPending} color="#3B82F6" icon="hourglass-outline" note="Pendiente de cobro" activeColors={activeColors} />
+                        <KpiCard label="Deuda pend." value={ledger.totalPendingDebt} color="#F59E0B" icon="alert-circle-outline" note="Cuotas sin pagar" activeColors={activeColors} />
+                        <KpiCard label="Cobrado ✓" value={ledger.totalCollected} color="#10B981" icon="checkmark-circle-outline" note="Incluido en balance" activeColors={activeColors} />
+                    </View>
+
+                    {/* ── ACTION BUTTONS ── */}
+                    <View style={{ flexDirection: 'row', marginBottom: 22 }}>
+                        <ActionBtn icon="trending-up" label="Ingreso" color="#10B981" onPress={() => openModal('income')} activeColors={activeColors} />
+                        <ActionBtn icon="trending-down" label="Gasto" color="#EF4444" onPress={() => openModal('expense')} activeColors={activeColors} />
+                        <ActionBtn icon="alert-circle" label="Deuda" color="#F59E0B" onPress={() => openModal('debt')} activeColors={activeColors} />
+                        <ActionBtn icon="cash" label="Cobrar" color="#3B82F6" onPress={() => openModal('receivable')} activeColors={activeColors} />
+                    </View>
+
+                    {/* ── PIE CHART ── */}
+                    {!loading && ledger.totalExpense > 0 && (
+                        <View style={{ marginBottom: 20 }}>
+                            <Text style={[S.secTitle, { color: activeColors.textDark }]}>Distribución de Gastos</Text>
+                            <View style={[S.chartCard, { backgroundColor: activeColors.cardCtx }]}>
+                                <PieChart
+                                    data={pieData}
+                                    width={SCREEN_W - 52}
+                                    height={150}
+                                    chartConfig={{ color: () => '#fff', labelColor: () => activeColors.secondary }}
+                                    accessor="population"
+                                    backgroundColor="transparent"
+                                    paddingLeft="10"
+                                    hasLegend
+                                    absolute={false}
+                                />
+                            </View>
+                        </View>
+                    )}
+
+                    {/* ── UPCOMING PAYMENTS ── */}
+                    {ledger.totalPendingDebt > 0 && (() => {
+                        const upcoming = transactions
+                            .filter(t => t.type === 'debt' && !t.completed)
+                            .flatMap(t => (t.installments || [])
+                                .filter(i => i.status !== 'paid')
+                                .slice(0, 1)
+                                .map(i => ({ ...i, provider: t.provider || t.category }))
+                            )
+                            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                            .slice(0, 5);
+                        if (!upcoming.length) return null;
+                        return (
+                            <View style={{ marginBottom: 20 }}>
+                                <Text style={[S.secTitle, { color: activeColors.textDark }]}>Próximos Pagos</Text>
+                                <View style={[S.chartCard, { backgroundColor: activeColors.cardCtx }]}>
+                                    {upcoming.map((item, i) => {
+                                        const bd = dueBadge(item.dueDate);
+                                        return (
+                                            <View key={i} style={[S.upRow, i < upcoming.length - 1 && { borderBottomWidth: 1, borderBottomColor: activeColors.bg + 'aa' }]}>
+                                                <View style={[S.upDot, { backgroundColor: bd.color }]} />
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={{ color: activeColors.textDark, fontWeight: '700', fontSize: 13 }}>{item.provider}</Text>
+                                                    <Text style={{ color: bd.color, fontSize: 11, marginTop: 1 }}>{bd.label}</Text>
+                                                </View>
+                                                <Text style={{ color: activeColors.textDark, fontWeight: '900', fontSize: 13 }}>${formatNumber(item.amount)}</Text>
+                                            </View>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        );
+                    })()}
+
+                    <Text style={[S.secTitle, { color: activeColors.textDark }]}>
+                        Movimientos {transactions.length > 0 ? `(${transactions.length})` : ''}
+                    </Text>
+                    {loading && <ActivityIndicator color={theme?.primary} style={{ marginTop: 20 }} />}
+                </>}
+
+                renderItem={({ item: dateKey }) => (
+                    <View style={{ marginBottom: 14 }}>
+                        <Text style={[S.dateHdr, { color: activeColors.secondary }]}>{dateKey}</Text>
+                        {grouped[dateKey].map((t, i) => {
                             const isDebt = t.type === 'debt';
-                            const isReceivable = t.type === 'receivable';
-                            const nextInst = isDebt ? getNextPendingInstallment(t) : null;
-                            const dueDateInfo = nextInst ? daysUntil(nextInst.dueDate) : (isReceivable && t.dueDate ? daysUntil(t.dueDate) : null);
+                            const isReceiv = t.type === 'receivable';
+                            const isIncome = t.type === 'income';
+                            const collected = isReceiv && t.status === 'collected';
 
-                            const iconName = t.type === 'income' ? 'arrow-up'
-                                : t.type === 'debt' ? 'alert-circle'
-                                    : t.type === 'receivable' ? 'cash-outline'
-                                        : 'arrow-down';
-                            const iconColor = t.type === 'income' ? '#10B981' : t.type === 'debt' ? '#F59E0B' : t.type === 'receivable' ? '#3B82F6' : '#EF4444';
-                            const iconBg = t.type === 'income' ? '#DCFCE7' : t.type === 'debt' ? '#FEF3C7' : t.type === 'receivable' ? '#DBEAFE' : '#FEE2E2';
-                            const amtSign = (t.type === 'income' || t.type === 'receivable') ? '+' : '-';
+                            const iconName = isIncome ? 'trending-up' : isDebt ? 'alert-circle' : isReceiv ? 'cash' : 'trending-down';
+                            const iconColor = isIncome ? '#10B981' : isDebt ? '#F59E0B' : isReceiv ? (collected ? '#10B981' : '#3B82F6') : '#EF4444';
+                            const iconBg = isIncome ? '#DCFCE7' : isDebt ? '#FEF3C7' : isReceiv ? (collected ? '#DCFCE7' : '#DBEAFE') : '#FEE2E2';
+                            const amtSign = (isIncome || (isReceiv && collected)) ? '+' : '';
+                            const instNext = isDebt ? (t.installments || []).find(x => x.status !== 'paid') : null;
+                            const bd = instNext ? dueBadge(instNext.dueDate) : isReceiv && t.dueDate ? dueBadge(t.dueDate) : null;
 
                             return (
                                 <TouchableOpacity
-                                    key={index}
-                                    onPress={() => isDebt ? openDebtDetails(t) : null}
-                                    onLongPress={() => setDeleteTarget(t)}
+                                    key={i}
+                                    onPress={() => isDebt ? (setSelDebt(t), setDebtModal(true)) : null}
+                                    onLongPress={() => setDelTarget(t)}
                                     activeOpacity={0.75}
-                                    style={[styles.transRow, { backgroundColor: activeColors.cardCtx }]}
+                                    style={[S.txRow, { backgroundColor: activeColors.cardCtx }]}
                                 >
-                                    <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
+                                    <View style={[S.txIcon, { backgroundColor: iconBg }]}>
                                         <Ionicons name={iconName} size={18} color={iconColor} />
                                     </View>
                                     <View style={{ flex: 1, marginLeft: 12 }}>
-                                        <Text style={[styles.transCat, { color: activeColors.textDark }]}>
+                                        <Text style={[S.txCat, { color: activeColors.textDark }]}>
                                             {isDebt ? (t.provider || t.category) : t.category}
                                         </Text>
-                                        {isDebt && t.installments ? (
-                                            <View>
-                                                <Text style={{ fontSize: 10, color: activeColors.secondary }}>
-                                                    {t.installments.filter(i => i.status === 'paid').length}/{t.installments.length} Cuotas pagadas
-                                                </Text>
-                                                {dueDateInfo && (
-                                                    <Text style={{ fontSize: 10, color: dueDateInfo.color, fontWeight: '700', marginTop: 1 }}>
-                                                        📅 {dueDateInfo.label}
-                                                    </Text>
-                                                )}
-                                            </View>
-                                        ) : isReceivable && dueDateInfo ? (
-                                            <Text style={{ fontSize: 10, color: dueDateInfo.color, fontWeight: '700' }}>
-                                                💰 {dueDateInfo.label}
+                                        {isDebt && t.installments && (
+                                            <Text style={{ color: activeColors.secondary, fontSize: 10 }}>
+                                                {t.installments.filter(x => x.status === 'paid').length}/{t.installments.length} cuotas pagadas
                                             </Text>
-                                        ) : t.note ? (
-                                            <Text style={{ fontSize: 10, color: activeColors.secondary }}>{t.note}</Text>
-                                        ) : null}
+                                        )}
+                                        {bd && <Text style={{ color: bd.color, fontSize: 10, fontWeight: '700', marginTop: 1 }}>📅 {bd.label}</Text>}
+                                        {isReceiv && !collected && (
+                                            <Text style={{ color: '#3B82F6', fontSize: 10, fontWeight: '700' }}>⏳ Pendiente de cobro</Text>
+                                        )}
+                                        {isReceiv && collected && (
+                                            <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '700' }}>✓ Cobrado el {formatDateShort(t.collectedDate)}</Text>
+                                        )}
+                                        {t.note ? <Text style={{ color: activeColors.secondary, fontSize: 10 }}>{t.note}</Text> : null}
                                     </View>
                                     <View style={{ alignItems: 'flex-end' }}>
-                                        <Text style={[styles.transAmt, { color: iconColor }]}>
-                                            {amtSign}${formatNumber(t.amount)}
-                                        </Text>
-                                        {isDebt && (
-                                            <Text style={{ fontSize: 9, color: activeColors.secondary, marginTop: 2 }}>Toca para detalle</Text>
+                                        <Text style={[S.txAmt, { color: iconColor }]}>{amtSign}${formatNumber(t.amount)}</Text>
+                                        {isReceiv && !collected && (
+                                            <TouchableOpacity
+                                                onPress={() => markCollected(t)}
+                                                style={[S.collectBtn, { backgroundColor: '#10B98120', borderColor: '#10B981' }]}
+                                            >
+                                                <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '800' }}>✓ Cobrado</Text>
+                                            </TouchableOpacity>
                                         )}
+                                        {isDebt && <Text style={{ color: activeColors.secondary, fontSize: 9, marginTop: 2 }}>Mantén para eliminar</Text>}
                                     </View>
                                 </TouchableOpacity>
                             );
                         })}
                     </View>
                 )}
-                ListEmptyComponent={
-                    !loading && (
-                        <View style={{ alignItems: 'center', marginTop: 40 }}>
-                            <Ionicons name="wallet-outline" size={48} color={activeColors.secondary} />
-                            <Text style={{ color: activeColors.secondary, marginTop: 12, fontSize: 15 }}>No hay movimientos aún.</Text>
-                            <Text style={{ color: activeColors.secondary, fontSize: 12, marginTop: 4 }}>Usa los botones de arriba para comenzar.</Text>
-                        </View>
-                    )
-                }
+                ListEmptyComponent={!loading && (
+                    <View style={{ alignItems: 'center', paddingTop: 40 }}>
+                        <Ionicons name="wallet-outline" size={52} color={activeColors.secondary + '80'} />
+                        <Text style={{ color: activeColors.secondary, marginTop: 14, fontSize: 15, fontWeight: '700' }}>Sin movimientos</Text>
+                        <Text style={{ color: activeColors.secondary, fontSize: 12, marginTop: 4 }}>Usa los botones de arriba para registrar</Text>
+                    </View>
+                )}
             />
 
-            {/* ── DEBT DETAIL MODAL ── */}
-            <Modal visible={debtDetailVisible} transparent animationType="slide" onRequestClose={closeDebtDetails}>
-                <View style={[styles.modalOverlay, { justifyContent: 'flex-end', padding: 0 }]}>
-                    <View style={[styles.modalSheet, { backgroundColor: activeColors.bg }]}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                            <Text style={[styles.modalTitle, { color: activeColors.textDark }]}>Detalle de Deuda</Text>
-                            <TouchableOpacity onPress={closeDebtDetails} style={[styles.headerBtn, { backgroundColor: activeColors.cardCtx }]}>
-                                <Ionicons name="close" size={20} color={activeColors.textDark} />
+            {/* ══════════════════════════════════════════════════
+                  MODAL: ADD TRANSACTION
+            ══════════════════════════════════════════════════ */}
+            <Modal visible={modal} transparent animationType="slide" onRequestClose={() => setModal(false)}>
+                <View style={S.modalBg}>
+                    <View style={[S.sheet, { backgroundColor: activeColors.bg }]}>
+                        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                            {/* Title */}
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                <Text style={[S.sheetTitle, { color: activeColors.textDark }]}>
+                                    {txType === 'income' ? '💚 Nuevo Ingreso'
+                                        : txType === 'expense' ? '❤️ Nuevo Gasto'
+                                            : txType === 'receivable' ? '💙 Por Cobrar'
+                                                : '🟡 Nueva Deuda'}
+                                </Text>
+                                <TouchableOpacity onPress={() => setModal(false)}>
+                                    <Ionicons name="close-circle" size={26} color={activeColors.secondary} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Amount */}
+                            <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>Monto ($)</Text>
+                            <TextInput
+                                placeholder="0.00"
+                                placeholderTextColor={activeColors.secondary}
+                                style={[S.input, { backgroundColor: activeColors.cardCtx, color: activeColors.textDark }]}
+                                keyboardType="numeric"
+                                value={amount}
+                                onChangeText={setAmount}
+                            />
+
+                            {/* Category chips or free-text */}
+                            <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>Categoría</Text>
+                            {cats.length > 0 ? (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                                    {cats.map(c => (
+                                        <TouchableOpacity key={c} onPress={() => setCategory(c)}
+                                            style={[S.chip, { backgroundColor: category === c ? (theme?.primary || '#6C63FF') : activeColors.cardCtx }]}>
+                                            <Text style={{ color: category === c ? '#fff' : activeColors.secondary, fontSize: 12, fontWeight: '600' }}>{c}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            ) : (
+                                <TextInput placeholder="Describe la categoría" placeholderTextColor={activeColors.secondary}
+                                    style={[S.input, { backgroundColor: activeColors.cardCtx, color: activeColors.textDark }]}
+                                    value={category} onChangeText={setCategory} />
+                            )}
+
+                            {/* Note */}
+                            <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>Nota (opcional)</Text>
+                            <TextInput placeholder="Añade un comentario..." placeholderTextColor={activeColors.secondary}
+                                style={[S.input, { backgroundColor: activeColors.cardCtx, color: activeColors.textDark }]}
+                                value={note} onChangeText={setNote} />
+
+                            {/* RECEIVABLE: due date */}
+                            {txType === 'receivable' && (
+                                <>
+                                    <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>📅 Fecha esperada de cobro</Text>
+                                    <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)}
+                                        style={[S.input, S.datePickerBtn, { backgroundColor: activeColors.cardCtx }]}>
+                                        <Text style={{ color: firstDate ? activeColors.textDark : activeColors.secondary }}>
+                                            {firstDate || 'Seleccionar fecha (opcional)'}
+                                        </Text>
+                                        <Ionicons name="calendar" size={18} color={activeColors.secondary} />
+                                    </TouchableOpacity>
+                                    {showCalendar && (
+                                        <CalendarPicker
+                                            value={firstDate}
+                                            onSelect={d => setFirstDate(d)}
+                                            onClose={() => setShowCalendar(false)}
+                                            activeColors={activeColors}
+                                            theme={theme}
+                                        />
+                                    )}
+                                </>
+                            )}
+
+                            {/* DEBT: provider + installments + first date */}
+                            {txType === 'debt' && (
+                                <>
+                                    <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>Proveedor / Acreedor</Text>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                                        {PROVIDERS.map(p => (
+                                            <TouchableOpacity key={p} onPress={() => setProvider(p)}
+                                                style={[S.chip, { backgroundColor: provider === p ? (theme?.primary || '#6C63FF') : activeColors.cardCtx }]}>
+                                                <Text style={{ color: provider === p ? '#fff' : activeColors.secondary, fontSize: 12, fontWeight: '600' }}>{p}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+
+                                    <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>Número de Cuotas</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                                        <TextInput placeholder="1" placeholderTextColor={activeColors.secondary}
+                                            style={[S.input, { flex: 1, marginBottom: 0, backgroundColor: activeColors.cardCtx, color: activeColors.textDark }]}
+                                            keyboardType="numeric" value={numInst} onChangeText={setNumInst} />
+                                        {amount && parseInt(numInst) > 0 && (
+                                            <Text style={{ flex: 2, color: activeColors.secondary, fontSize: 12 }}>
+                                                ≈ ${parseFloat((parseFloat(amount) / (parseInt(numInst) || 1)).toFixed(2))} / cuota
+                                            </Text>
+                                        )}
+                                    </View>
+
+                                    <Text style={[S.fieldLabel, { color: activeColors.secondary }]}>📅 Fecha primera cuota</Text>
+                                    <TouchableOpacity onPress={() => setShowInstCal(!showInstCal)}
+                                        style={[S.input, S.datePickerBtn, { backgroundColor: activeColors.cardCtx }]}>
+                                        <Text style={{ color: firstDate ? activeColors.textDark : activeColors.secondary }}>
+                                            {firstDate || 'Seleccionar (por defecto: hoy)'}
+                                        </Text>
+                                        <Ionicons name="calendar" size={18} color={activeColors.secondary} />
+                                    </TouchableOpacity>
+                                    {showInstCal && (
+                                        <CalendarPicker
+                                            value={firstDate}
+                                            onSelect={d => setFirstDate(d)}
+                                            onClose={() => setShowInstCal(false)}
+                                            activeColors={activeColors}
+                                            theme={theme}
+                                        />
+                                    )}
+                                    {firstDate && parseInt(numInst) > 1 && (
+                                        <Text style={{ color: activeColors.secondary, fontSize: 11, marginBottom: 8 }}>
+                                            ℹ️ Las cuotas siguientes se asignan mes a mes automáticamente.
+                                        </Text>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Save / Cancel */}
+                            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                                <TouchableOpacity onPress={() => setModal(false)} style={[S.btn, { borderWidth: 1.5, borderColor: activeColors.secondary + '60' }]}>
+                                    <Text style={{ color: activeColors.secondary, fontWeight: '700' }}>Cancelar</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={save} style={[S.btn, { backgroundColor: theme?.primary || '#6C63FF' }]}>
+                                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '800' }}>Guardar</Text>}
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* ══════════════════════════════════════════════════
+                  MODAL: DEBT DETAIL
+            ══════════════════════════════════════════════════ */}
+            <Modal visible={debtModal} transparent animationType="slide" onRequestClose={() => setDebtModal(false)}>
+                <View style={[S.modalBg, { justifyContent: 'flex-end', padding: 0 }]}>
+                    <View style={[S.sheet, { backgroundColor: activeColors.bg, borderRadius: 28, maxHeight: '78%' }]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <Text style={[S.sheetTitle, { color: activeColors.textDark }]}>Detalle de Deuda</Text>
+                            <TouchableOpacity onPress={() => setDebtModal(false)}>
+                                <Ionicons name="close-circle" size={26} color={activeColors.secondary} />
                             </TouchableOpacity>
                         </View>
 
-                        {selectedDebt && (
+                        {selDebt && (
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                                    <View style={[styles.iconBox, { backgroundColor: '#FEF3C7', width: 56, height: 56, borderRadius: 28 }]}>
-                                        <Ionicons name="alert-circle" size={28} color="#F59E0B" />
-                                    </View>
-                                    <Text style={[styles.transCat, { color: activeColors.textDark, fontSize: 20, marginTop: 10 }]}>{selectedDebt.provider || 'Deuda'}</Text>
-                                    <Text style={[styles.transAmt, { color: '#F59E0B', fontSize: 26 }]}>${formatNumber(selectedDebt.amount)}</Text>
-                                    <Text style={{ color: activeColors.secondary, marginTop: 4 }}>{selectedDebt.category}</Text>
+                                {/* Summary */}
+                                <View style={[S.chartCard, { backgroundColor: activeColors.cardCtx, marginBottom: 16 }]}>
+                                    <Text style={{ color: activeColors.textDark, fontWeight: '900', fontSize: 18 }}>{selDebt.provider || selDebt.category}</Text>
+                                    <Text style={{ color: '#F59E0B', fontWeight: '900', fontSize: 26, marginTop: 4 }}>${formatNumber(selDebt.amount)}</Text>
+                                    <Text style={{ color: activeColors.secondary, marginTop: 2 }}>{selDebt.category}</Text>
+
+                                    {/* Progress */}
+                                    {(() => {
+                                        const paid = (selDebt.installments || []).filter(x => x.status === 'paid').length;
+                                        const total = (selDebt.installments || []).length;
+                                        const pct = total ? paid / total : 0;
+                                        const paidAmt = (selDebt.installments || []).filter(x => x.status === 'paid').reduce((s, x) => s + x.amount, 0);
+                                        return (
+                                            <View style={{ marginTop: 14 }}>
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                                                    <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Pagado: {paid}/{total} cuotas</Text>
+                                                    <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 12 }}>${formatNumber(paidAmt)}</Text>
+                                                </View>
+                                                <View style={S.progBg}>
+                                                    <View style={[S.progFill, { width: `${pct * 100}%`, backgroundColor: pct === 1 ? '#10B981' : (theme?.primary || '#6C63FF') }]} />
+                                                </View>
+                                            </View>
+                                        );
+                                    })()}
                                 </View>
 
-                                {/* Progress bar for paid installments */}
-                                {selectedDebt.installments?.length > 0 && (() => {
-                                    const paid = selectedDebt.installments.filter(i => i.status === 'paid').length;
-                                    const total = selectedDebt.installments.length;
-                                    const pct = paid / total;
-                                    return (
-                                        <View style={{ marginBottom: 16, paddingHorizontal: 4 }}>
-                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                                                <Text style={{ color: activeColors.secondary, fontSize: 12 }}>Progreso de pago</Text>
-                                                <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 12 }}>{paid}/{total} cuotas</Text>
-                                            </View>
-                                            <View style={styles.debtBarBg}>
-                                                <View style={[styles.debtBarFill, { width: `${pct * 100}%`, backgroundColor: '#10B981' }]} />
-                                            </View>
-                                        </View>
-                                    );
-                                })()}
+                                <Text style={{ color: activeColors.textDark, fontWeight: '800', fontSize: 15, marginBottom: 10 }}>Plan de Pagos</Text>
 
-                                <Text style={{ color: activeColors.textDark, fontWeight: 'bold', marginBottom: 10, fontSize: 15 }}>Plan de Pagos</Text>
-
-                                {(selectedDebt.installments || []).map((inst, index) => {
-                                    const info = daysUntil(inst.dueDate);
+                                {(selDebt.installments || []).map((inst, idx) => {
+                                    const bd = inst.status !== 'paid' ? dueBadge(inst.dueDate) : null;
                                     return (
-                                        <TouchableOpacity
-                                            key={index}
-                                            onPress={() => handlePayInstallment(selectedDebt, inst)}
-                                            style={[styles.transRow, { backgroundColor: activeColors.cardCtx, opacity: inst.status === 'paid' ? 0.6 : 1 }]}
+                                        <TouchableOpacity key={idx}
+                                            onPress={() => payInstallment(selDebt, inst)}
+                                            style={[S.txRow, { backgroundColor: activeColors.cardCtx, opacity: inst.status === 'paid' ? 0.55 : 1 }]}
                                         >
-                                            <View style={{ width: 36, alignItems: 'center' }}>
-                                                <Text style={{ fontWeight: '900', color: activeColors.secondary, fontSize: 13 }}>#{inst.number}</Text>
+                                            <View style={{ width: 32, alignItems: 'center' }}>
+                                                {inst.status === 'paid'
+                                                    ? <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+                                                    : <Text style={{ color: activeColors.secondary, fontWeight: '900' }}>#{inst.number}</Text>}
                                             </View>
-                                            <View style={{ flex: 1, marginLeft: 8 }}>
-                                                <Text style={{ color: activeColors.textDark, fontWeight: '700' }}>${inst.amount.toFixed(2)}</Text>
-                                                {inst.status !== 'paid' && (
-                                                    <Text style={{ color: info.color, fontSize: 11, marginTop: 2 }}>{info.label || formatDueDate(inst.dueDate)}</Text>
-                                                )}
+                                            <View style={{ flex: 1, marginLeft: 10 }}>
+                                                <Text style={{ color: activeColors.textDark, fontWeight: '800', fontSize: 14 }}>${formatNumber(inst.amount)}</Text>
+                                                {bd && <Text style={{ color: bd.color, fontSize: 11, marginTop: 1 }}>{bd.label}</Text>}
                                                 {inst.status === 'paid' && inst.paidDate && (
-                                                    <Text style={{ color: '#10B981', fontSize: 11 }}>Pagado el {formatDate(inst.paidDate)}</Text>
+                                                    <Text style={{ color: '#10B981', fontSize: 11 }}>Pagada el {formatDateShort(inst.paidDate)}</Text>
                                                 )}
                                             </View>
-                                            {inst.status === 'paid' ? (
-                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    <Text style={{ color: '#10B981', fontSize: 11, fontWeight: '800', marginRight: 4 }}>PAGADO</Text>
-                                                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                                                </View>
-                                            ) : (
-                                                <View style={[styles.payBtn, { backgroundColor: theme?.primary || '#6C63FF' }]}>
-                                                    <Text style={{ color: 'white', fontSize: 11, fontWeight: '700' }}>PAGAR</Text>
+                                            {inst.status !== 'paid' && (
+                                                <View style={[S.payChip, { backgroundColor: (theme?.primary || '#6C63FF') + '20', borderColor: theme?.primary || '#6C63FF' }]}>
+                                                    <Text style={{ color: theme?.primary || '#6C63FF', fontSize: 11, fontWeight: '800' }}>PAGAR</Text>
                                                 </View>
                                             )}
                                         </TouchableOpacity>
@@ -630,184 +856,97 @@ const FinancialDashboard = ({ theme, activeColors, isPremium, premiumType, onOpe
                             </ScrollView>
                         )}
 
-                        <TouchableOpacity onPress={closeDebtDetails} style={[styles.closeSheetBtn, { backgroundColor: activeColors.cardCtx }]}>
+                        <TouchableOpacity onPress={() => setDebtModal(false)} style={[S.btn, { marginTop: 12, backgroundColor: activeColors.cardCtx }]}>
                             <Text style={{ color: activeColors.textDark, fontWeight: '700', fontSize: 15 }}>Cerrar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
 
-            {/* ── ADD TRANSACTION MODAL ── */}
-            <Modal visible={actionModalVisible} transparent animationType="fade" onRequestClose={() => setActionModalVisible(false)}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: activeColors.cardCtx }]}>
-                        <Text style={[styles.modalTitle, { color: activeColors.textDark }]}>
-                            {actionType === 'income' ? '💚 Nuevo Ingreso'
-                                : actionType === 'expense' ? '❤️ Nuevo Gasto'
-                                    : actionType === 'receivable' ? '💙 Por Cobrar'
-                                        : '🟡 Nueva Deuda'}
-                        </Text>
-
-                        <TextInput placeholder="Monto ($)" placeholderTextColor={activeColors.secondary}
-                            style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                            keyboardType="numeric" value={amount} onChangeText={setAmount} />
-                        <TextInput placeholder="Categoría (ej: Comida, Sueldo)" placeholderTextColor={activeColors.secondary}
-                            style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                            value={category} onChangeText={setCategory} />
-                        <TextInput placeholder="Nota (opcional)" placeholderTextColor={activeColors.secondary}
-                            style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                            value={note} onChangeText={setNote} />
-
-                        {actionType === 'receivable' && (
-                            <TextInput placeholder="Fecha de cobro (AAAA-MM-DD, opcional)" placeholderTextColor={activeColors.secondary}
-                                style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                                value={dueDate} onChangeText={setDueDate} />
-                        )}
-
-                        {actionType === 'debt' && (
-                            <View style={{ marginTop: 4 }}>
-                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13 }}>Proveedor:</Text>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                                    {PROVIDERS.map(p => (
-                                        <TouchableOpacity key={p} onPress={() => setDebtProvider(p)}
-                                            style={{
-                                                paddingHorizontal: 14, paddingVertical: 7, marginRight: 8, borderRadius: 20,
-                                                backgroundColor: debtProvider === p ? (theme?.primary || '#6C63FF') : activeColors.bg
-                                            }}>
-                                            <Text style={{ color: debtProvider === p ? 'white' : activeColors.secondary, fontWeight: '600', fontSize: 12 }}>{p}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-
-                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13 }}>Número de Cuotas:</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <TextInput placeholder="1" placeholderTextColor={activeColors.secondary}
-                                        style={[styles.input, { flex: 1, marginRight: 10, backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                                        keyboardType="numeric" value={installments} onChangeText={setInstallments} />
-                                    <Text style={{ flex: 2, color: activeColors.secondary, fontSize: 12 }}>
-                                        {amount ? `≈ $${(parseFloat(amount || 0) / (parseInt(installments) || 1)).toFixed(2)} / cuota` : ''}
-                                    </Text>
-                                </View>
-
-                                {/* First installment date */}
-                                <Text style={{ color: activeColors.textDark, marginBottom: 6, fontWeight: '700', fontSize: 13, marginTop: 4 }}>
-                                    📅 Fecha primera cuota:
-                                </Text>
-                                <TextInput
-                                    placeholder="AAAA-MM-DD (ej: 2025-03-01)"
-                                    placeholderTextColor={activeColors.secondary}
-                                    style={[styles.input, { backgroundColor: activeColors.bg, color: activeColors.textDark }]}
-                                    value={firstInstallmentDate}
-                                    onChangeText={setFirstInstallmentDate}
-                                />
-                                {firstInstallmentDate && parseInt(installments) > 1 && (
-                                    <Text style={{ color: activeColors.secondary, fontSize: 11, marginTop: -8, marginBottom: 8 }}>
-                                        Las siguientes cuotas se asignan mes a mes automáticamente.
-                                    </Text>
-                                )}
-                            </View>
-                        )}
-
-                        <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-                            <TouchableOpacity onPress={() => setActionModalVisible(false)}
-                                style={[styles.btn, { borderWidth: 1.5, borderColor: activeColors.border || '#333' }]}>
-                                <Text style={{ color: activeColors.secondary, fontWeight: '600' }}>Cancelar</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleAddTransaction}
-                                style={[styles.btn, { backgroundColor: theme?.primary || '#6C63FF' }]}>
-                                <Text style={{ color: 'white', fontWeight: '700' }}>Guardar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* ── DELETE CONFIRM MODAL ── */}
-            <Modal visible={!!deleteTarget} transparent animationType="fade" onRequestClose={() => setDeleteTarget(null)}>
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: activeColors.cardCtx }]}>
-                        <Ionicons name="trash" size={32} color="#EF4444" style={{ alignSelf: 'center', marginBottom: 12 }} />
-                        <Text style={[styles.modalTitle, { color: activeColors.textDark }]}>¿Eliminar movimiento?</Text>
+            {/* ══════════════════════════════════════════════════
+                  MODAL: DELETE CONFIRM
+            ══════════════════════════════════════════════════ */}
+            <Modal visible={!!delTarget} transparent animationType="fade" onRequestClose={() => setDelTarget(null)}>
+                <View style={S.modalBg}>
+                    <View style={[S.sheet, { backgroundColor: activeColors.cardCtx, borderRadius: 24, paddingVertical: 28 }]}>
+                        <Ionicons name="trash" size={36} color="#EF4444" style={{ alignSelf: 'center', marginBottom: 12 }} />
+                        <Text style={[S.sheetTitle, { color: activeColors.textDark }]}>¿Eliminar?</Text>
                         <Text style={{ color: activeColors.secondary, textAlign: 'center', marginBottom: 20 }}>
-                            {deleteTarget?.category} — ${formatNumber(deleteTarget?.amount)}
+                            {delTarget?.category} — ${formatNumber(delTarget?.amount)}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 10 }}>
-                            <TouchableOpacity onPress={() => setDeleteTarget(null)}
-                                style={[styles.btn, { borderWidth: 1.5, borderColor: activeColors.border || '#333' }]}>
+                            <TouchableOpacity onPress={() => setDelTarget(null)} style={[S.btn, { borderWidth: 1.5, borderColor: activeColors.secondary + '60' }]}>
                                 <Text style={{ color: activeColors.secondary, fontWeight: '600' }}>Cancelar</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={() => handleDelete(deleteTarget?._id)}
-                                style={[styles.btn, { backgroundColor: '#EF4444' }]}>
-                                <Text style={{ color: 'white', fontWeight: '700' }}>Eliminar</Text>
+                            <TouchableOpacity onPress={doDelete} style={[S.btn, { backgroundColor: '#EF4444' }]}>
+                                <Text style={{ color: '#fff', fontWeight: '800' }}>Eliminar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                 </View>
             </Modal>
-
-            {/* ── BOTTOM LOGOUT BAR ── */}
-            <View style={[styles.bottomBar, { backgroundColor: activeColors.cardCtx, borderTopColor: activeColors.border || '#2a2a2a' }]}>
-                <TouchableOpacity onPress={onLogout} style={styles.logoutBarBtn}>
-                    <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-                    <Text style={{ color: '#EF4444', fontWeight: '700', fontSize: 13, marginLeft: 8 }}>Cerrar sesión</Text>
-                </TouchableOpacity>
-            </View>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, paddingHorizontal: 18 },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, paddingBottom: 12 },
-    greeting: { fontSize: 13, fontWeight: '600' },
-    title: { fontSize: 26, fontWeight: '900' },
-    headerBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+// ═══════════════════════════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════════════════════════
+const S = StyleSheet.create({
+    root: { flex: 1, paddingHorizontal: 16 },
 
-    // Balance Card
-    balanceCard: { borderRadius: 24, padding: 22, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 18, elevation: 12 },
-    balanceLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '600', marginBottom: 4 },
-    balanceAmount: { color: 'white', fontSize: 38, fontWeight: '900', letterSpacing: -1 },
-    cardBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, gap: 4 },
-    cardBadgeText: { color: 'white', fontSize: 10, fontWeight: '800' },
-    cardStatsRow: { flexDirection: 'row', marginTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)', paddingTop: 14 },
-    cardStat: { flex: 1, alignItems: 'center', gap: 2 },
-    cardStatDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
-    cardStatLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '600' },
-    cardStatAmt: { color: 'white', fontSize: 13, fontWeight: '800' },
-    debtBarBg: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden' },
-    debtBarFill: { height: 6, borderRadius: 3, backgroundColor: '#FCD34D' },
-    debtBarLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '600' },
+    // Header
+    header: { flexDirection: 'row', alignItems: 'center', paddingTop: 14, paddingBottom: 10 },
+    appTitle: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+    userGreet: { fontSize: 12, fontWeight: '600', marginTop: 1 },
+    hBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
 
-    // Actions
-    actionContainer: { flexDirection: 'row', marginBottom: 24, gap: 4 },
-    actionBtnCircle: { width: 54, height: 54, borderRadius: 27, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-    actionLabel: { fontSize: 11, fontWeight: '600' },
+    // Balance card
+    balCard: { borderRadius: 24, padding: 20, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 10 },
+    balLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '700' },
+    balAmt: { color: '#fff', fontSize: 36, fontWeight: '900', letterSpacing: -1, marginTop: 4 },
+    balSub: { color: 'rgba(255,255,255,0.55)', fontSize: 9, marginTop: 3, fontStyle: 'italic' },
+    liveBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+    liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ADE80', marginRight: 5 },
+    liveText: { color: '#fff', fontSize: 10, fontWeight: '900' },
+    balRow: { flexDirection: 'row', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)', paddingTop: 14 },
+    balCol: { flex: 1, alignItems: 'center' },
+    balColLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 9, fontWeight: '700', marginBottom: 3 },
+    balColVal: { color: '#fff', fontSize: 12, fontWeight: '900' },
+    balDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
 
-    // Charts
-    sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 8 },
-    chartCard: { padding: 14, borderRadius: 20, marginRight: 12, alignItems: 'center' },
-    chartTitle: { fontSize: 14, fontWeight: '700', marginBottom: 10, alignSelf: 'flex-start' },
+    // Section
+    secTitle: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
+    chartCard: { borderRadius: 18, padding: 14, marginBottom: 4 },
 
-    // Transactions
-    dateHeader: { fontSize: 12, fontWeight: '700', marginBottom: 8 },
-    transRow: { flexDirection: 'row', padding: 14, borderRadius: 16, alignItems: 'center', marginBottom: 8 },
-    iconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    transCat: { fontSize: 15, fontWeight: '700' },
-    transAmt: { fontSize: 15, fontWeight: '900' },
+    // Upcoming
+    upRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+    upDot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },
 
-    // Modals
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 20 },
-    modalSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '80%' },
-    modalContent: { borderRadius: 24, padding: 24 },
-    modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16, textAlign: 'center' },
-    input: { padding: 14, borderRadius: 12, marginBottom: 12, fontSize: 15 },
+    // Transaction row
+    dateHdr: { fontSize: 11, fontWeight: '800', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+    txRow: { flexDirection: 'row', padding: 12, borderRadius: 16, alignItems: 'center', marginBottom: 8 },
+    txIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    txCat: { fontSize: 14, fontWeight: '700' },
+    txAmt: { fontSize: 15, fontWeight: '900' },
+    collectBtn: { marginTop: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1 },
+
+    // Modal
+    modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+    sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 22 },
+    sheetTitle: { fontSize: 18, fontWeight: '900', textAlign: 'center' },
+
+    // Form
+    fieldLabel: { fontSize: 12, fontWeight: '700', marginBottom: 6, marginTop: 4 },
+    input: { padding: 14, borderRadius: 14, marginBottom: 12, fontSize: 14 },
+    datePickerBtn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8 },
     btn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-    payBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-    closeSheetBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center', marginTop: 12 },
+    payChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
 
-    // Bottom Bar
-    bottomBar: { flexDirection: 'row', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 18, borderTopWidth: 1 },
-    logoutBarBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FEE2E2' },
+    // Progress
+    progBg: { height: 7, borderRadius: 4, backgroundColor: '#374151', overflow: 'hidden' },
+    progFill: { height: 7, borderRadius: 4 },
 });
 
 export default FinancialDashboard;
