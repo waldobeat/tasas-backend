@@ -914,7 +914,7 @@ const S = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: 16,
+        paddingTop: 45,
         paddingBottom: 16
     },
     headerCenter: {
