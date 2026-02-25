@@ -25,9 +25,11 @@ import FeatureAnnouncement from './src/components/FeatureAnnouncement';
 import AuthScreen from './src/components/AuthScreen';
 import FinancialDashboard from './src/components/FinancialDashboard';
 import CommentsModal from './src/components/CommentsModal';
+import DebtReminderModal from './src/components/DebtReminderModal';
 
 // Utils
 import { authService } from './src/utils/authService';
+import { financeService } from './src/utils/financeService';
 
 // Hooks
 import { useRates } from './src/hooks/useRates';
@@ -63,6 +65,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showFinancial, setShowFinancial] = useState(false);
+  const [userTransactions, setUserTransactions] = useState([]);
 
   const [showFeatureAnnouncement, setShowFeatureAnnouncement] = useState(false);
 
@@ -110,6 +113,13 @@ export default function App() {
       const storedUser = await authService.getUser();
       if (storedUser) {
         setUser(storedUser);
+        // Load transactions for debt reminder check
+        try {
+          const txns = await financeService.getAllTransactions();
+          if (Array.isArray(txns)) setUserTransactions(txns);
+        } catch (e) {
+          console.log('Could not pre-load transactions:', e.message);
+        }
       }
 
       // Show Feature Announcement on EVERY startup as requested
@@ -223,6 +233,10 @@ export default function App() {
     setUser(userData);
     setShowAuth(false);
     setShowFinancial(true);
+    // Load transactions after login for reminder
+    financeService.getAllTransactions()
+      .then(txns => { if (Array.isArray(txns)) setUserTransactions(txns); })
+      .catch(() => { });
   };
 
   const handleLogout = async () => {
@@ -424,6 +438,16 @@ export default function App() {
           theme={currentTheme}
           activeColors={activeColors}
         />
+
+        {/* DEBT REMINDER — shown once per day if user has urgent installments */}
+        {user && (
+          <DebtReminderModal
+            transactions={userTransactions}
+            onOpenDashboard={handleOpenFinancial}
+            theme={currentTheme}
+            activeColors={activeColors}
+          />
+        )}
         {/* <ValentineRain /> */}
       </SafeAreaView >
     </SafeAreaProvider >
