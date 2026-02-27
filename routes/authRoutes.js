@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const transporter = require('../services/emailService');
 const router = express.Router();
@@ -135,13 +136,22 @@ router.post('/login', async (req, res) => {
         // Eliminado: Bloqueo de inicio de sesión por cuenta pendiente de activación
         // ya que el envío de correos está temporalmente bloqueado.
 
+        // Generate JWT Token
+        const secret = process.env.JWT_SECRET || 'tasa_secret_key_app';
+        const token = jwt.sign(
+            { id: user._id, email: user.email, isPremium: user.isPremium },
+            secret,
+            { expiresIn: '30d' }
+        );
+
         res.json({
             id: user._id,
             name: user.name,
             email: user.email,
             isPremium: user.isPremium,
             premiumType: user.premiumType,
-            expiresAt: user.expiresAt
+            expiresAt: user.expiresAt,
+            token: token
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

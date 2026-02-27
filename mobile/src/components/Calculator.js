@@ -1,18 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    StyleSheet,
-    Animated,
-    Modal,
-    KeyboardAvoidingView,
-    Platform,
-    Dimensions,
-    TouchableWithoutFeedback,
-    Keyboard,
-    Share
+    View, Text, TextInput, TouchableOpacity, StyleSheet,
+    Animated, Modal, KeyboardAvoidingView, Platform,
+    Dimensions, TouchableWithoutFeedback, Keyboard, Share,
+    ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
@@ -23,48 +14,85 @@ import { formatNumber } from '../utils/helpers';
 const { height } = Dimensions.get('window');
 
 export default function Calculator({
-    visible,
-    onClose,
-    title,
-    rateValue,
-    activeColors,
-    theme,
-    onShare,
-    animValue,
-    id = ''
+    visible, onClose, title, rateValue, activeColors, theme, onShare, animValue, id = ''
 }) {
     const [amount, setAmount] = useState('');
-    const [result, setResult] = useState('0,00 Bs');
-    const presets = [5, 10, 20, 50, 100];
+    const [isReversed, setIsReversed] = useState(false); // false: Divisa -> Bs, true: Bs -> Divisa
+    const [resultStr, setResultStr] = useState('0,00');
+
+    const swapAnim = useRef(new Animated.Value(0)).current;
     const shareRef = useRef();
     const inputRef = useRef();
 
-    const handleCalcInput = (val) => {
-        setAmount(val);
-        if (!val) {
-            setResult('0,00 Bs');
-            return;
+    useEffect(() => {
+        if (!visible) {
+            setAmount('');
+            setIsReversed(false);
+            setResultStr('0,00');
+            swapAnim.setValue(0);
+            Keyboard.dismiss();
+        } else {
+            // Focus automágico cuando se abre el modal para levantar el teclado
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 300);
         }
-        const cleanVal = val.replace(',', '.');
-        const num = parseFloat(cleanVal);
-        if (isNaN(num)) return;
+    }, [visible]);
 
+    useEffect(() => {
+        calculate(amount, isReversed);
+    }, [amount, isReversed, rateValue]);
+
+    const getRateNum = () => {
         let rateNum = rateValue;
         if (typeof rateValue === 'string') {
             rateNum = parseFloat(rateValue.replace(/\./g, '').replace(',', '.'));
         }
+        return rateNum || 1;
+    };
 
-        const total = num * rateNum;
-        setResult(formatNumber(total) + ' Bs');
+    const calculate = (val, reversed) => {
+        if (!val) {
+            setResultStr('0,00');
+            return;
+        }
+        const cleanVal = val.replace(',', '.');
+        const num = parseFloat(cleanVal);
+        if (isNaN(num)) {
+            setResultStr('0,00');
+            return;
+        }
+
+        const rateNum = getRateNum();
+
+        if (reversed) {
+            const total = num / rateNum;
+            setResultStr(formatNumber(total));
+        } else {
+            const total = num * rateNum;
+            setResultStr(formatNumber(total));
+        }
     };
 
     const handlePreset = (p) => {
-        handleCalcInput(p.toString());
+        setAmount(p.toString());
+        // Desestimamos el teclado cuando tocan un preset para ver el resultado limpio (opcional)
+        // Keyboard.dismiss();
+    };
+
+    const toggleDirection = () => {
+        Animated.sequence([
+            Animated.timing(swapAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+            Animated.timing(swapAnim, { toValue: 0, duration: 150, useNativeDriver: true })
+        ]).start();
+        setIsReversed(!isReversed);
     };
 
     const handleInternalShare = async () => {
         try {
-            const message = `Cambio: ${amount} ${title} = ${result} \nTasa: ${formatNumber(rateValue)} Bs.\n\nDescarga La Tasa V2 aquí: https://tasas-backend.onrender.com`;
+            const from = isReversed ? 'Bs' : title;
+            const to = isReversed ? title : 'Bs';
+            const message = `Cambio estimado:\n${amount || 0} ${from} = ${resultStr} ${to}\nTasa: ${formatNumber(rateValue)} Bs.\n\nCalculado con La Tasa V2 ✨\nhttps://tasas-backend.onrender.com`;
             await Share.share({ message });
         } catch (error) {
             console.error('Error sharing text:', error);
@@ -73,278 +101,202 @@ export default function Calculator({
 
     const handleImageShare = async () => {
         try {
-            const uri = await captureRef(shareRef, {
-                format: 'png',
-                quality: 1,
-                result: 'tmpfile'
-            });
-
+            const uri = await captureRef(shareRef, { format: 'png', quality: 1, result: 'tmpfile' });
             if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri, {
-                    mimeType: 'image/png',
-                    dialogTitle: `Compartir ${title}`,
-                    UTI: 'public.png'
-                });
+                await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: `Compartir Cálculo`, UTI: 'public.png' });
             } else {
-                handleInternalShare(); // Fallback to text
+                handleInternalShare();
             }
         } catch (error) {
-            console.error("Snapshot failed in Calculator", error);
-            handleInternalShare(); // Fallback to text
+            handleInternalShare();
         }
     };
 
-    return (
-        <Modal
-            visible={visible}
-            transparent={true}
-            animationType="slide"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={styles.modalOverlay}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        style={styles.keyboardView}
-                    >
-                        <View style={[styles.modalContent, { backgroundColor: activeColors.cardCtx }]}>
-                            {/* Captured Area */}
-                            <TouchableOpacity activeOpacity={1} onPress={() => inputRef.current?.focus()}>
-                                <View
-                                    ref={shareRef}
-                                    collapsable={false}
-                                    style={{ backgroundColor: activeColors.cardCtx, borderRadius: 30, padding: 10 }}
-                                >
-                                    {/* Header */}
-                                    <View style={styles.header}>
-                                        <Text style={[styles.title, { color: activeColors.textDark }]}>
-                                            La Tasa de {title}
-                                        </Text>
-                                        <View style={styles.branding}>
-                                            <Ionicons name="cafe" size={16} color={activeColors.textDark} />
-                                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: activeColors.textDark, marginLeft: 4 }}>
-                                                App
-                                            </Text>
-                                        </View>
-                                    </View>
+    const fromLabel = isReversed ? "Bolívares (Bs)" : `Divisa (${title})`;
+    const toLabel = isReversed ? `Divisa (${title})` : "Bolívares (Bs)";
+    const fromSymbol = isReversed ? 'Bs' : title;
+    const toSymbol = isReversed ? title : 'Bs';
 
-                                    <View style={[styles.divider, { backgroundColor: activeColors.border }]} />
+    // Acceso rapido de conversion modificado The presets requested: 1, 5, 7, 10, 50, 100
+    const presets = isReversed ? [100, 500, 1000] : [1, 5, 7, 10, 50, 100];
 
-                                    {/* Subtitle / Rate Info */}
-                                    <View style={styles.rateInfo}>
-                                        <Text style={[styles.rateText, { color: activeColors.secondary }]}>
-                                            Tasa: <Text style={{ color: theme.primary, fontWeight: 'bold' }}>{formatNumber(rateValue)} Bs</Text>
-                                        </Text>
-                                        {animValue && (
-                                            <Animated.View style={{ transform: [{ scale: animValue }] }}>
-                                                <Ionicons name="flash" size={16} color="#F59E0B" />
-                                            </Animated.View>
-                                        )}
-                                    </View>
+    const spin = swapAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '180deg']
+    });
 
-                                    {/* Input Section */}
-                                    <View style={[styles.manualInput, { backgroundColor: activeColors.inputBg, borderColor: 'rgba(0,0,0,0.05)' }]}>
-                                        <Text style={{ color: activeColors.textDark, fontSize: 26, fontWeight: 'bold' }}>
-                                            {amount || '0'} {title}
-                                        </Text>
-                                    </View>
+    const ModalInnerContent = (
+        <View style={[styles.modalContent, { backgroundColor: activeColors.cardCtx }]}>
 
-                                    {/* Result Section */}
-                                    <View style={[styles.resultContainer, { backgroundColor: theme.primarySoft, borderColor: theme.primary + '20' }]}>
-                                        <Text style={[styles.resultLabel, { color: theme.primary }]}>Total Estimado</Text>
-                                        <Text style={[styles.resultHighlight, { color: theme.primary }]}>{result}</Text>
-                                    </View>
+            <TouchableOpacity activeOpacity={1} onPress={() => inputRef.current?.focus()}>
+                <View ref={shareRef} collapsable={false} style={{ backgroundColor: activeColors.cardCtx, borderRadius: 30, padding: 10 }}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <Text style={[styles.title, { color: activeColors.textDark }]}>Calculadora {title}</Text>
+                        <View style={styles.branding}>
+                            <Ionicons name="cafe" size={16} color={activeColors.textDark} />
+                            <Text style={{ fontSize: 10, fontWeight: '900', color: activeColors.textDark, marginLeft: 4 }}>TASA V2</Text>
+                        </View>
+                    </View>
 
-                                    <Text style={{ color: activeColors.secondary, fontSize: 9, textAlign: 'center', marginTop: 15, fontStyle: 'italic' }}>
-                                        Cálculo realizado con La Tasa V2
-                                    </Text>
-                                </View>
-                            </TouchableOpacity>
+                    <View style={styles.rateInfo}>
+                        <Text style={{ color: activeColors.secondary, fontSize: 14 }}>
+                            Tasa de cambio: <Text style={{ color: theme.primary, fontWeight: '800' }}>{formatNumber(rateValue)} Bs</Text>
+                        </Text>
+                        {animValue && (
+                            <Animated.View style={{ transform: [{ scale: animValue }], marginLeft: 6 }}>
+                                <Ionicons name="flash" size={16} color="#F59E0B" />
+                            </Animated.View>
+                        )}
+                    </View>
 
-                            {/* Warning for Binance (Integrated) */}
-                            {id && id.includes('binance') && (
-                                <View style={{ backgroundColor: theme.primarySoft, padding: 10, borderRadius: 12, marginTop: 15, flexDirection: 'row', alignItems: 'center', borderStyle: 'dotted', borderWidth: 1, borderColor: theme.primary }}>
-                                    <Ionicons name="warning" size={16} color={theme.secondary} style={{ marginRight: 6 }} />
-                                    <Text style={{ color: theme.secondary, fontSize: 10, flex: 1, fontWeight: 'bold' }}>
-                                        Mercado volátil. Verifique en Binance antes de operar.
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* Hidden Control Inputs */}
-                            <View style={{ marginTop: 10 }}>
-                                <TextInput
-                                    ref={inputRef}
-                                    style={{ height: 0, opacity: 0 }}
-                                    keyboardType="numeric"
-                                    value={amount}
-                                    onChangeText={handleCalcInput}
-                                />
-
-                                {/* Presets */}
-                                <View style={styles.presetRow}>
-                                    {presets.map(p => (
-                                        <TouchableOpacity
-                                            key={p}
-                                            style={[styles.presetBtn, { backgroundColor: activeColors.bg, borderColor: activeColors.border, marginRight: 8, marginBottom: 8 }]}
-                                            onPress={() => handlePreset(p)}
-                                        >
-                                            <Text style={[styles.presetText, { color: activeColors.textDark }]}>${p}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                    <TouchableOpacity
-                                        style={styles.clearBadge}
-                                        onPress={() => handleCalcInput('')}
-                                    >
-                                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-
-                            {/* Actions */}
-                            <View style={{ flexDirection: 'row', marginTop: 10 }}>
-                                <TouchableOpacity
-                                    style={[styles.shareBtn, { flex: 1, backgroundColor: STATIC_COLORS.whatsapp, marginRight: 10 }]}
-                                    onPress={handleImageShare}
-                                >
-                                    <Ionicons name="image-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                                    <Text style={styles.shareBtnText}>Compartir Imagen</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    onPress={onClose}
-                                    style={[styles.shareBtn, { width: 60, backgroundColor: activeColors.bg, borderWidth: 1, borderColor: activeColors.border }]}
-                                >
-                                    <Ionicons name="close" size={24} color={activeColors.secondary} />
-                                </TouchableOpacity>
+                    {/* Exchanger UI */}
+                    <View style={[styles.exchangeBox, { backgroundColor: activeColors.bg, borderColor: activeColors.border }]}>
+                        {/* FROM */}
+                        <View style={styles.currencyRow}>
+                            <View>
+                                <Text style={[styles.currencyLabel, { color: activeColors.secondary }]}>Convertir ({fromLabel})</Text>
+                                <Text style={[styles.currencyValue, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit>
+                                    {amount || '0'}
+                                    <Text style={{ fontSize: 20, color: theme.primary + '90' }}> {fromSymbol}</Text>
+                                </Text>
                             </View>
                         </View>
-                    </KeyboardAvoidingView>
+
+                        {/* SWAP BUTTON */}
+                        <View style={styles.swapContainer}>
+                            <View style={[styles.swapLine, { backgroundColor: activeColors.border }]} />
+                            <TouchableOpacity onPress={toggleDirection} style={[styles.swapBtn, { backgroundColor: theme.primarySoft, borderColor: theme.primary + '40' }]}>
+                                <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                                    <Ionicons name="swap-vertical" size={24} color={theme.primary} />
+                                </Animated.View>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* TO */}
+                        <View style={styles.currencyRow}>
+                            <View>
+                                <Text style={[styles.currencyLabel, { color: activeColors.secondary }]}>Recibes ({toLabel})</Text>
+                                <Text style={[styles.currencyValue, { color: activeColors.textDark }]} numberOfLines={1} adjustsFontSizeToFit>
+                                    {resultStr}
+                                    <Text style={{ fontSize: 20, color: activeColors.secondary }}> {toSymbol}</Text>
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Watermark */}
+                    <Text style={{ color: activeColors.secondary, fontSize: 10, textAlign: 'center', marginTop: 18, fontStyle: 'italic', fontWeight: '600' }}>
+                        Cálculo estimado • La Tasa App
+                    </Text>
                 </View>
-            </TouchableWithoutFeedback>
+            </TouchableOpacity>
+
+            {/* Warning for Binance */}
+            {id && id.includes('binance') && (
+                <View style={[styles.warningBox, { backgroundColor: theme.primarySoft, borderColor: theme.primary }]}>
+                    <Ionicons name="warning" size={16} color={theme.secondary || '#F59E0B'} style={{ marginRight: 6 }} />
+                    <Text style={{ color: theme.secondary || '#F59E0B', fontSize: 11, flex: 1, fontWeight: '800' }}>
+                        Estimación P2P. Verifique directamente en Binance.
+                    </Text>
+                </View>
+            )}
+
+            {/* Hidden Input & Controls */}
+            <View style={{ marginTop: 15 }}>
+                <TextInput
+                    ref={inputRef}
+                    style={{ height: 0, opacity: 0 }}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    autoFocus={Platform.OS === 'ios'} // Prevent autofocus issues on some Androids
+                />
+
+                {/* Presets */}
+                <View style={styles.presetRow}>
+                    {presets.map(p => (
+                        <TouchableOpacity
+                            key={p}
+                            style={[styles.presetBtn, { backgroundColor: activeColors.bg, borderColor: activeColors.border }]}
+                            onPress={() => handlePreset(p)}
+                        >
+                            <Text style={[styles.presetText, { color: activeColors.textDark }]}>{p}</Text>
+                        </TouchableOpacity>
+                    ))}
+                    <TouchableOpacity style={[styles.clearBadge, { backgroundColor: '#FEE2E2', minWidth: '15%' }]} onPress={() => setAmount('')}>
+                        <Ionicons name="backspace" size={20} color="#EF4444" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* Actions */}
+            <View style={{ flexDirection: 'row', marginTop: 10, gap: 10 }}>
+                <TouchableOpacity style={[styles.shareBtn, { flex: 1, backgroundColor: STATIC_COLORS.whatsapp }]} onPress={handleImageShare}>
+                    <Ionicons name="share-social-outline" size={22} color="white" style={{ marginRight: 8 }} />
+                    <Text style={styles.shareBtnText}>Compartir</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={onClose} style={[styles.shareBtn, { width: 65, backgroundColor: activeColors.bg, borderWidth: 1, borderColor: activeColors.border }]}>
+                    <Ionicons name="close" size={26} color={activeColors.secondary} />
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
+    return (
+        <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onClose}>
+            <View style={styles.modalOverlay}>
+                {Platform.OS === 'ios' ? (
+                    <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            {ModalInnerContent}
+                        </TouchableWithoutFeedback>
+                    </KeyboardAvoidingView>
+                ) : (
+                    // In Android, we use a robust ScrollView wrapper instead of KeyboardAvoidingView
+                    // which often fails inside full-screen modals.
+                    <ScrollView
+                        contentContainerStyle={styles.androidScrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {ModalInnerContent}
+                    </ScrollView>
+                )}
+            </View>
         </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        justifyContent: 'center',
-        padding: 20
-    },
-    keyboardView: {
-        width: '100%',
-        alignItems: 'center'
-    },
-    modalContent: {
-        width: '100%',
-        maxWidth: 400,
-        borderRadius: 30,
-        padding: 25,
-        elevation: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10
-    },
-    branding: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.03)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    closeBtn: {
-        padding: 5
-    },
-    divider: {
-        height: 1,
-        width: '100%',
-        marginBottom: 20
-    },
-    rateInfo: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    rateText: {
-        fontSize: 15,
-        fontWeight: '600',
-        marginRight: 8
-    },
-    manualInput: {
-        borderRadius: 20,
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        marginBottom: 20,
-        borderWidth: 1.5,
-        borderColor: 'rgba(0,0,0,0.05)',
-        alignItems: 'center'
-    },
-    presetRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        marginBottom: 10
-    },
-    presetBtn: {
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 12,
-        borderWidth: 1.5,
-    },
-    presetText: {
-        fontWeight: 'bold',
-        fontSize: 15,
-    },
-    clearBadge: {
-        backgroundColor: '#FEE2E2',
-        padding: 10,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    resultContainer: {
-        marginTop: 15,
-        alignItems: 'center',
-        padding: 20,
-        borderRadius: 25,
-        borderWidth: 1,
-    },
-    resultLabel: {
-        fontSize: 13,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        textTransform: 'uppercase',
-    },
-    resultHighlight: {
-        fontSize: 38,
-        fontWeight: 'bold',
-    },
-    shareBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        marginTop: 20,
-        borderRadius: 18,
-    },
-    shareBtnText: {
-        color: 'white',
-        fontSize: 17,
-        fontWeight: 'bold',
-    },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 16 },
+    keyboardView: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    androidScrollContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 40 },
+
+    modalContent: { width: '100%', maxWidth: 420, borderRadius: 32, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.3, shadowRadius: 32, elevation: 12 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 10 },
+    branding: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+    title: { fontSize: 22, fontWeight: '900', letterSpacing: -0.5 },
+    rateInfo: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20, marginHorizontal: 10 },
+
+    exchangeBox: { borderRadius: 24, padding: 16, borderWidth: 1, marginHorizontal: 4 },
+    currencyRow: { paddingVertical: 12, paddingHorizontal: 8 },
+    currencyLabel: { fontSize: 13, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+    currencyValue: { fontSize: 42, fontWeight: '900', letterSpacing: -1 },
+
+    swapContainer: { height: 1, justifyContent: 'center', alignItems: 'center', marginVertical: 4 },
+    swapLine: { position: 'absolute', width: '90%', height: 1 },
+    swapBtn: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 2, zIndex: 10 },
+
+    warningBox: { padding: 12, borderRadius: 16, marginTop: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderStyle: 'dashed' },
+
+    presetRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginTop: 6 },
+    presetBtn: { flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1, alignItems: 'center', minWidth: '12%' },
+    presetText: { fontWeight: '800', fontSize: 16 },
+    clearBadge: { paddingVertical: 14, paddingHorizontal: 20, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+
+    shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, marginTop: 16, borderRadius: 20 },
+    shareBtnText: { color: 'white', fontSize: 17, fontWeight: '800' },
 });
+

@@ -3,15 +3,33 @@ import { authService } from './authService';
 
 const API_URL = 'https://tasas-backend.onrender.com/api/finance';
 
+// Helper para obtener los headers con el token
+const getAuthHeaders = async () => {
+    const user = await authService.getUser();
+    if (user && user.token) {
+        return {
+            headers: {
+                Authorization: `Bearer ${user.token}`
+            }
+        };
+    }
+    return {};
+};
+
 export const financeService = {
     getAllTransactions: async () => {
         try {
             const user = await authService.getUser();
             if (!user) return [];
-            const response = await axios.get(`${API_URL}/${user.id}`);
+            const config = await getAuthHeaders();
+            const response = await axios.get(`${API_URL}/${user.id}`, config);
             return response.data;
         } catch (error) {
             console.error('Error fetching transactions from API:', error.message);
+            // Handle token expiration/invalidity gracefully (e.g. 401/403)
+            if (error.response && [401, 403].includes(error.response.status)) {
+                throw new Error('Sesión Expirada');
+            }
             return [];
         }
     },
@@ -25,100 +43,121 @@ export const financeService = {
                 ...transaction,
                 userId: user.id,
             };
-            const response = await axios.post(API_URL, newTransaction);
+            const config = await getAuthHeaders();
+            const response = await axios.post(API_URL, newTransaction, config);
             return response.data;
         } catch (error) {
             console.error('Error adding transaction to API:', error.message);
+            if (error.response && [401, 403].includes(error.response.status)) {
+                throw new Error('Sesión Expirada');
+            }
             throw error;
         }
     },
 
     updateTransaction: async (id, updatedData) => {
         try {
-            const response = await axios.put(`${API_URL}/${id}`, updatedData);
+            const config = await getAuthHeaders();
+            const response = await axios.put(`${API_URL}/${id}`, updatedData, config);
             return response.data;
         } catch (error) {
             console.error('Error updating transaction in API:', error.message);
+            if (error.response && [401, 403].includes(error.response.status)) {
+                throw new Error('Sesión Expirada');
+            }
             throw error;
         }
     },
 
     deleteTransaction: async (id) => {
         try {
-            const response = await axios.delete(`${API_URL}/${id}`);
+            const config = await getAuthHeaders();
+            const response = await axios.delete(`${API_URL}/${id}`, config);
             return response.data;
         } catch (error) {
             console.error('Error deleting transaction in API:', error.message);
+            if (error.response && [401, 403].includes(error.response.status)) {
+                throw new Error('Sesión Expirada');
+            }
             throw error;
         }
     },
 
     getStats: async () => {
-        const transactions = await financeService.getAllTransactions();
-        const stats = {
-            totalIncome: 0,
-            totalExpense: 0,
-            totalDebt: 0,
-            totalReceivable: 0,
-            categories: {},
-            history: [] // Added for line chart
-        };
+        try {
+            const transactions = await financeService.getAllTransactions();
+            const stats = {
+                totalIncome: 0,
+                totalExpense: 0,
+                totalDebt: 0,
+                totalReceivable: 0,
+                categories: {},
+                history: [] // Added for line chart
+            };
 
-        // Sort by date for history
-        const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
-        let runningBalance = 0;
+            // Sort by date for history
+            const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let runningBalance = 0;
 
-        sorted.forEach(t => {
-            if (!t) return;
-            const amount = parseFloat(t.amount) || 0;
-            if (t.type === 'income') {
-                stats.totalIncome += amount;
-                runningBalance += amount;
-            }
-            if (t.type === 'expense') {
-                stats.totalExpense += amount;
-                runningBalance -= amount;
-                if (t.category) {
-                    stats.categories[t.category] = (stats.categories[t.category] || 0) + amount;
+            sorted.forEach(t => {
+                if (!t) return;
+                const amount = parseFloat(t.amount) || 0;
+                if (t.type === 'income') {
+                    stats.totalIncome += amount;
+                    runningBalance += amount;
                 }
-            }
-            if (t.type === 'debt') {
-                stats.totalDebt += amount;
-                runningBalance -= amount;
-            }
-            if (t.type === 'receivable') {
-                stats.totalReceivable += amount;
-                runningBalance += amount;
-            }
-
-            let dateLabel = "N/A";
-            try {
-                if (t && t.date) {
-                    const d = new Date(t.date);
-                    if (!isNaN(d.getTime())) {
-                        try {
-                            dateLabel = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
-                        } catch (formatError) {
-                            console.warn("Error formatting date with toLocaleDateString:", formatError);
-                            dateLabel = "Fecha Inválida";
-                        }
+                if (t.type === 'expense') {
+                    stats.totalExpense += amount;
+                    runningBalance -= amount;
+                    if (t.category) {
+                        stats.categories[t.category] = (stats.categories[t.category] || 0) + amount;
                     }
                 }
-            } catch (e) {
-                console.log("Stats date error", e);
+                if (t.type === 'debt') {
+                    stats.totalDebt += amount;
+                    runningBalance -= amount;
+                }
+                if (t.type === 'receivable') {
+                    stats.totalReceivable += amount;
+                    runningBalance += amount;
+                }
+
+                let dateLabel = "N/A";
+                try {
+                    if (t && t.date) {
+                        const d = new Date(t.date);
+                        if (!isNaN(d.getTime())) {
+                            try {
+                                dateLabel = d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit' });
+                            } catch (formatError) {
+                                console.warn("Error formatting date with toLocaleDateString:", formatError);
+                                dateLabel = "Fecha Inválida";
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log("Stats date error", e);
+                }
+
+                stats.history.push({
+                    date: dateLabel,
+                    balance: runningBalance
+                });
+            });
+
+            // Limit history for chart readability
+            if (stats.history.length > 7) {
+                stats.history = stats.history.slice(-7);
             }
 
-            stats.history.push({
-                date: dateLabel,
-                balance: runningBalance
-            });
-        });
-
-        // Limit history for chart readability
-        if (stats.history.length > 7) {
-            stats.history = stats.history.slice(-7);
+            return stats;
+        } catch (error) {
+            if (error.message === 'Sesión Expirada') {
+                throw error;
+            }
+            return {
+                totalIncome: 0, totalExpense: 0, totalDebt: 0, totalReceivable: 0, categories: {}, history: []
+            };
         }
-
-        return stats;
     }
 };
