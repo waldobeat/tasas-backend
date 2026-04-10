@@ -5,7 +5,7 @@ import { Dimensions } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
-const Portfolio = ({ activeColors, history }) => {
+const Portfolio = ({ activeColors, history, theme }) => {
     const [selectedPoint, setSelectedPoint] = React.useState(null);
 
     // Process history data for chart
@@ -135,17 +135,17 @@ const Portfolio = ({ activeColors, history }) => {
                     <View>
                         <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                             <View>
-                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800' }}>
-                                    {chartData.items.length < 3 ? "Histórico Recente" : "Histórico (Semana Actual)"}
+                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800', letterSpacing: 1 }}>
+                                    {chartData.items.length < 3 ? "HISTÓRICO RECIENTE" : "TENDENCIA SEMANAL"}
                                 </Text>
-                                <Text style={{ color: activeColors.secondary, fontSize: 12 }}>
+                                <Text style={{ color: activeColors.secondary, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase' }}>
                                     {chartData.items.length < 3 ? "Últimos 5 días" : "Desde el Lunes"}
                                 </Text>
                             </View>
                             {selectedPoint && (
-                                <View style={{ backgroundColor: activeColors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 4 }}>
-                                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                                        {selectedPoint.label}: {selectedPoint.value} Bs
+                                <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 1, borderColor: activeColors.border, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 4 }}>
+                                    <Text style={{ color: activeColors.textDark, fontWeight: '800', fontSize: 13 }}>
+                                        {selectedPoint.label}: <Text style={{ color: activeColors.success }}>{selectedPoint.value}</Text>
                                     </Text>
                                 </View>
                             )}
@@ -160,26 +160,32 @@ const Portfolio = ({ activeColors, history }) => {
                             width={screenWidth - 40} // Adjusted for the 15 + 15 container padding
                             height={190}
                             chartConfig={{
-                                backgroundColor: activeColors.cardCtx,
-                                backgroundGradientFrom: activeColors.cardCtx,
-                                backgroundGradientTo: activeColors.cardCtx,
+                                backgroundColor: 'transparent',
+                                backgroundGradientFrom: 'transparent', // Make chart completely transparent
+                                backgroundGradientTo: 'transparent',
+                                backgroundGradientFromOpacity: 0,
+                                backgroundGradientToOpacity: 0,
                                 decimalPlaces: 2,
-                                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
-                                labelColor: (opacity = 1) => activeColors.textDark,
+                                color: (opacity = 1) => theme ? theme.primary : `rgba(0, 255, 157, ${opacity})`, // Neon line color
+                                labelColor: (opacity = 1) => activeColors.secondary,
                                 style: { borderRadius: 16 },
                                 propsForDots: {
-                                    r: "6",
-                                    strokeWidth: "2",
-                                    stroke: activeColors.primary
+                                    r: "0",
+                                    strokeWidth: "0",
                                 },
+                                fillShadowGradientFrom: theme ? theme.primary : '#00E5FF',
+                                fillShadowGradientFromOpacity: 0.6, // Stronger hologram smoke
+                                fillShadowGradientTo: activeColors.bg,
+                                fillShadowGradientToOpacity: 0.05,
                                 propsForLabels: {
-                                    fontSize: 11,
-                                    fontWeight: 'bold'
+                                    fontSize: 10,
+                                    fontWeight: '800',
+                                    fill: activeColors.secondary
                                 },
                                 propsForBackgroundLines: {
-                                    strokeDasharray: "",
+                                    strokeDasharray: "10, 10",
                                     strokeWidth: 0.5,
-                                    stroke: activeColors.border
+                                    stroke: 'rgba(255,255,255,0.05)'
                                 }
                             }}
                             onDataPointClick={({ value, index }) => {
@@ -217,11 +223,10 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
-        shadowRadius: 24,
-        elevation: 6,
+        // Glassmorphism effect styling applied dynamically above via theme
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.2, // Emit faint glow
+        shadowRadius: 15,
         overflow: 'hidden'
     }
 });

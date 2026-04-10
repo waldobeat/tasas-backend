@@ -6,7 +6,7 @@ import axios from 'axios';
 const API_URL = 'https://tasas-backend.onrender.com/api/rates';
 
 const RATES_CACHE_KEY = 'rates_cache_v2';
-const CACHE_TTL = 60 * 60 * 1000; // 1 Hora
+const CACHE_TTL = 15 * 60 * 1000; // 15 Minutos
 
 export const useRates = () => {
     const [loading, setLoading] = useState(true);

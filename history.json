@@ -176,15 +176,35 @@
     "rates": {
       "bdv": {
         "usd": {
-          "rate": 393.2216
+          "rate": 425.6741
         },
         "eur": {
-          "rate": 467.33207495
+          "rate": 491.49182934
         }
       },
       "binance": {
         "usd": {
-          "rate": 535.6998
+          "rate": 626.5
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-04T01:40:00.399Z",
+    "date": "2026-03-04",
+    "value_date": "Miércoles, 04 Marzo  2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 425.6741
+        },
+        "eur": {
+          "rate": 491.49182934
+        }
+      },
+      "binance": {
+        "usd": {
+          "rate": 628.792
         }
       }
     }

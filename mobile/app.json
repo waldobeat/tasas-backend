@@ -2,7 +2,7 @@
   "expo": {
     "name": "La Tasa V2",
     "slug": "latasa",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -46,6 +46,6 @@
     "updates": {
       "url": "https://u.expo.dev/9822776a-dc7f-4286-8065-d1ada4026d8f"
     },
-    "runtimeVersion": "1.0.0"
+    "runtimeVersion": "1.1.0"
   }
 }

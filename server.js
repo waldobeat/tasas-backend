@@ -30,24 +30,11 @@ app.use(express.json());
 setupCronJobs();
 
 // Mount Routes
-const authRoutes = require('./routes/authRoutes');
-const commentRoutes = require('./routes/commentRoutes');
-const financeRoutes = require('./routes/financeRoutes'); // Enabled finance routes
-
-// Mount Routes
+// Rutas de Tasas (Únicas necesarias)
 app.get('/api/version', (req, res) => res.json({ version: '1.2', timestamp: new Date().toISOString() }));
-
-console.log('✅ Mounting authRoutes at /api/auth');
-app.use('/api/auth', authRoutes);
-
-console.log('✅ Mounting commentRoutes at /api/comments');
-app.use('/api/comments', commentRoutes);
 
 console.log('✅ Mounting rateRoutes at /api');
 app.use('/api', rateRoutes);
-
-console.log('✅ Mounting financeRoutes at /api/finance');
-app.use('/api/finance', financeRoutes);
 
 const { broadcastNotification } = require('./utils/pushNotifications');
 

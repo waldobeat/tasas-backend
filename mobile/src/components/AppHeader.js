@@ -10,10 +10,6 @@ const AppHeader = ({
     setMenuVisible,
     updateTag = "CLEAN START (V12)",
     isAdFree = false,
-    userName,
-    onOpenRegistration,
-    onOpenFinancial,
-    onOpenComments,
     theme
 }) => {
     // Smoke animations
@@ -90,32 +86,6 @@ const AppHeader = ({
         ]
     });
 
-    // Rating State
-    const [ratingData, setRatingData] = useState({ average: 0, total: 0 });
-
-    useEffect(() => {
-        const fetchRating = async () => {
-            try {
-                // We need to import authService or similar to get comments, 
-                // but AppHeader might not satisfy dependency if we import directly.
-                // Better to pass logic or import authService.
-                // Assuming authService is available in ../utils/authService
-                const { authService } = require('../utils/authService');
-                const data = await authService.getComments();
-                if (data) {
-                    setRatingData({ average: data.averageRating || 5.0, total: data.totalComments || 0 });
-                }
-            } catch (e) {
-                console.log("Error fetching rating", e);
-            }
-        };
-
-        fetchRating();
-        // Poll every minute for updates
-        const interval = setInterval(fetchRating, 60000);
-        return () => clearInterval(interval);
-    }, []);
-
     // Gift Animation (Wobble/Pulse)
     const giftAnim = useRef(new Animated.Value(0)).current;
 
@@ -143,107 +113,65 @@ const AppHeader = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingHorizontal: scale(15),
-            paddingTop: Platform.OS === 'ios' ? verticalScale(40) : verticalScale(50),
-            paddingBottom: verticalScale(10),
-            backgroundColor: activeColors.cardCtx,
-            borderBottomWidth: 1,
-            borderBottomColor: activeColors.border,
-            borderBottomLeftRadius: 15,
-            borderBottomRightRadius: 15,
-            shadowColor: activeColors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.05,
-            shadowRadius: 5,
-            elevation: 3,
+            paddingHorizontal: scale(20),
+            paddingTop: Platform.OS === 'ios' ? verticalScale(50) : verticalScale(60),
+            paddingBottom: verticalScale(15),
+            backgroundColor: 'transparent', // Glass effect handled globally
             zIndex: 10
         }}>
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={{ width: scale(55), flexDirection: 'column', alignItems: 'center', marginRight: scale(5) }}>
-                    <Animated.View style={[{ position: 'absolute', bottom: 30, right: 20 }, getSmokeStyle(smoke1)]}>
-                        <Ionicons name="cloud" size={14} color={activeColors.textDark} />
-                    </Animated.View>
-                    <Animated.View style={[{ position: 'absolute', bottom: 30, left: 20 }, getSmokeStyle(smoke2)]}>
-                        <Ionicons name="cloud" size={12} color={activeColors.textDark} />
-                    </Animated.View>
-                    <Animated.View style={[{ position: 'absolute', bottom: 35, alignSelf: 'center' }, getSmokeStyle(smoke3)]}>
-                        <Ionicons name="cloud" size={10} color={activeColors.textDark} />
-                    </Animated.View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
-                    <Ionicons name="cafe" size={scale(48)} color={activeColors.textDark} />
-
-                    <Animated.Text style={[{ position: 'absolute', bottom: -5, fontSize: scale(10), fontWeight: 'bold', color: activeColors.textDark }, getTextStyle(textAnim)]}>
-                        La Tasa
-                    </Animated.Text>
-                </View>
-                <View style={{ marginLeft: scale(12) }}>
-                    <Text style={{ color: activeColors.textDark, fontSize: moderateScale(24), fontWeight: '900', letterSpacing: -0.5 }}>
-                        La Tasa V2
-                    </Text>
-                    <Text style={{ color: activeColors.secondary, fontSize: scale(12), opacity: 1, fontWeight: '600' }}>
-                        {userName ? `Hola, ${userName}` : 'Tus calculos en tiempo real'}
-                    </Text>
-                </View>
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Rating Badge */}
-                {ratingData.total > 0 && (
-                    <TouchableOpacity onPress={onOpenComments} style={{ marginRight: 8, alignItems: 'flex-end' }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="star" size={12} color="#F59E0B" />
-                            <Text style={{ color: activeColors.textDark, fontWeight: 'bold', fontSize: 12, marginLeft: 2 }}>
-                                {ratingData.average}
-                            </Text>
-                        </View>
-                        <Text style={{ color: activeColors.secondary, fontSize: 10 }}>
-                            {ratingData.total} {ratingData.total === 1 ? 'opinión' : 'opiniones'}
-                        </Text>
-                    </TouchableOpacity>
-                )}
-
-                {/* Gift Button - Hidden if User is Registered */}
-                {!userName ? (
-                    <TouchableOpacity
-                        onPress={onOpenRegistration}
-                        style={{
-                            padding: 6,
-                            backgroundColor: activeColors.bg,
-                            borderRadius: 12,
-                            marginRight: 8
-                        }}
-                    >
-                        <Animated.View style={getGiftStyle()}>
-                            <Ionicons name="gift" size={24} color="#E11D48" />
+                    {/* Coffee and Smoke Logo */}
+                    <View style={{ width: scale(55), flexDirection: 'column', alignItems: 'center', marginRight: scale(10) }}>
+                        <Animated.View style={[{ position: 'absolute', bottom: 30, right: 20 }, getSmokeStyle(smoke1)]}>
+                            <Ionicons name="cloud" size={14} color={theme.primary} />
                         </Animated.View>
-                    </TouchableOpacity>
-                ) : (
+                        <Animated.View style={[{ position: 'absolute', bottom: 30, left: 20 }, getSmokeStyle(smoke2)]}>
+                            <Ionicons name="cloud" size={12} color={theme.primary} />
+                        </Animated.View>
+                        <Animated.View style={[{ position: 'absolute', bottom: 35, alignSelf: 'center' }, getSmokeStyle(smoke3)]}>
+                            <Ionicons name="cloud" size={10} color={theme.primary} />
+                        </Animated.View>
+
+                        <Ionicons name="cafe" size={scale(48)} color={activeColors.textDark} />
+                    </View>
+
+                    <View>
+                        <Animated.Text style={[{
+                            color: activeColors.textDark,
+                            fontSize: moderateScale(32),
+                            fontWeight: '900',
+                            letterSpacing: -1,
+                            textShadowColor: theme.primary,
+                            textShadowOffset: { width: 0, height: 0 },
+                            textShadowRadius: 10
+                        }, getTextStyle(textAnim)]}>
+                            La Tasa
+                        </Animated.Text>
+                        <Text style={{ color: activeColors.secondary, fontSize: scale(11), fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' }}>
+                            Mercado en Tiempo Real
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TouchableOpacity
-                        onPress={onOpenFinancial}
+                        onPress={setMenuVisible}
                         style={{
-                            padding: 6,
-                            backgroundColor: activeColors.bg,
-                            borderRadius: 12,
-                            marginRight: 8
+                            padding: 10,
+                            backgroundColor: activeColors.cardCtx,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: activeColors.border
                         }}
                     >
-                        <Ionicons name="wallet" size={24} color={theme.primary} />
+                        <Ionicons name="options-outline" size={24} color={activeColors.textDark} />
                     </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                    onPress={setMenuVisible}
-                    style={{
-                        padding: 6,
-                        backgroundColor: activeColors.bg,
-                        borderRadius: 12,
-                    }}
-                >
-                    <Ionicons name="settings-sharp" size={24} color={activeColors.secondary} />
-                </TouchableOpacity>
+                </View>
             </View>
-        </View >
+        </View>
     );
 };
 

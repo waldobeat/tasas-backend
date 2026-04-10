@@ -22,12 +22,12 @@ const UpdateModal = ({
                 Animated.sequence([
                     Animated.timing(pulseAnim, {
                         toValue: 1.1,
-                        duration: 1000,
+                        duration: 100, // Shiver speed
                         useNativeDriver: true,
                     }),
                     Animated.timing(pulseAnim, {
                         toValue: 1,
-                        duration: 1000,
+                        duration: 100, // Shiver speed
                         useNativeDriver: true,
                     }),
                 ])
@@ -73,10 +73,10 @@ const UpdateModal = ({
                         <Ionicons name="close" size={20} color={activeColors.secondary} />
                     </TouchableOpacity>
 
-                    <Animated.View style={{ transform: [{ scale: pulseAnim }], marginBottom: 10 }}>
+                    <Animated.View style={{ transform: [{ scale: pulseAnim }, { rotate: pulseAnim.interpolate({ inputRange: [1, 1.1], outputRange: ['-5deg', '5deg'] }) }], marginBottom: 10 }}>
                         <Ionicons
-                            name={isUpdatePending ? "checkmark-circle" : "cloud-download"}
-                            size={60}
+                            name={isUpdatePending ? "hardware-chip" : "warning"}
+                            size={70}
                             color={theme.primary}
                         />
                     </Animated.View>
@@ -89,7 +89,7 @@ const UpdateModal = ({
                         textAlign: 'center',
                         letterSpacing: -0.5
                     }}>
-                        {isUpdatePending ? 'Actualización Completada' : 'Actualizando...'}
+                        {isUpdatePending ? '¡INSTÁLAME YA! 🤖' : '¡ME QUEDO OBSOLETO! 😱'}
                     </Text>
 
                     <Text style={{
@@ -101,8 +101,8 @@ const UpdateModal = ({
                         opacity: 0.8
                     }}>
                         {isUpdatePending
-                            ? 'Presiona reiniciar para aplicar los cambios.'
-                            : 'Estamos preparando todo, por favor espera...'}
+                            ? 'Mis circuitos ya tienen la mejora. ¡Reiníciame rápido antes de que explote!'
+                            : 'Descargando datos vitales de supervivencia... ¡No me dejes así, por favor espera!'}
                     </Text>
 
                     <View style={{

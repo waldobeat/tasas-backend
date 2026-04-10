@@ -17,7 +17,7 @@ export default function Calculator({
     visible, onClose, title, rateValue, activeColors, theme, onShare, animValue, id = ''
 }) {
     const [amount, setAmount] = useState('');
-    const [isReversed, setIsReversed] = useState(false); // false: Divisa -> Bs, true: Bs -> Divisa
+    const [isReversed, setIsReversed] = useState(false);
     const [resultStr, setResultStr] = useState('0,00');
 
     const swapAnim = useRef(new Animated.Value(0)).current;
@@ -32,10 +32,9 @@ export default function Calculator({
             swapAnim.setValue(0);
             Keyboard.dismiss();
         } else {
-            // Focus automágico cuando se abre el modal para levantar el teclado
             setTimeout(() => {
                 inputRef.current?.focus();
-            }, 300);
+            }, Platform.OS === 'ios' ? 300 : 500);
         }
     }, [visible]);
 
@@ -65,13 +64,15 @@ export default function Calculator({
 
         const rateNum = getRateNum();
 
+        let total;
         if (reversed) {
-            const total = num / rateNum;
-            setResultStr(formatNumber(total));
+            total = num / rateNum;
         } else {
-            const total = num * rateNum;
-            setResultStr(formatNumber(total));
+            total = num * rateNum;
         }
+        
+        const formattedResult = formatNumber(total);
+        setResultStr(formattedResult);
     };
 
     const handlePreset = (p) => {
@@ -117,24 +118,33 @@ export default function Calculator({
     const fromSymbol = isReversed ? 'Bs' : title;
     const toSymbol = isReversed ? title : 'Bs';
 
-    // Acceso rapido de conversion modificado The presets requested: 1, 5, 7, 10, 50, 100
-    const presets = isReversed ? [100, 500, 1000] : [1, 5, 7, 10, 50, 100];
+    // Acceso rapido de conversion modificado The presets requested: 1, 3, 5, 7, 10, 50
+    const presets = isReversed ? [100, 300, 500] : [1, 3, 5, 7, 10, 50];
 
     const spin = swapAnim.interpolate({
         inputRange: [0, 1],
         outputRange: ['0deg', '180deg']
     });
 
-    const ModalInnerContent = (
-        <View style={[styles.modalContent, { backgroundColor: activeColors.cardCtx }]}>
+    const handleFocus = () => {
+        if (inputRef.current) {
+            inputRef.current.blur();
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 50);
+        }
+    };
 
-            <TouchableOpacity activeOpacity={1} onPress={() => inputRef.current?.focus()}>
-                <View ref={shareRef} collapsable={false} style={{ backgroundColor: activeColors.cardCtx, borderRadius: 30, padding: 10 }}>
+    const ModalInnerContent = (
+        <View style={[styles.modalContent, { backgroundColor: activeColors.bg, borderWidth: 1, borderColor: theme.primary + '40' }]}>
+
+            <TouchableOpacity activeOpacity={1} onPress={handleFocus} style={{ flex: 1 }}>
+                <View ref={shareRef} collapsable={false} style={{ backgroundColor: activeColors.bg, borderRadius: 30, padding: 20 }}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text style={[styles.title, { color: activeColors.textDark }]}>Calculadora {title}</Text>
-                        <View style={styles.branding}>
-                            <Ionicons name="cafe" size={16} color={activeColors.textDark} />
+                        <Text style={[styles.title, { color: activeColors.textDark, textShadowColor: activeColors.textDark, textShadowRadius: 10, textShadowOffset: { width: 0, height: 0 } }]}>Calculadora {title}</Text>
+                        <View style={[styles.branding, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                            <Ionicons name="flash" size={16} color={theme.primary} />
                             <Text style={{ fontSize: 10, fontWeight: '900', color: activeColors.textDark, marginLeft: 4 }}>TASA V2</Text>
                         </View>
                     </View>
@@ -151,14 +161,14 @@ export default function Calculator({
                     </View>
 
                     {/* Exchanger UI */}
-                    <View style={[styles.exchangeBox, { backgroundColor: activeColors.bg, borderColor: activeColors.border }]}>
+                    <View style={[styles.exchangeBox, { backgroundColor: 'rgba(255, 255, 255, 0.02)', borderColor: activeColors.border }]}>
                         {/* FROM */}
                         <View style={styles.currencyRow}>
                             <View>
                                 <Text style={[styles.currencyLabel, { color: activeColors.secondary }]}>Convertir ({fromLabel})</Text>
-                                <Text style={[styles.currencyValue, { color: theme.primary }]} numberOfLines={1} adjustsFontSizeToFit>
+                                <Text style={[styles.currencyValue, { color: theme.primary, textShadowColor: theme.primary, textShadowRadius: 15 }]} numberOfLines={1} adjustsFontSizeToFit>
                                     {amount || '0'}
-                                    <Text style={{ fontSize: 20, color: theme.primary + '90' }}> {fromSymbol}</Text>
+                                    <Text style={{ fontSize: 24, color: theme.primary + '90' }}> {fromSymbol}</Text>
                                 </Text>
                             </View>
                         </View>
@@ -166,7 +176,7 @@ export default function Calculator({
                         {/* SWAP BUTTON */}
                         <View style={styles.swapContainer}>
                             <View style={[styles.swapLine, { backgroundColor: activeColors.border }]} />
-                            <TouchableOpacity onPress={toggleDirection} style={[styles.swapBtn, { backgroundColor: theme.primarySoft, borderColor: theme.primary + '40' }]}>
+                            <TouchableOpacity onPress={toggleDirection} style={[styles.swapBtn, { backgroundColor: 'rgba(0,0,0,0.7)', borderColor: theme.primary + '60', shadowColor: theme.primary, shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }]}>
                                 <Animated.View style={{ transform: [{ rotate: spin }] }}>
                                     <Ionicons name="swap-vertical" size={24} color={theme.primary} />
                                 </Animated.View>
@@ -177,9 +187,9 @@ export default function Calculator({
                         <View style={styles.currencyRow}>
                             <View>
                                 <Text style={[styles.currencyLabel, { color: activeColors.secondary }]}>Recibes ({toLabel})</Text>
-                                <Text style={[styles.currencyValue, { color: activeColors.textDark }]} numberOfLines={1} adjustsFontSizeToFit>
+                                <Text style={[styles.currencyValue, { color: activeColors.textDark, textShadowColor: activeColors.textDark, textShadowRadius: 10 }]} numberOfLines={1} adjustsFontSizeToFit>
                                     {resultStr}
-                                    <Text style={{ fontSize: 20, color: activeColors.secondary }}> {toSymbol}</Text>
+                                    <Text style={{ fontSize: 24, color: activeColors.secondary }}> {toSymbol}</Text>
                                 </Text>
                             </View>
                         </View>
@@ -202,15 +212,16 @@ export default function Calculator({
                 </View>
             )}
 
-            {/* Hidden Input & Controls */}
-            <View style={{ marginTop: 15 }}>
+                {/* Hidden Input & Controls */}
+            <View style={{ marginTop: 15, position: 'relative' }}>
                 <TextInput
                     ref={inputRef}
-                    style={{ height: 0, opacity: 0 }}
-                    keyboardType="numeric"
+                    style={{ position: 'absolute', width: 1, height: 1, opacity: 0, left: 0 }}
+                    keyboardType="decimal-pad" // Better than numeric for comma support in Latam
                     value={amount}
                     onChangeText={setAmount}
                     autoFocus={Platform.OS === 'ios'} // Prevent autofocus issues on some Androids
+                    autoCorrect={false}
                 />
 
                 {/* Presets */}
@@ -218,13 +229,13 @@ export default function Calculator({
                     {presets.map(p => (
                         <TouchableOpacity
                             key={p}
-                            style={[styles.presetBtn, { backgroundColor: activeColors.bg, borderColor: activeColors.border }]}
+                            style={[styles.presetBtn, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: activeColors.border }]}
                             onPress={() => handlePreset(p)}
                         >
                             <Text style={[styles.presetText, { color: activeColors.textDark }]}>{p}</Text>
                         </TouchableOpacity>
                     ))}
-                    <TouchableOpacity style={[styles.clearBadge, { backgroundColor: '#FEE2E2', minWidth: '15%' }]} onPress={() => setAmount('')}>
+                    <TouchableOpacity style={[styles.clearBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: '#EF444450', minWidth: '15%' }]} onPress={() => setAmount('')}>
                         <Ionicons name="backspace" size={20} color="#EF4444" />
                     </TouchableOpacity>
                 </View>
@@ -232,12 +243,12 @@ export default function Calculator({
 
             {/* Actions */}
             <View style={{ flexDirection: 'row', marginTop: 10, gap: 10 }}>
-                <TouchableOpacity style={[styles.shareBtn, { flex: 1, backgroundColor: STATIC_COLORS.whatsapp }]} onPress={handleImageShare}>
-                    <Ionicons name="share-social-outline" size={22} color="white" style={{ marginRight: 8 }} />
-                    <Text style={styles.shareBtnText}>Compartir</Text>
+                <TouchableOpacity style={[styles.shareBtn, { flex: 1, backgroundColor: 'rgba(0, 255, 157, 0.1)', borderWidth: 1, borderColor: STATIC_COLORS.whatsapp }]} onPress={handleImageShare}>
+                    <Ionicons name="share-social-outline" size={22} color={STATIC_COLORS.success} style={{ marginRight: 8 }} />
+                    <Text style={[styles.shareBtnText, { color: STATIC_COLORS.success }]}>Compartir</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={onClose} style={[styles.shareBtn, { width: 65, backgroundColor: activeColors.bg, borderWidth: 1, borderColor: activeColors.border }]}>
+                <TouchableOpacity onPress={onClose} style={[styles.shareBtn, { width: 65, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: activeColors.border }]}>
                     <Ionicons name="close" size={26} color={activeColors.secondary} />
                 </TouchableOpacity>
             </View>
@@ -283,11 +294,11 @@ const styles = StyleSheet.create({
     exchangeBox: { borderRadius: 24, padding: 16, borderWidth: 1, marginHorizontal: 4 },
     currencyRow: { paddingVertical: 12, paddingHorizontal: 8 },
     currencyLabel: { fontSize: 13, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
-    currencyValue: { fontSize: 42, fontWeight: '900', letterSpacing: -1 },
+    currencyValue: { fontSize: 48, fontWeight: '900', letterSpacing: -2 },
 
     swapContainer: { height: 1, justifyContent: 'center', alignItems: 'center', marginVertical: 4 },
     swapLine: { position: 'absolute', width: '90%', height: 1 },
-    swapBtn: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 2, zIndex: 10 },
+    swapBtn: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 1, zIndex: 10 },
 
     warningBox: { padding: 12, borderRadius: 16, marginTop: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderStyle: 'dashed' },
 
