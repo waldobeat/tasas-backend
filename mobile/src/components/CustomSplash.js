@@ -1,141 +1,195 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Image, StyleSheet, Dimensions, StatusBar, Animated, Text, Easing } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, StatusBar, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { scale, moderateScale } from '../styles/theme';
+import { scale } from '../styles/theme';
 
 const { width, height } = Dimensions.get('window');
 
 const CustomSplash = ({ onFinish, theme }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.8)).current;
+    const gear1Rotate = useRef(new Animated.Value(0)).current;
+    const gear2Rotate = useRef(new Animated.Value(0)).current;
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    
+    const [loadingStep, setLoadingStep] = useState(0);
+    const [progress, setProgress] = useState(0);
+    const [statusText, setStatusText] = useState('Inicializando...');
 
-    const smoke1 = useRef(new Animated.Value(0)).current;
-    const smoke2 = useRef(new Animated.Value(0)).current;
-    const smoke3 = useRef(new Animated.Value(0)).current;
-    const textAnim = useRef(new Animated.Value(0)).current;
-    const loadAnim = useRef(new Animated.Value(0)).current;
+    const step1Ref = useRef(new Animated.Value(0)).current;
+    const step2Ref = useRef(new Animated.Value(0)).current;
+    const step3Ref = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Master Splash Entrance
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
-                duration: 1000,
+                duration: 600,
                 useNativeDriver: true,
             }),
             Animated.spring(scaleAnim, {
                 toValue: 1,
                 friction: 5,
                 useNativeDriver: true,
-            }),
-            Animated.timing(loadAnim, {
-                toValue: 1,
-                duration: 2500,
-                easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-                useNativeDriver: false,
             })
         ]).start();
 
-        // Smoke Loops
-        const animateSmoke = (anim, delay) => {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.delay(delay),
-                    Animated.parallel([
-                        Animated.timing(anim, {
-                            toValue: 1,
-                            duration: 2000,
-                            easing: Easing.out(Easing.ease),
-                            useNativeDriver: true
-                        })
-                    ]),
-                    Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true })
-                ])
-            ).start();
-        };
+        Animated.loop(
+            Animated.timing(gear1Rotate, {
+                toValue: 1,
+                duration: 3000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
 
-        animateSmoke(smoke1, 0);
-        animateSmoke(smoke2, 1200);
-        animateSmoke(smoke3, 2400);
+        Animated.loop(
+            Animated.timing(gear2Rotate, {
+                toValue: -1,
+                duration: 3000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+            })
+        ).start();
 
-        // Shine Loop
         Animated.loop(
             Animated.sequence([
-                Animated.delay(2000),
-                Animated.timing(textAnim, {
-                    toValue: 1,
-                    duration: 500,
-                    easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-                    useNativeDriver: true
+                Animated.timing(pulseAnim, {
+                    toValue: 0.6,
+                    duration: 600,
+                    useNativeDriver: true,
                 }),
-                Animated.timing(textAnim, {
-                    toValue: 0,
-                    duration: 500,
-                    easing: Easing.linear,
-                    useNativeDriver: true
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 600,
+                    useNativeDriver: true,
                 })
             ])
         ).start();
 
-        const timer = setTimeout(() => {
+        const runLoadingSequence = async () => {
+            await new Promise(r => setTimeout(r, 800));
+            setLoadingStep(1);
+            setStatusText('Conectando al servidor...');
+            
+            Animated.timing(step1Ref, { toValue: 1, duration: 1500, useNativeDriver: false }).start();
+            
+            await new Promise(r => setTimeout(r, 1800));
+            setLoadingStep(2);
+            setStatusText('Obteniendo tasas de cambio...');
+            
+            Animated.timing(step2Ref, { toValue: 1, duration: 1500, useNativeDriver: false }).start();
+            
+            await new Promise(r => setTimeout(r, 1800));
+            setLoadingStep(3);
+            setStatusText('Preparando interfaz...');
+            
+            Animated.timing(step3Ref, { toValue: 1, duration: 1200, useNativeDriver: false }).start();
+            
+            await new Promise(r => setTimeout(r, 1500));
+            setStatusText('Listo!');
+            
+            await new Promise(r => setTimeout(r, 500));
             onFinish();
-        }, 3000); // 3 seconds
+        };
 
-        return () => clearTimeout(timer);
+        runLoadingSequence();
     }, []);
 
-    const getSmokeStyle = (anim) => ({
-        opacity: anim.interpolate({
-            inputRange: [0, 0.2, 0.5, 1],
-            outputRange: [0, 0.8, 0.4, 0]
-        }),
-        transform: [
-            { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, -60] }) },
-            { translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [0, Math.random() * 15 - 7.5] }) },
-            { scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 3] }) }
-        ]
+    const gear1Spin = gear1Rotate.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg']
     });
 
-    const getTextStyle = (anim) => ({
-        opacity: anim.interpolate({
-            inputRange: [0, 0.5, 1],
-            outputRange: [0.3, 1, 0.3]
-        }),
-        transform: [
-            { scale: anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.15, 1] }) },
-        ]
+    const gear2Spin = gear2Rotate.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '-360deg']
+    });
+
+    const bar1Width = step1Ref.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%']
+    });
+
+    const bar2Width = step2Ref.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%']
+    });
+
+    const bar3Width = step3Ref.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%']
     });
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.bg }]}>
+        <View style={[styles.container, { backgroundColor: '#0A0A0F' }]}>
             <StatusBar hidden />
             <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }], alignItems: 'center' }}>
 
-                <View style={{ width: scale(160), alignItems: 'center', marginBottom: 20 }}>
-                    <Animated.View style={[{ position: 'absolute', bottom: 70, right: 30 }, getSmokeStyle(smoke1)]}>
-                        <Ionicons name="cloud" size={30} color={theme.textDark || theme.text} />
+                <View style={{ position: 'relative', width: 120, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 30 }}>
+                    <Animated.View style={{ position: 'absolute', transform: [{ rotate: gear1Spin }] }}>
+                        <Ionicons name="cog" size={80} color="#3B82F6" />
                     </Animated.View>
-                    <Animated.View style={[{ position: 'absolute', bottom: 70, left: 30 }, getSmokeStyle(smoke2)]}>
-                        <Ionicons name="cloud" size={24} color={theme.textDark || theme.text} />
+                    <Animated.View style={{ position: 'absolute', transform: [{ rotate: gear2Spin }, { scale: 0.5 }] }}>
+                        <Ionicons name="cog" size={50} color="#1D4ED8" />
                     </Animated.View>
-                    <Animated.View style={[{ position: 'absolute', bottom: 80, alignSelf: 'center' }, getSmokeStyle(smoke3)]}>
-                        <Ionicons name="cloud" size={20} color={theme.textDark || theme.text} />
+                    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                        <Ionicons name="flash" size={30} color="#60A5FA" />
                     </Animated.View>
-
-                    <Ionicons name="cafe" size={scale(120)} color={theme.textDark || theme.text} />
-
-                    <Animated.Text style={[{ position: 'absolute', bottom: -10, fontSize: scale(24), fontWeight: 'bold', color: theme.textDark || theme.text }, getTextStyle(textAnim)]}>
-                        La Tasa
-                    </Animated.Text>
                 </View>
 
-                <View style={{ marginTop: 30, width: scale(160), height: 4, backgroundColor: theme.border || 'rgba(0,0,0,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                    <Animated.View style={{
-                        height: '100%',
-                        width: loadAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                        backgroundColor: theme.primary || '#E11D48'
-                    }} />
+                <Text style={{ 
+                    fontSize: scale(32), 
+                    fontWeight: '900', 
+                    color: '#F8FAFC',
+                    letterSpacing: -1,
+                    marginBottom: 10
+                }}>
+                    LA TASA
+                </Text>
+
+                <Text style={{ 
+                    color: '#3B82F6', 
+                    fontSize: scale(14), 
+                    fontWeight: '600',
+                    marginBottom: 30 
+                }}>
+                    {statusText}
+                </Text>
+
+                <View style={{ width: width - 80 }}>
+                    <View style={styles.progressContainer}>
+                        <View style={styles.progressTrack}>
+                            <Animated.View style={[styles.progressBar, { width: bar1Width, backgroundColor: '#3B82F6' }]} />
+                        </View>
+                        <Text style={[styles.progressLabel, { color: loadingStep >= 1 ? '#3B82F6' : '#64748B' }]}>
+                            {loadingStep >= 1 ? '✓' : '○'} Conectando servidor
+                        </Text>
+                    </View>
+
+                    <View style={styles.progressContainer}>
+                        <View style={styles.progressTrack}>
+                            <Animated.View style={[styles.progressBar, { width: bar2Width, backgroundColor: '#10B981' }]} />
+                        </View>
+                        <Text style={[styles.progressLabel, { color: loadingStep >= 2 ? '#10B981' : '#64748B' }]}>
+                            {loadingStep >= 2 ? '✓' : '○'} Obteniendo tasas
+                        </Text>
+                    </View>
+
+                    <View style={styles.progressContainer}>
+                        <View style={styles.progressTrack}>
+                            <Animated.View style={[styles.progressBar, { width: bar3Width, backgroundColor: '#F59E0B' }]} />
+                        </View>
+                        <Text style={[styles.progressLabel, { color: loadingStep >= 3 ? '#F59E0B' : '#64748B' }]}>
+                            {loadingStep >= 3 ? '✓' : '○'} Preparando interfaz
+                        </Text>
+                    </View>
                 </View>
+
+                <Text style={{ color: '#64748B', fontSize: 12, marginTop: 30 }}>
+                    {Math.round(loadingStep * 33)}%
+                </Text>
+
             </Animated.View>
         </View>
     );
@@ -153,10 +207,24 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
     },
-    image: {
-        width: width * 0.4, // Smaller for icon
-        height: width * 0.4,
-    }
+    progressContainer: {
+        marginBottom: 12,
+    },
+    progressTrack: {
+        height: 8,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 4,
+        overflow: 'hidden',
+    },
+    progressBar: {
+        height: '100%',
+        borderRadius: 4,
+    },
+    progressLabel: {
+        fontSize: 12,
+        marginTop: 6,
+        fontWeight: '500',
+    },
 });
 
 export default CustomSplash;
