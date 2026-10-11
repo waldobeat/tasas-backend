@@ -1,21 +1,17 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { scale, moderateScale, verticalScale } from '../styles/theme';
 
 const screenWidth = Dimensions.get('window').width;
 
 const Portfolio = ({ activeColors, history, theme }) => {
-    const [selectedPoint, setSelectedPoint] = React.useState(null);
+    const [selectedPoint, setSelectedPoint] = useState(null);
 
-    // Process history data for chart
     const processData = () => {
         if (!history || history.length === 0) return { items: [], max: 0, min: 0 };
 
-        // Ensure we have data and sort it just in case, though usually comes sorted
-        // API returns: [{ rates: { bdv: { usd: { rate: ... } } }, date: "YYYY-MM-DD", ... }]
-
-        // --- 7:00 AM Logic ---
         const now = new Date();
         const currentHour = now.getHours();
         let effectiveToday = now.toISOString().split('T')[0];
@@ -25,44 +21,30 @@ const Portfolio = ({ activeColors, history, theme }) => {
             effectiveToday = d.toISOString().split('T')[0];
         }
 
-
-        // --- Monday Logic ---
-        // Calculate the date of the most recent Monday
         const getMonday = (d) => {
             d = new Date(d);
             const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(d.setDate(diff));
-        }
+        };
 
-
-        // --- Deduplication Logic ---
-        // Create a map to keep only the latest entry per date
         const uniqueDataMap = new Map();
         history.forEach(item => {
             const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
             if (dateSource) {
-                // By setting it repeatedly, we keep the last one found in the array (assuming chronological order)
-                // If history is not sorted, we might need to sort first, but usually API sends sorted.
                 uniqueDataMap.set(dateSource, item);
             }
         });
 
         const uniqueHistory = Array.from(uniqueDataMap.values());
-
-        // --- Monday Logic ---
-        // Calculate the date of the most recent Monday
         const mondayDate = getMonday(new Date(effectiveToday));
         const mondayString = mondayDate.toISOString().split('T')[0];
 
-        // Filter: Date >= Monday AND Date <= EffectiveToday
-        let data = uniqueHistory
-            .filter(item => {
-                const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
-                return dateSource && dateSource >= mondayString && dateSource <= effectiveToday;
-            });
+        let data = uniqueHistory.filter(item => {
+            const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
+            return dateSource && dateSource >= mondayString && dateSource <= effectiveToday;
+        });
 
-        // Fallback: If less than 3 points, take last 5 valid points (from unique history)
         if (data.length < 3) {
             data = uniqueHistory
                 .filter(item => {
@@ -74,10 +56,8 @@ const Portfolio = ({ activeColors, history, theme }) => {
 
         let maxRate = 0;
         let minRate = Infinity;
-
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-        // 1. Map data and identify min/max
         const chartItems = data.map(item => {
             const dateSource = item.date || (item.timestamp ? item.timestamp.split('T')[0] : null);
             const rate = item?.rates?.bdv?.usd?.rate ? parseFloat(item.rates.bdv.usd.rate) : 0;
@@ -89,7 +69,6 @@ const Portfolio = ({ activeColors, history, theme }) => {
             return { date: dateSource, fullDate, rate, label: "" };
         });
 
-        // 2. Identify the "Active" rate index (latest where date <= effectiveToday)
         let activeIndex = -1;
         for (let i = chartItems.length - 1; i >= 0; i--) {
             if (chartItems[i].date && chartItems[i].date <= effectiveToday) {
@@ -98,7 +77,6 @@ const Portfolio = ({ activeColors, history, theme }) => {
             }
         }
 
-        // 3. Assign labels based on proximity to active rate
         chartItems.forEach((item, index) => {
             if (index === activeIndex) {
                 item.label = "Hoy";
@@ -108,16 +86,15 @@ const Portfolio = ({ activeColors, history, theme }) => {
                 const parts = item.date.split('-');
                 if (parts.length >= 3) {
                     const monthIdx = parseInt(parts[1], 10) - 1;
-                    item.label = `${months[monthIdx] || '???'} ${parts[2]}`;
+                    item.label = `${months[monthIdx] || ''} ${parts[2]}`;
                 } else {
-                    item.label = "???";
+                    item.label = "";
                 }
             } else {
-                item.label = "???";
+                item.label = "";
             }
         });
 
-        // Add some padding to min/max for chart visuals
         return {
             items: chartItems,
             max: maxRate > 0 ? maxRate * 1.005 : 100,
@@ -127,29 +104,32 @@ const Portfolio = ({ activeColors, history, theme }) => {
 
     const chartData = processData();
     const hasData = chartData.items && chartData.items.length > 0;
+    const accentColor = theme?.primary || '#00E5FF';
 
     return (
         <View style={styles.container}>
-            <View style={[styles.chartCard, { backgroundColor: activeColors.cardCtx, borderColor: activeColors.border }]}>
+            <View style={styles.chartCard}>
                 {hasData ? (
                     <View>
-                        <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <View style={styles.header}>
                             <View>
-                                <Text style={{ color: activeColors.textDark, fontSize: 16, fontWeight: '800', letterSpacing: 1 }}>
-                                    {chartData.items.length < 3 ? "HISTÓRICO RECIENTE" : "TENDENCIA SEMANAL"}
-                                </Text>
-                                <Text style={{ color: activeColors.secondary, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase' }}>
-                                    {chartData.items.length < 3 ? "Últimos 5 días" : "Desde el Lunes"}
+                                <View style={styles.titleRow}>
+                                    <Ionicons name="stats-chart" size={16} color={accentColor} style={{ marginRight: 6 }} />
+                                    <Text style={styles.titleText}>HISTORIAL BCV USD</Text>
+                                </View>
+                                <Text style={styles.subtitleText}>
+                                    {chartData.items.length < 3 ? "Últimos 5 registros" : "Evolución de la semana"}
                                 </Text>
                             </View>
+
                             {selectedPoint && (
-                                <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 1, borderColor: activeColors.border, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 4 }}>
-                                    <Text style={{ color: activeColors.textDark, fontWeight: '800', fontSize: 13 }}>
-                                        {selectedPoint.label}: <Text style={{ color: activeColors.success }}>{selectedPoint.value}</Text>
-                                    </Text>
+                                <View style={[styles.tooltip, { borderColor: accentColor + '60' }]}>
+                                    <Text style={styles.tooltipLabel}>{selectedPoint.label}: </Text>
+                                    <Text style={[styles.tooltipValue, { color: accentColor }]}>{selectedPoint.value} Bs</Text>
                                 </View>
                             )}
                         </View>
+
                         <LineChart
                             data={{
                                 labels: chartData.items.map(i => i.label),
@@ -157,35 +137,37 @@ const Portfolio = ({ activeColors, history, theme }) => {
                                     data: chartData.items.map(i => i.rate)
                                 }]
                             }}
-                            width={screenWidth - 40} // Adjusted for the 15 + 15 container padding
-                            height={190}
+                            width={screenWidth - scale(40)}
+                            height={180}
                             chartConfig={{
                                 backgroundColor: 'transparent',
-                                backgroundGradientFrom: 'transparent', // Make chart completely transparent
-                                backgroundGradientTo: 'transparent',
+                                backgroundGradientFrom: '#111726',
+                                backgroundGradientTo: '#111726',
                                 backgroundGradientFromOpacity: 0,
                                 backgroundGradientToOpacity: 0,
                                 decimalPlaces: 2,
-                                color: (opacity = 1) => theme ? theme.primary : `rgba(0, 255, 157, ${opacity})`, // Neon line color
-                                labelColor: (opacity = 1) => activeColors.secondary,
+                                color: (opacity = 1) => accentColor,
+                                labelColor: () => '#64748B',
                                 style: { borderRadius: 16 },
                                 propsForDots: {
-                                    r: "0",
-                                    strokeWidth: "0",
+                                    r: "4",
+                                    strokeWidth: "2",
+                                    stroke: accentColor,
+                                    fill: '#111726'
                                 },
-                                fillShadowGradientFrom: theme ? theme.primary : '#00E5FF',
-                                fillShadowGradientFromOpacity: 0.6, // Stronger hologram smoke
-                                fillShadowGradientTo: activeColors.bg,
-                                fillShadowGradientToOpacity: 0.05,
+                                fillShadowGradientFrom: accentColor,
+                                fillShadowGradientFromOpacity: 0.25,
+                                fillShadowGradientTo: '#111726',
+                                fillShadowGradientToOpacity: 0.0,
                                 propsForLabels: {
                                     fontSize: 10,
-                                    fontWeight: '800',
-                                    fill: activeColors.secondary
+                                    fontWeight: '700',
+                                    fill: '#64748B'
                                 },
                                 propsForBackgroundLines: {
-                                    strokeDasharray: "10, 10",
-                                    strokeWidth: 0.5,
-                                    stroke: 'rgba(255,255,255,0.05)'
+                                    strokeDasharray: "4, 4",
+                                    strokeWidth: 0.8,
+                                    stroke: 'rgba(255,255,255,0.06)'
                                 }
                             }}
                             onDataPointClick={({ value, index }) => {
@@ -194,8 +176,9 @@ const Portfolio = ({ activeColors, history, theme }) => {
                             }}
                             bezier
                             style={{
-                                marginVertical: 8,
-                                borderRadius: 16
+                                marginVertical: 6,
+                                borderRadius: 16,
+                                paddingRight: 35,
                             }}
                             withInnerLines={true}
                             withOuterLines={false}
@@ -204,8 +187,8 @@ const Portfolio = ({ activeColors, history, theme }) => {
                         />
                     </View>
                 ) : (
-                    <View style={{ height: 150, justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ color: activeColors.secondary }}>Cargando historial...</Text>
+                    <View style={styles.loadingContainer}>
+                        <Text style={styles.loadingText}>Cargando historial...</Text>
                     </View>
                 )}
             </View>
@@ -213,22 +196,74 @@ const Portfolio = ({ activeColors, history, theme }) => {
     );
 };
 
+export default Portfolio;
+
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 10,
+        marginBottom: verticalScale(14),
     },
     chartCard: {
-        paddingVertical: 15,
-        paddingHorizontal: 15,
+        backgroundColor: '#111726',
         borderRadius: 20,
-        marginBottom: 20,
         borderWidth: 1,
-        // Glassmorphism effect styling applied dynamically above via theme
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2, // Emit faint glow
-        shadowRadius: 15,
-        overflow: 'hidden'
-    }
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+        paddingTop: 16,
+        paddingBottom: 8,
+        paddingHorizontal: 12,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+        marginBottom: 8,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    titleText: {
+        color: '#FFFFFF',
+        fontSize: moderateScale(13),
+        fontWeight: '800',
+        letterSpacing: 0.8,
+    },
+    subtitleText: {
+        color: '#64748B',
+        fontSize: moderateScale(11),
+        fontWeight: '500',
+        marginTop: 2,
+    },
+    tooltip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        borderWidth: 1,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+    },
+    tooltipLabel: {
+        color: '#94A3B8',
+        fontSize: 11,
+        fontWeight: '600',
+    },
+    tooltipValue: {
+        fontSize: 12,
+        fontWeight: '800',
+    },
+    loadingContainer: {
+        height: 140,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        color: '#64748B',
+        fontSize: 13,
+    },
 });
-
-export default Portfolio;
