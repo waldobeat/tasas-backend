@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "La Tasa V2",
+    "slug": "httpstasas-backendonrendercom",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cafesitoxpressve.latasa",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.cafesitoxpressve.latasa",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production"
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "onesignalAppId": "d2b69155-b19c-4d4f-a417-b7f2dfd63fe8",
+      "eas": {
+        "projectId": "77ab63dd-e2e6-47c0-8f86-12978e2b9b00"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/77ab63dd-e2e6-47c0-8f86-12978e2b9b00"
+    },
+    "runtimeVersion": "1.0.0"
+  }
+}

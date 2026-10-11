@@ -1,0 +1,212 @@
+[
+  {
+    "timestamp": "2026-01-28T12:00:00.000Z",
+    "date": "2026-01-28",
+    "value_date": "Miércoles, 28 Enero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 361.49
+        },
+        "eur": {
+          "rate": 432.71
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-29T12:00:00.000Z",
+    "date": "2026-01-29",
+    "value_date": "Jueves, 29 Enero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 363.66
+        },
+        "eur": {
+          "rate": 434.42
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-30T12:00:00.000Z",
+    "date": "2026-01-30",
+    "value_date": "Viernes, 30 Enero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 367.3
+        },
+        "eur": {
+          "rate": 439.46
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-01T12:00:00.000Z",
+    "date": "2026-02-01",
+    "value_date": "Domingo, 01 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 370.31
+        },
+        "eur": {
+          "rate": 440.47
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-03T12:00:00.000Z",
+    "date": "2026-02-03",
+    "value_date": "Martes, 03 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 372.1
+        },
+        "eur": {
+          "rate": 439.63
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-04T12:00:00.000Z",
+    "date": "2026-02-04",
+    "value_date": "Miércoles, 04 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 375.08
+        },
+        "eur": {
+          "rate": 442.58
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-05T12:00:00.000Z",
+    "date": "2026-02-05",
+    "value_date": "Jueves, 05 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 378.45
+        },
+        "eur": {
+          "rate": 447.21
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-06T12:00:00.000Z",
+    "date": "2026-02-06",
+    "value_date": "Viernes, 06 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 381.1
+        },
+        "eur": {
+          "rate": 449.85
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-08T15:47:00.000Z",
+    "date": "2026-02-09",
+    "value_date": "Lunes, 09 Febrero 2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 382.6318
+        },
+        "eur": {
+          "rate": 451.8767
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-08T20:23:27.911Z",
+    "date": "2026-02-09",
+    "value_date": "Lunes, 09 Febrero  2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 382.6318
+        },
+        "eur": {
+          "rate": 451.87667684
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-13T00:29:44.801Z",
+    "date": "2026-02-13",
+    "value_date": "Viernes, 13 Febrero  2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 393.2216
+        },
+        "eur": {
+          "rate": 467.33207495
+        }
+      },
+      "binance": {
+        "usd": {
+          "rate": 535.5998
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-02-13T01:00:00.637Z",
+    "date": "2026-02-13",
+    "value_date": "Viernes, 13 Febrero  2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 425.6741
+        },
+        "eur": {
+          "rate": 491.49182934
+        }
+      },
+      "binance": {
+        "usd": {
+          "rate": 626.5
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-03-04T01:40:00.399Z",
+    "date": "2026-03-04",
+    "value_date": "Miércoles, 04 Marzo  2026",
+    "rates": {
+      "bdv": {
+        "usd": {
+          "rate": 425.6741
+        },
+        "eur": {
+          "rate": 491.49182934
+        }
+      },
+      "binance": {
+        "usd": {
+          "rate": 628.792
+        }
+      }
+    }
+  }
+]

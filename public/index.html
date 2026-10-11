@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0B1120">
+    <meta name="5f770545e75f1b1aa57ed3056200162e87d36a9f" content="5f770545e75f1b1aa57ed3056200162e87d36a9f" />
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9257287865743639" crossorigin="anonymous"></script>
+    
+    <title>La Tasa - Dólar en Venezuela</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0B1120;
+            --card-bg: #1E293B;
+            --secondary: #94A3B8;
+            --text-main: #F8FAFC;
+            --border: #334155;
+            --input-bg: #0F172A;
+            --primary-accent: #3B82F6;
+            --success-color: #10B981;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .header-content .subtitle {
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+        }
+
+        /* DOWNLOAD SECTION */
+        .download-options {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .download-banner {
+            flex: 1;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: transform 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .uptodown-banner {
+            flex: 1;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            transition: transform 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .uptodown-banner img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .download-banner:hover, .uptodown-banner:hover {
+            transform: translateY(-2px);
+        }
+
+        .download-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .download-btn-small {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* RATES */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .rate-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .currency-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .currency-subtitle {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            text-transform: uppercase;
+        }
+
+        .rate-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .calc-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+
+        /* CALCULATOR */
+        .calculator {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .calculator.open {
+            max-height: 300px;
+            opacity: 1;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .amount-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .presets {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .preset-chip {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .result-box {
+            border-radius: var(--radius-md);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .result-amount {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            color: var(--secondary);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-content">
+                <div class="subtitle" id="currentDate">Cargando fecha...</div>
+                <h1>La Tasa</h1>
+            </div>
+            <div class="user-badge">
+                <i class="fas fa-user-circle" style="margin-right: 6px;"></i> Invitado
+            </div>
+        </header>
+
+        <div class="download-options">
+            <a href="/api/download" class="download-banner">
+                <div class="download-title">DESCARGA DIRECTA</div>
+                <div class="download-btn-small">
+                    <i class="fab fa-android"></i> APK Gratis
+                </div>
+            </a>
+
+            <a href="https://la-tasa-dolar-en-venezuela.en.uptodown.com/android" class="uptodown-banner" target="_blank" rel="noopener">
+                <img src="https://stc.utdstc.com/img/mediakit/download-gio-small.png" alt="Descargar en Uptodown">
+            </a>
+        </div>
+
+        <div style="height: 1px; background: var(--border); width: 100%;"></div>
+
+        <div>
+            <div class="section-title">Tasas de Cambio</div>
+            <div id="ratesContainer">
+                <div class="loader" style="text-align: center; padding: 40px; color: var(--primary-accent);">
+                    <i class="fas fa-circle-notch fa-spin fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="last-updated" id="footer-text" style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 10px;">
+                <i class="fas fa-sync fa-spin"></i> Sincronizando...
+            </div>
+            <div class="copyright">© 2026 La Tasa. Datos oficiales del BCV.</div>
+        </footer>
+    </div>
+
+    <script>
+        // --- UTILS ---
+        function formatNumber(num) {
+            return num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        function parseLocaleNumber(stringNumber) {
+            if (typeof stringNumber === 'number') return stringNumber;
+            return parseFloat(stringNumber.toString().replace(/\./g, '').replace(',', '.'));
+        }
+
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = now.toLocaleDateString('es-VE', options);
+            document.getElementById('currentDate').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        }
+
+        window.toggleCalculator = function(id) {
+            document.getElementById(`calc-${id}`).classList.toggle('open');
+        };
+
+        window.calculate = function(id, rawRate) {
+            const input = document.getElementById(`input-${id}`);
+            const resultDisplay = document.getElementById(`result-${id}`);
+            const amount = parseFloat(input.value) || 0;
+            const rate = parseLocaleNumber(rawRate);
+            resultDisplay.innerText = formatNumber(amount * rate) + " Bs";
+        };
+
+        window.setAmount = function(id, amount, rawRate) {
+            document.getElementById(`input-${id}`).value = amount;
+            calculate(id, rawRate);
+        };
+
+        async function fetchRates() {
+            try {
+                const response = await fetch('/api/rates');
+                const data = await response.json();
+                const container = document.getElementById('ratesContainer');
+                container.innerHTML = '';
+
+                const renderCard = (id, title, subtitle, rateValue) => {
+                    const cleanRate = parseLocaleNumber(rateValue);
+                    let themeColor = '#3B82F6';
+                    if(id === 'binance-usd') themeColor = '#F0B90B';
+                    if(id === 'bcv-eur') themeColor = '#EA580C';
+
+                    return `
+                        <div class="rate-card">
+                            <div class="card-top">
+                                <div class="card-info">
+                                    <div class="currency-title">${title}</div>
+                                    <div class="currency-subtitle">${subtitle}</div>
+                                </div>
+                                <div style="display: flex; align-items: center;">
+                                    <div class="rate-value" style="color: ${themeColor}">${formatNumber(cleanRate)} Bs</div>
+                                    <div class="calc-toggle" onclick="toggleCalculator('${id}')">
+                                        <i class="fas fa-calculator"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="calc-${id}" class="calculator">
+                                <input type="number" id="input-${id}" class="amount-input" value="1" oninput="calculate('${id}', '${rateValue}')">
+                                <div class="presets">
+                                    ${[5, 10, 20, 50, 100].map(val => 
+                                        `<div class="preset-chip" onclick="setAmount('${id}', ${val}, '${rateValue}')">$${val}</div>`
+                                    ).join('')}
+                                </div>
+                                <div class="result-box" style="background: ${themeColor}15; border: 1px solid ${themeColor}30;">
+                                    <div style="font-size: 0.7rem; color: ${themeColor}; font-weight: 700;">TOTAL ESTIMADO</div>
+                                    <div class="result-amount" id="result-${id}" style="color: ${themeColor}">${formatNumber(cleanRate)} Bs</div>
+                                </div>
+                            </div>
+                        </div>`;
+                };
+
+                if (data.rates.bdv?.usd) container.innerHTML += renderCard('bcv-usd', 'Dólar (USD)', 'Tasa BCV', data.rates.bdv.usd.rate);
+                if (data.rates.bdv?.eur) container.innerHTML += renderCard('bcv-eur', 'Euro (EUR)', 'Tasa BCV', data.rates.bdv.eur.rate);
+                if (data.rates.binance?.usd) container.innerHTML += renderCard('binance-usd', 'Binance P2P', 'USDT', data.rates.binance.usd.rate);
+
+                if (data.rates.bdv?.last_updated) {
+                    const date = new Date(data.rates.bdv.last_updated);
+                    document.getElementById('footer-text').innerHTML = `<i class="fas fa-check-circle" style="color: #10B981;"></i> Actualizado: ${date.toLocaleTimeString('es-VE')}`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div style="text-align:center; color: var(--secondary);">Error cargando tasas</div>`;
+            }
+        }
+
+        updateDate();
+        fetchRates();
+        setInterval(fetchRates, 60000);
+    </script>
+</body>
+</html>
